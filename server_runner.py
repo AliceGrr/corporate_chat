@@ -18,6 +18,7 @@ def jello():
 
 @app.route('/register', methods=['GET', 'POST'])
 def new():
+    """Регистрация пользователей."""
     if request.method == 'POST':
         user = Users(request.form['username'], request.form['psw'])
         db.session.add(user)
@@ -28,12 +29,14 @@ def new():
 
 @app.route('/test')
 def test():
+    """Отдача POST-запроса на регистрацию и вывод текущих полей БД."""
     requests.post('http://127.0.0.1:5000/register', data={'username': 'Pavlo', 'psw': 'qwerty2'})
     message = 'users:' + str(Users.query.all())
     return message
 
 
 class Users(db.Model):
+    """ ORM класс пользователей для БД."""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), unique=True,)
     psw = db.Column(db.String(500))
