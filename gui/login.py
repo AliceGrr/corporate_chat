@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main.ui'
+# Form implementation generated from reading ui file 'login.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.1
 #
@@ -11,18 +11,18 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.setEnabled(True)
-        MainWindow.resize(802, 586)
+class Ui_LoginWindow(object):
+    def setupUi(self, LoginWindow):
+        LoginWindow.setObjectName("LoginWindow")
+        LoginWindow.setEnabled(True)
+        LoginWindow.resize(802, 586)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
-        MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setMinimumSize(QtCore.QSize(802, 586))
-        MainWindow.setMaximumSize(QtCore.QSize(802, 586))
+        sizePolicy.setHeightForWidth(LoginWindow.sizePolicy().hasHeightForWidth())
+        LoginWindow.setSizePolicy(sizePolicy)
+        LoginWindow.setMinimumSize(QtCore.QSize(802, 586))
+        LoginWindow.setMaximumSize(QtCore.QSize(802, 586))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         brush.setStyle(QtCore.Qt.SolidPattern)
@@ -78,27 +78,22 @@ class Ui_MainWindow(object):
         brush = QtGui.QBrush(QtGui.QColor(28, 94, 217, 128))
         brush.setStyle(QtCore.Qt.NoBrush)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.PlaceholderText, brush)
-        MainWindow.setPalette(palette)
-        MainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
-        self.central_widget = QtWidgets.QWidget(MainWindow)
+        LoginWindow.setPalette(palette)
+        LoginWindow.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        LoginWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
+        self.central_widget = QtWidgets.QWidget(LoginWindow)
         self.central_widget.setObjectName("central_widget")
         self.push_button = QtWidgets.QPushButton(self.central_widget)
-        self.push_button.setGeometry(QtCore.QRect(270, 310, 231, 71))
+        self.push_button.setGeometry(QtCore.QRect(330, 420, 121, 51))
         font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Semibold")
         font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
         self.push_button.setFont(font)
         self.push_button.setStyleSheet("#push_button {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "#push_button:hover {background-color:rgb(230, 230, 230);}")
         self.push_button.setObjectName("push_button")
-        self.push_button_2 = QtWidgets.QPushButton(self.central_widget)
-        self.push_button_2.setGeometry(QtCore.QRect(270, 400, 231, 71))
-        font = QtGui.QFont()
-        font.setPointSize(14)
-        self.push_button_2.setFont(font)
-        self.push_button_2.setStyleSheet("#push_button_2 {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
-"#push_button_2:hover{background-color:rgb(230, 230, 230);}")
-        self.push_button_2.setObjectName("push_button_2")
         self.label = QtWidgets.QLabel(self.central_widget)
         self.label.setGeometry(QtCore.QRect(270, 100, 361, 81))
         font = QtGui.QFont()
@@ -119,16 +114,55 @@ class Ui_MainWindow(object):
         self.label_2.setFont(font)
         self.label_2.setStyleSheet("color:rgb(28, 94, 217)")
         self.label_2.setObjectName("label_2")
-        MainWindow.setCentralWidget(self.central_widget)
+        self.lineEdit = QtWidgets.QLineEdit(self.central_widget)
+        self.lineEdit.setGeometry(QtCore.QRect(310, 280, 161, 41))
+        self.lineEdit.setStyleSheet("border-radius: 10px;border: 1px solid #CCCCCC;\n"
+"")
+        self.lineEdit.setObjectName("lineEdit")
+        self.label_3 = QtWidgets.QLabel(self.central_widget)
+        self.label_3.setGeometry(QtCore.QRect(340, 250, 89, 30))
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Light")
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_3.setFont(font)
+        self.label_3.setStyleSheet("color:rgb(28, 94, 217)")
+        self.label_3.setObjectName("label_3")
+        self.label_4 = QtWidgets.QLabel(self.central_widget)
+        self.label_4.setGeometry(QtCore.QRect(340, 330, 111, 31))
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Light")
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_4.setFont(font)
+        self.label_4.setStyleSheet("color:rgb(28, 94, 217)")
+        self.label_4.setObjectName("label_4")
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.central_widget)
+        self.lineEdit_2.setGeometry(QtCore.QRect(310, 360, 161, 41))
+        self.lineEdit_2.setStyleSheet("border-radius: 10px;border: 1px solid #CCCCCC;\n"
+"")
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.commandLinkButton = QtWidgets.QCommandLinkButton(self.central_widget)
+        self.commandLinkButton.setGeometry(QtCore.QRect(270, 480, 291, 41))
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Light")
+        font.setPointSize(10)
+        self.commandLinkButton.setFont(font)
+        self.commandLinkButton.setStyleSheet("color:rgb(28, 94, 217)")
+        self.commandLinkButton.setObjectName("commandLinkButton")
+        LoginWindow.setCentralWidget(self.central_widget)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        MainWindow.setTabOrder(self.push_button_2, self.push_button)
+        self.retranslateUi(LoginWindow)
+        QtCore.QMetaObject.connectSlotsByName(LoginWindow)
 
-    def retranslateUi(self, MainWindow):
+    def retranslateUi(self, LoginWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Corporate Chat"))
-        self.push_button.setText(_translate("MainWindow", "Sign in"))
-        self.push_button_2.setText(_translate("MainWindow", "Sign up"))
-        self.label.setText(_translate("MainWindow", "Welcome to"))
-        self.label_2.setText(_translate("MainWindow", "corporate chat"))
+        LoginWindow.setWindowTitle(_translate("LoginWindow", "Corporate Chat"))
+        self.push_button.setText(_translate("LoginWindow", "Sign in"))
+        self.label.setText(_translate("LoginWindow", "Welcome to"))
+        self.label_2.setText(_translate("LoginWindow", "corporate chat"))
+        self.label_3.setText(_translate("LoginWindow", "Username"))
+        self.label_4.setText(_translate("LoginWindow", "Password"))
+        self.commandLinkButton.setText(_translate("LoginWindow", "Don\'t have account? Sign up!"))

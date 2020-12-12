@@ -1,10 +1,12 @@
 import sys
 from PyQt5 import QtWidgets
-from gui import main_design
+from PyQt5.QtWidgets import QApplication
+
+from gui import login
 
 
-class ExampleApp(QtWidgets.QMainWindow, main_design.Ui_MainWindow):
-    """Класс дизайна основного окна приложения."""
+class ExampleApp(QtWidgets.QMainWindow, login.Ui_LoginWindow):
+    """Класс дизайна формы входа."""
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -12,7 +14,7 @@ class ExampleApp(QtWidgets.QMainWindow, main_design.Ui_MainWindow):
 
 def main():
     """Показ окна и запуск приложения."""
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication([])
     window = ExampleApp()
     window.show()
     app.exec_()

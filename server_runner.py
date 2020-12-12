@@ -1,52 +1,41 @@
 from flask import Flask, flash, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
-import requests
+from sqlalchemy import exc
+from tables import Users
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.sql'
-app.config['SECRET_KEY'] = 'lil secret key'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.update(
+    SQLALCHEMY_DATABASE_URI='sqlite:///chat.sql',
+    SECRET_KEY='lil secret key',
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+)
 
 db = SQLAlchemy(app)
 
 
-@app.route('/')
-def jello():
-    return 'jello'
+@app.route('/corporate_chat', methods=['GET', 'POST'])
+def login():
+    """Вход пользователя."""
+    if request.method == 'POST':
+        pass
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def new():
+@app.route('/corporate_chat/register', methods=['GET', 'POST'])
+def register():
     """Регистрация пользователей."""
     if request.method == 'POST':
-        user = Users(request.form['username'], request.form['psw'])
+        try:
+            user = Users(request.form['username'], request.form['psw'])
+        except exc.IntegrityError:
+            return 'user with this name exist'
         db.session.add(user)
         db.session.commit()
+        flash('You were successfully registered')
         return redirect(url_for('jello'))
-    return "can't create user"
-
-
-@app.route('/test')
-def test():
-    """Отдача POST-запроса на регистрацию и вывод текущих полей БД."""
-    requests.post('http://127.0.0.1:5000/register', data={'username': 'Pavlo', 'psw': 'qwerty2'})
-    message = 'users:' + str(Users.query.all())
-    return message
-
-
-class Users(db.Model):
-    """ ORM класс пользователей для БД."""
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True,)
-    psw = db.Column(db.String(500))
-
-    def __init__(self, username, psw):
-        self.username = username
-        self.psw = psw
-
-    def __repr__(self):
-        return f'id: {self.id}, username: {self.username}, psw: {self.psw} '
+    if request.method == 'GET':
+        message = 'users:' + str(Users.query.all())
+        return message
 
 
 if __name__ == '__main__':
