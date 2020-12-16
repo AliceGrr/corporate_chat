@@ -8,7 +8,11 @@ class LoginWindow(QtWidgets.QMainWindow, login.Ui_LoginWindow):
     """Класс дизайна формы входа."""
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
+        self.ui = login.Ui_LoginWindow()
+        self.ui.setupUi(self)
+
+        # ввод пароля
+        self.ui.password_in.setEchoMode(QtWidgets.QLineEdit.Password)
 
 
 def main():
