@@ -1,6 +1,6 @@
-from flask import Flask, flash, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 import requests
 
 app = Flask(__name__)
@@ -16,8 +16,7 @@ db = SQLAlchemy(app)
 
 class Users(db.Model):
     """ORM класс пользователей для БД."""
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True,)
+    username = db.Column(db.String(50), primary_key=True)
     psw = db.Column(db.String(500))
 
     def __init__(self, username, psw):
@@ -25,37 +24,46 @@ class Users(db.Model):
         self.psw = psw
 
     def __repr__(self):
-        return f'<id: {self.id}, username: {self.username}, psw: {self.psw}>'
+        return f'username: {self.username}, psw: {self.psw}'
 
 
-@app.route('/corporate_chat', methods=['GET', 'POST'])
+@app.route('/corporate_chat', methods=['POST'])
 def login():
     """Вход пользователя."""
     if request.method == 'POST':
-        return 'no enter'
+        # TODO: write a login func
+        return 'success'
 
 
-@app.route('/corporate_chat/register', methods=['GET', 'POST'])
+@app.route('/corporate_chat/register', methods=['POST'])
 def register():
     """Регистрация пользователей."""
     if request.method == 'POST':
-        try:
-            user = Users(request.form['username'], request.form['psw'])
-        except exc.IntegrityError:
-            return 'user with this name exist'
-        db.session.add(user)
-        db.session.commit()
-        flash('You were successfully registered')
-        return 'success!'
-    if request.method == 'GET':
-        message = 'users:' + str(Users.query.all())
-        return message
+        if request.form["username"] == '':
+            print("Username is required")
+        elif request.form["psw"] == '':
+            print("Password is required")
+        else:
+            try:
+                user = Users(request.form['username'], request.form['psw'])
+                db.session.add(user)
+                db.session.commit()
+            except exc.IntegrityError:
+                print('user with this name exist')
+            return 'success!'
 
 
-@app.route('/test')
+@app.route('/register_test')
 def test():
     """попытка регистрации."""
     requests.post('http://127.0.0.1:5000/corporate_chat/register', data={'username': 'Alice', 'psw': 'qwerty'})
+    return 'complete'
+
+
+@app.route('/login_test')
+def test_2():
+    """попытка логина."""
+    requests.post('http://127.0.0.1:5000/corporate_chat', data={'username': 'Palvo'})
     return 'complete'
 
 
