@@ -1,6 +1,5 @@
-from flask import Flask, redirect, url_for, request, session
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import exc, select
 
 
 app = Flask(__name__)
