@@ -15,18 +15,18 @@ class Users(db.Model):
         return f'username: {self.username}, psw: {self.psw}'
 
 
-# class Messages(db.Model):
-#     """Класс сообщений для БД."""
-#     from_user = db.Column(db.String(50))
-#     msg = db.Column(db.String(200))
-#     to_user = db.Column(db.String(50))
-#     time_stamp = db.Column(db.DateTime())
-#
-#     def __init__(self, from_user, to_user, msg):
-#         self.from_user = from_user
-#         self.to_user = to_user
-#         self.msg = msg
-#         self.time_stamp = utcnow()
-#
-#     def __repr__(self):
-#         return f'<from: {self.from_user}, to: {self.to_user}, msg: {self.msg}, date/time: {self.time_stamp}>'
+class Messages(db.Model):
+    """Класс сообщений для БД."""
+    from_user = db.Column(db.String(50))
+    msg = db.Column(db.String(200))
+    to_user = db.Column(db.String(50))
+    time_stamp = db.Column(db.DateTime())
+
+    def __init__(self, from_user, to_user, msg):
+        self.from_user = from_user
+        self.to_user = to_user
+        self.msg = msg
+        self.time_stamp = utcnow()
+
+    def __repr__(self):
+        return f'<from: {self.from_user}, to: {self.to_user}, msg: {self.msg}, date/time: {self.time_stamp}>'

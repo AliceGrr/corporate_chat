@@ -1,6 +1,6 @@
 from .server_runner import app, db
 from flask import request
-from .tables import Users
+from .tables import Users, Messages
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import exc
@@ -18,15 +18,24 @@ def login():
         return 'success'
 
 
+def check_register_data(username, psw):
+    """Проверка корректности вводимых данных"""
+    if username == '':
+        print('Username is required')
+    elif psw == '':
+        print('Password is required')
+    elif username.startswith(' '):
+        print("Username can't start with whitespace")
+    elif psw.startswith(' '):
+        print("Password can't start with whitespace")
+    return True
+
+
 @app.route('/corporate_chat/register', methods=['POST'])
 def register():
     """Регистрация пользователей."""
     if request.method == 'POST':
-        if request.form['username'] == '':
-            print('Username is required')
-        elif request.form['psw'] == '':
-            print('Password is required')
-        else:
+        if check_register_data(request.form['username'], request.form['psw']) is True:
             try:
                 user = Users(request.form['username'], generate_password_hash(request.form['psw']))
                 db.session.add(user)
@@ -36,10 +45,17 @@ def register():
             return 'success!'
 
 
-@app.route('/corporate_chat/send_message')
+@app.route('/corporate_chat/send_message', methods=['POST'])
 def send_message():
-    # TODO: write a send func
-    pass
+    if request.method == 'POST':
+        receiver = db.session.query(Users).get(request.form['to_user'])
+        if receiver is None:
+            print('no such user')
+        else:
+            msg = Messages(request.form['from_user'], request.form['to_user'], request.form['msg'])
+            db.session.add(msg)
+            db.session.commit()
+            return 'success!'
 
 
 @app.route('/corporate_chat/receive_message')
