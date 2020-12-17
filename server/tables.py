@@ -3,7 +3,7 @@ from arrow import utcnow
 
 
 class Users(db.Model):
-    """ORM класс пользователей для БД."""
+    """Класс пользователей для БД."""
     username = db.Column(db.String(50), primary_key=True)
     psw = db.Column(db.String(500))
 
@@ -17,6 +17,7 @@ class Users(db.Model):
 
 class Messages(db.Model):
     """Класс сообщений для БД."""
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     from_user = db.Column(db.String(50))
     msg = db.Column(db.String(200))
     to_user = db.Column(db.String(50))

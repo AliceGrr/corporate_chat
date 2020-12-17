@@ -13,7 +13,7 @@ app.config.update(
 db = SQLAlchemy(app)
 
 
-from server import routes
+from server.routes import *
 
 
 if __name__ == '__main__':

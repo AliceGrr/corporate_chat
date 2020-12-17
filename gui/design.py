@@ -11,7 +11,7 @@ class LoginWindow(QtWidgets.QMainWindow, login.Ui_LoginWindow):
         self.ui = login.Ui_LoginWindow()
         self.ui.setupUi(self)
 
-        # ввод пароля
+        # точки для ввода пароля
         self.ui.password_in.setEchoMode(QtWidgets.QLineEdit.Password)
 
 
