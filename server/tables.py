@@ -1,9 +1,10 @@
-from .server_runner import db
+from . import db
 from arrow import utcnow
 
 
 class Users(db.Model):
     """Класс пользователей для БД."""
+    id = db.Column(db.Integer, autoincrement=True)
     username = db.Column(db.String(50), primary_key=True)
     psw = db.Column(db.String(500))
 
@@ -31,3 +32,5 @@ class Messages(db.Model):
 
     def __repr__(self):
         return f'<from: {self.from_user}, to: {self.to_user}, msg: {self.msg}, date/time: {self.time_stamp}>'
+
+

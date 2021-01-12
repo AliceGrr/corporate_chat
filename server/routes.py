@@ -1,4 +1,4 @@
-from .server_runner import app, db
+from . import app, db
 from flask import request
 from .tables import Users, Messages
 import requests
@@ -47,6 +47,7 @@ def register():
 
 @app.route('/corporate_chat/send_message', methods=['POST'])
 def send_message():
+    """Отправка сообщений от пользователя к пользователю."""
     if request.method == 'POST':
         receiver = db.session.query(Users).get(request.form['to_user'])
         if receiver is None:
@@ -60,6 +61,7 @@ def send_message():
 
 @app.route('/corporate_chat/receive_message')
 def receive_message():
+    """Получение сообщений одного конкретного пользователя."""
     # TODO: write a receive func
     pass
 
