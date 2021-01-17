@@ -45,12 +45,16 @@ def login():
 def register():
     """Регистрация пользователей."""
     if request.method == 'POST':
+        err_log = check_data(request.form['username'], request.form['psw'])
+        if err_log['msg']:
+            return err_log
         try:
             user = Users(request.form['username'], generate_password_hash(request.form['psw']))
             db.session.add(user)
             db.session.commit()
         except exc.IntegrityError:
-            return {'msg': 'user with this name exists'}
+            err_log['msg'] = 'user with this name exists'
+            return err_log
 
 
 @app.route('/corporate_chat/send_message', methods=['POST'])
