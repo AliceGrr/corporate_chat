@@ -1,14 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from config import Config
+from flask_migrate import Migrate
 
 app = Flask(__name__)
-
-app.config.update(
-    SQLALCHEMY_DATABASE_URI='sqlite:///chat.db',
-    SECRET_KEY='lil secret key',
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-)
-
+app.config.from_object(Config)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
-from server import routes
+from . import routes, models

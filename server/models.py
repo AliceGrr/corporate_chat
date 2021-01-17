@@ -13,7 +13,7 @@ class Users(db.Model):
         self.psw = psw
 
     def __repr__(self):
-        return f'username: {self.username}, psw: {self.psw}'
+        return f'username: {self.username}'
 
 
 class Messages(db.Model):
