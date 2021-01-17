@@ -30,7 +30,32 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         psw = self.ui.password_in.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat',
                                  data={'username': username, 'psw': psw})
-        print(response)
+        err_log = response.json()
+        if err_log['username_err']:
+            self.ui.login_in.setStyleSheet(
+                '''
+                border: 2px solid rgb(255, 55, 118);
+                '''
+            )
+        else:
+            self.ui.login_in.setStyleSheet(
+                '''
+                '''
+            )
+        if err_log['psw_err']:
+            self.ui.password_in.setStyleSheet(
+                '''
+                border: 2px solid rgb(255, 55, 118);
+                '''
+            )
+        else:
+            self.ui.password_in.setStyleSheet(
+                '''
+                '''
+            )
+        answer = err_log['msg']
+        self.ui.error_label.setText(answer)
+        print(answer)
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
