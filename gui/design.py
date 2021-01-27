@@ -4,6 +4,14 @@ import requests
 from gui import login, registration
 
 
+def clear_form(self):
+    self.ui.login_in.setText('')
+    self.ui.password_in.setText('')
+    self.ui.error_label.setText('')
+    self.ui.login_in.setStyleSheet('''''')
+    self.ui.login_in.setStyleSheet('''''')
+
+
 def show_input_errors(self, err_log):
     if err_log['username_err']:
         self.ui.login_in.setStyleSheet(
@@ -12,10 +20,7 @@ def show_input_errors(self, err_log):
             '''
         )
     else:
-        self.ui.login_in.setStyleSheet(
-            '''
-            '''
-        )
+        self.ui.login_in.setStyleSheet('''''')
     if err_log['psw_err']:
         self.ui.password_in.setStyleSheet(
             '''
@@ -23,10 +28,7 @@ def show_input_errors(self, err_log):
             '''
         )
     else:
-        self.ui.password_in.setStyleSheet(
-            '''
-            '''
-        )
+        self.ui.login_in.setStyleSheet('''''')
     answer = err_log['msg']
     self.ui.error_label.setText(answer)
 
@@ -58,14 +60,12 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat',
                                  data={'username': username, 'psw': psw})
         print(response)
-        if response == '<Response [500]>':
-            self.ui.error_label.setText('server connection error')
+        err_log = response.json()
+        if err_log['msg']:
+            show_input_errors(self, err_log)
         else:
-            err_log = response.json()
-            if err_log['msg']:
-                show_input_errors(self, err_log)
-            else:
-                self.to_registration_form()
+            clear_form(self)
+            self.to_registration_form()
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
@@ -97,6 +97,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
+            clear_form(self)
             self.to_login_form()
 
 
