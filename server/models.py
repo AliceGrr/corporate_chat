@@ -4,9 +4,9 @@ from arrow import utcnow
 
 class Users(db.Model):
     """Класс пользователей для БД."""
-    id = db.Column(db.Integer, autoincrement=True)
-    username = db.Column(db.String(50), primary_key=True)
-    psw = db.Column(db.String(500))
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50))
+    psw = db.Column(db.String(128))
 
     def __init__(self, username, psw):
         self.username = username
@@ -18,7 +18,7 @@ class Users(db.Model):
 
 class Messages(db.Model):
     """Класс сообщений для БД."""
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True)
     from_user = db.Column(db.String(50))
     msg = db.Column(db.String(200))
     to_user = db.Column(db.String(50))

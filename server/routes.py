@@ -33,12 +33,16 @@ def login():
         err_log = check_data(request.form['username'], request.form['psw'])
         if err_log['msg']:
             return err_log
-        user = db.session.query(Users).get(request.form['username'])
+        user = Users.query.filter_by(username=request.form['username']).first()
+        print(user)
         if user is None:
             err_log['msg'] = 'no such user'
             return err_log
         elif check_password_hash(user.psw, request.form['psw']):
-            pass
+            return err_log
+        else:
+            err_log['msg'] = 'uncorrect psw'
+            return err_log
 
 
 @app.route('/corporate_chat/register', methods=['POST'])
@@ -52,6 +56,7 @@ def register():
             user = Users(request.form['username'], generate_password_hash(request.form['psw']))
             db.session.add(user)
             db.session.commit()
+            return err_log
         except exc.IntegrityError:
             err_log['msg'] = 'user with this name exists'
             return err_log

@@ -4,6 +4,33 @@ import requests
 from gui import login, registration
 
 
+def show_input_errors(self, err_log):
+    if err_log['username_err']:
+        self.ui.login_in.setStyleSheet(
+            '''
+            border: 2px solid rgb(255, 55, 118);
+            '''
+        )
+    else:
+        self.ui.login_in.setStyleSheet(
+            '''
+            '''
+        )
+    if err_log['psw_err']:
+        self.ui.password_in.setStyleSheet(
+            '''
+            border: 2px solid rgb(255, 55, 118);
+            '''
+        )
+    else:
+        self.ui.password_in.setStyleSheet(
+            '''
+            '''
+        )
+    answer = err_log['msg']
+    self.ui.error_label.setText(answer)
+
+
 class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     """Класс формы входа."""
 
@@ -30,31 +57,15 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         psw = self.ui.password_in.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat',
                                  data={'username': username, 'psw': psw})
-        err_log = response.json()
-        if err_log['username_err']:
-            self.ui.login_in.setStyleSheet(
-                '''
-                border: 2px solid rgb(255, 55, 118);
-                '''
-            )
+        print(response)
+        if response == '<Response [500]>':
+            self.ui.error_label.setText('server connection error')
         else:
-            self.ui.login_in.setStyleSheet(
-                '''
-                '''
-            )
-        if err_log['psw_err']:
-            self.ui.password_in.setStyleSheet(
-                '''
-                border: 2px solid rgb(255, 55, 118);
-                '''
-            )
-        else:
-            self.ui.password_in.setStyleSheet(
-                '''
-                '''
-            )
-        answer = err_log['msg']
-        self.ui.error_label.setText(answer)
+            err_log = response.json()
+            if err_log['msg']:
+                show_input_errors(self, err_log)
+            else:
+                self.to_registration_form()
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
@@ -71,6 +82,11 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         # связки кнопок и функций
         self.ui.sign_up_button.clicked.connect(self.register)
 
+    def to_login_form(self):
+        """Переход на форму логина."""
+        login_window.show()
+        self.close()
+
     def register(self):
         """Регистрация пользователя."""
         username = self.ui.login_in.text()
@@ -78,30 +94,10 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/register',
                                  data={'username': username, 'psw': psw})
         err_log = response.json()
-        if err_log['username_err']:
-            self.ui.login_in.setStyleSheet(
-                '''
-                border: 2px solid rgb(255, 55, 118);
-                '''
-            )
+        if err_log['msg']:
+            show_input_errors(self, err_log)
         else:
-            self.ui.login_in.setStyleSheet(
-                '''
-                '''
-            )
-        if err_log['psw_err']:
-            self.ui.password_in.setStyleSheet(
-                '''
-                border: 2px solid rgb(255, 55, 118);
-                '''
-            )
-        else:
-            self.ui.password_in.setStyleSheet(
-                '''
-                '''
-            )
-        answer = err_log['msg']
-        self.ui.error_label.setText(answer)
+            self.to_login_form()
 
 
 if __name__ == '__main__':
