@@ -107,7 +107,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
             show_input_errors(self, err_log)
         else:
             clear_form(self)
-            # Переход на форму логина
+            # переход на форму логина
             self.to_login_form()
 
 
@@ -119,21 +119,31 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui = chat.Ui_ChatForm()
         self.ui.setupUi(self)
         self.current_user = ''
+        self.current_chat = ''
 
         # Список всех чатов
         response = requests.get('http://127.0.0.1:5000/corporate_chat/receive_user_list')
         data = response.json()
         self.ui.chats.addItems(data['users'])
 
+        # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
 
+        # связка списка чатов с функцией
+        self.ui.chats.itemClicked.connect(self.open_chat)
+
     def send_message(self):
+        """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
         from_user = self.current_user
-        to_user = 'Mur'
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                                 data={'from_user': from_user, 'to_user': to_user, 'msg': msg_text})
+        to_user = self.current_chat
+        requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+                      data={'from_user': from_user, 'to_user': to_user, 'msg': msg_text})
         self.ui.messages.addItem(f'{from_user}: {msg_text}')
+
+    def open_chat(self, chat):
+        """Открытие конкретного чата."""
+        self.current_chat = chat.text()
 
 
 if __name__ == '__main__':
