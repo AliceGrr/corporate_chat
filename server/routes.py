@@ -76,3 +76,10 @@ def receive_message():
     """Получение сообщений одного конкретного пользователя."""
     # TODO: write a receive func
     pass
+
+
+@app.route('/corporate_chat/receive_user_list')
+def receive_user_list():
+    """Получение списка всех пользователей."""
+    users = [str(user) for user in Users.query.order_by(Users.username).all()]
+    return {'users': users}

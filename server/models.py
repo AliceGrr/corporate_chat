@@ -1,5 +1,5 @@
 from . import db
-from arrow import utcnow
+import datetime
 
 
 class Users(db.Model):
@@ -13,7 +13,7 @@ class Users(db.Model):
         self.psw = psw
 
     def __repr__(self):
-        return f'username: {self.username}'
+        return f'{self.username}'
 
 
 class Messages(db.Model):
@@ -28,7 +28,7 @@ class Messages(db.Model):
         self.from_user = from_user
         self.to_user = to_user
         self.msg = msg
-        self.time_stamp = utcnow()
+        self.time_stamp = datetime.datetime.now()
 
     def __repr__(self):
         return f'<from: {self.from_user}, to: {self.to_user}, msg: {self.msg}, date/time: {self.time_stamp}>'

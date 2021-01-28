@@ -1,10 +1,11 @@
 import sys
 from PyQt5 import QtWidgets
 import requests
-from gui import login, registration
+from gui import login, registration, chat
 
 
 def clear_form(self):
+    """Очистка формы от введеных значений и маркеров ошибок."""
     self.ui.login_in.setText('')
     self.ui.password_in.setText('')
     self.ui.error_label.setText('')
@@ -13,6 +14,7 @@ def clear_form(self):
 
 
 def show_input_errors(self, err_log):
+    """Выделение ошибок ввода данных."""
     if err_log['username_err']:
         self.ui.login_in.setStyleSheet(
             '''
@@ -53,6 +55,11 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         registration_window.show()
         self.close()
 
+    def to_chat_form(self):
+        """Переход на форму чата."""
+        chat_window.show()
+        self.close()
+
     def login(self):
         """Вход пользователя в систему."""
         username = self.ui.login_in.text()
@@ -65,7 +72,9 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
             show_input_errors(self, err_log)
         else:
             clear_form(self)
-            self.to_registration_form()
+            chat_window.current_user = username
+            # Переход на форму чата
+            self.to_chat_form()
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
@@ -98,12 +107,39 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
             show_input_errors(self, err_log)
         else:
             clear_form(self)
+            # Переход на форму логина
             self.to_login_form()
+
+
+class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
+    """Класс формы чата."""
+
+    def __init__(self):
+        super().__init__()
+        self.ui = chat.Ui_ChatForm()
+        self.ui.setupUi(self)
+        self.current_user = ''
+
+        # Список всех чатов
+        response = requests.get('http://127.0.0.1:5000/corporate_chat/receive_user_list')
+        data = response.json()
+        self.ui.chats.addItems(data['users'])
+
+        self.ui.send_message.clicked.connect(self.send_message)
+
+    def send_message(self):
+        msg_text = self.ui.message_text.toPlainText()
+        from_user = self.current_user
+        to_user = 'Mur'
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+                                 data={'from_user': from_user, 'to_user': to_user, 'msg': msg_text})
+        self.ui.messages.addItem(f'{from_user}: {msg_text}')
 
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    login_window = LoginForm()
+    chat_window = ChatForm()
     registration_window = RegistrationForm()
+    login_window = LoginForm()
     login_window.show()
     app.exec_()

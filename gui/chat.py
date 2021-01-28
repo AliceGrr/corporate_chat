@@ -11,29 +11,36 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1200, 800)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+class Ui_ChatForm(object):
+    def setupUi(self, ChatForm):
+        ChatForm.setObjectName("ChatForm")
+        ChatForm.resize(1200, 800)
+        self.centralwidget = QtWidgets.QWidget(ChatForm)
         self.centralwidget.setObjectName("centralwidget")
         self.chats = QtWidgets.QListWidget(self.centralwidget)
-        self.chats.setGeometry(QtCore.QRect(10, 10, 256, 781))
+        self.chats.setGeometry(QtCore.QRect(10, 50, 261, 731))
         self.chats.setObjectName("chats")
         self.suitable_users = QtWidgets.QComboBox(self.centralwidget)
-        self.suitable_users.setGeometry(QtCore.QRect(280, 40, 911, 20))
+        self.suitable_users.setGeometry(QtCore.QRect(10, 10, 261, 31))
         self.suitable_users.setObjectName("suitable_users")
         self.find_user = QtWidgets.QLineEdit(self.centralwidget)
-        self.find_user.setGeometry(QtCore.QRect(280, 10, 911, 20))
+        self.find_user.setGeometry(QtCore.QRect(10, 10, 261, 31))
         self.find_user.setObjectName("find_user")
         self.messages = QtWidgets.QListWidget(self.centralwidget)
-        self.messages.setGeometry(QtCore.QRect(280, 70, 911, 721))
+        self.messages.setGeometry(QtCore.QRect(280, 50, 911, 651))
         self.messages.setObjectName("messages")
-        MainWindow.setCentralWidget(self.centralwidget)
+        self.send_message = QtWidgets.QPushButton(self.centralwidget)
+        self.send_message.setGeometry(QtCore.QRect(1110, 710, 81, 71))
+        self.send_message.setObjectName("send_message")
+        self.message_text = QtWidgets.QPlainTextEdit(self.centralwidget)
+        self.message_text.setGeometry(QtCore.QRect(280, 710, 821, 71))
+        self.message_text.setObjectName("message_text")
+        ChatForm.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslateUi(ChatForm)
+        QtCore.QMetaObject.connectSlotsByName(ChatForm)
 
-    def retranslateUi(self, MainWindow):
+    def retranslateUi(self, ChatForm):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
+        self.send_message.setText(_translate("ChatForm", "PushButton"))
