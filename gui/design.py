@@ -4,6 +4,22 @@ import requests
 from gui import login, registration, chat
 
 
+def clear_form(self):
+    """Очистка формы от введеных значений и маркеров ошибок."""
+    self.ui.login_in.setText('')
+    self.ui.password_in.setText('')
+    self.ui.error_label.setText('')
+    self.ui.login_in.setStyleSheet('''''')
+    self.ui.password_in.setStyleSheet('''''')
+
+
+def change_windows(self, window_to_open):
+    """Переход на другое окно."""
+    clear_form(self)
+    window_to_open.show()
+    self.close()
+
+
 def show_input_errors(self, err_log):
     """Выделение ошибок ввода данных."""
     if err_log['username_err']:
@@ -41,25 +57,13 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.to_sign_up_button.clicked.connect(self.to_registration_form)
         self.ui.sign_in_button.clicked.connect(self.login)
 
-    def clear_form(self):
-        """Очистка формы от введеных значений и маркеров ошибок."""
-        self.ui.login_in.setText('')
-        self.ui.password_in.setText('')
-        self.ui.error_label.setText('')
-        self.ui.login_in.setStyleSheet('''''')
-        self.ui.password_in.setStyleSheet('''''')
-
     def to_registration_form(self):
         """Переход на форму регистрации."""
-        self.clear_form()
-        registration_window.show()
-        self.close()
+        change_windows(self, registration_window)
 
     def to_chat_form(self):
         """Переход на форму чата."""
-        self.clear_form()
-        chat_window.show()
-        self.close()
+        change_windows(self, chat_window)
 
     def login(self):
         """Вход пользователя в систему."""
@@ -91,19 +95,9 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         # связки кнопок и функций
         self.ui.sign_up_button.clicked.connect(self.register)
 
-    def clear_form(self):
-        """Очистка формы от введеных значений и маркеров ошибок."""
-        self.ui.login_in.setText('')
-        self.ui.password_in.setText('')
-        self.ui.error_label.setText('')
-        self.ui.login_in.setStyleSheet('''''')
-        self.ui.password_in.setStyleSheet('''''')
-
     def to_login_form(self):
         """Переход на форму логина."""
-        self.clear_form()
-        login_window.show()
-        self.close()
+        change_windows(self, login_window)
 
     def register(self):
         """Регистрация пользователя."""
