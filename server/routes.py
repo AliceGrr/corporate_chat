@@ -5,24 +5,31 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import exc
 
 
-def check_data(username, psw):
+def is_field_empty(data):
+    if data == '':
+        return 'is required\n'
+    return False
+
+
+def is_field_contains_whitespaces(data):
+    if data.find(' ') != -1:
+        return "contain whitespaces\n"
+    return False
+
+
+def is_field_incorrect(data):
+    return is_field_empty(data) or is_field_contains_whitespaces(data)
+
+
+def verify_user_data(username, psw):
     """Проверка корректности вводимых данных"""
-    err_msg = ''
-    err_log = {'psw_err': False, 'username_err': False}
-    if username == '':
-        err_msg += 'Username is required\n'
+    err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
+    if is_field_incorrect(username):
+        err_log['msg'] += 'Username ' + is_field_incorrect(username)
         err_log['username_err'] = True
-    if username.find(' ') != -1:
-        err_msg += "Username can't contain whitespaces\n"
-        err_log['username_err'] = True
-    if psw == '':
-        err_msg += 'Password is required\n'
+    if is_field_incorrect(psw):
+        err_log['msg'] += 'Password ' + is_field_incorrect(psw)
         err_log['psw_err'] = True
-    if psw.find(' ') != -1:
-        err_msg += "Password can't contain whitespaces\n"
-        err_log['psw_err'] = True
-    err_log['msg'] = err_msg
-    print(err_log)
     return err_log
 
 
@@ -30,7 +37,7 @@ def check_data(username, psw):
 def login():
     """Вход пользователя."""
     if request.method == 'POST':
-        err_log = check_data(request.form['username'], request.form['psw'])
+        err_log = verify_user_data(request.form['username'], request.form['psw'])
         if err_log['msg']:
             return err_log
         user = Users.query.filter_by(username=request.form['username']).first()
@@ -49,7 +56,7 @@ def login():
 def register():
     """Регистрация пользователей."""
     if request.method == 'POST':
-        err_log = check_data(request.form['username'], request.form['psw'])
+        err_log = verify_user_data(request.form['username'], request.form['psw'])
         if err_log['msg']:
             return err_log
         try:
@@ -69,6 +76,7 @@ def send_message():
         msg = Messages(request.form['from_user'], request.form['to_user'], request.form['msg'])
         db.session.add(msg)
         db.session.commit()
+        return 'success'
 
 
 @app.route('/corporate_chat/receive_message')

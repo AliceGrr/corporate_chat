@@ -21,16 +21,28 @@ class Messages(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     from_user = db.Column(db.String(50))
     msg = db.Column(db.String(200))
-    to_user = db.Column(db.String(50))
+    chat = db.Column(db.Integer)
     time_stamp = db.Column(db.DateTime())
 
-    def __init__(self, from_user, to_user, msg):
+    def __init__(self, from_user, chat, msg):
         self.from_user = from_user
-        self.to_user = to_user
+        self.chat = chat
         self.msg = msg
         self.time_stamp = datetime.datetime.now()
 
     def __repr__(self):
-        return f'<from: {self.from_user}, to: {self.to_user}, msg: {self.msg}, date/time: {self.time_stamp}>'
+        return f'<from: {self.from_user}, to chat: {self.chat}, msg: {self.msg}, date/time: {self.time_stamp}>'
+
+
+class Chats(db.Model):
+    """Класс чата для БД."""
+    id = db.Column(db.Integer, primary_key=True)
+    users = db.Column(db.String(200))
+
+    def __init__(self, users):
+        self.users = users
+
+    def __repr__(self):
+        return f'users in chat: {self.users}'
 
 

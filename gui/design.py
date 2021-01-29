@@ -4,15 +4,6 @@ import requests
 from gui import login, registration, chat
 
 
-def clear_form(self):
-    """Очистка формы от введеных значений и маркеров ошибок."""
-    self.ui.login_in.setText('')
-    self.ui.password_in.setText('')
-    self.ui.error_label.setText('')
-    self.ui.login_in.setStyleSheet('''''')
-    self.ui.login_in.setStyleSheet('''''')
-
-
 def show_input_errors(self, err_log):
     """Выделение ошибок ввода данных."""
     if err_log['username_err']:
@@ -60,6 +51,14 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         chat_window.show()
         self.close()
 
+    def clear_form(self):
+        """Очистка формы от введеных значений и маркеров ошибок."""
+        self.ui.login_in.setText('')
+        self.ui.password_in.setText('')
+        self.ui.error_label.setText('')
+        self.ui.login_in.setStyleSheet('''''')
+        self.ui.password_in.setStyleSheet('''''')
+
     def login(self):
         """Вход пользователя в систему."""
         username = self.ui.login_in.text()
@@ -71,7 +70,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            clear_form(self)
+            self.clear_form()
             chat_window.current_user = username
             # Переход на форму чата
             self.to_chat_form()
@@ -96,6 +95,14 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         login_window.show()
         self.close()
 
+    def clear_form(self):
+        """Очистка формы от введеных значений и маркеров ошибок."""
+        self.ui.login_in.setText('')
+        self.ui.password_in.setText('')
+        self.ui.error_label.setText('')
+        self.ui.login_in.setStyleSheet('''''')
+        self.ui.password_in.setStyleSheet('''''')
+
     def register(self):
         """Регистрация пользователя."""
         username = self.ui.login_in.text()
@@ -106,7 +113,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            clear_form(self)
+            self.clear_form()
             # переход на форму логина
             self.to_login_form()
 
@@ -121,7 +128,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user = ''
         self.current_chat = ''
 
-        # Список всех чатов
+        # список всех чатов
         response = requests.get('http://127.0.0.1:5000/corporate_chat/receive_user_list')
         data = response.json()
         self.ui.chats.addItems(data['users'])
@@ -144,6 +151,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def open_chat(self, chat):
         """Открытие конкретного чата."""
         self.current_chat = chat.text()
+        self.ui.messages.clear()
 
 
 if __name__ == '__main__':
