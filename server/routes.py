@@ -41,7 +41,6 @@ def login():
         if err_log['msg']:
             return err_log
         user = Users.query.filter_by(username=request.form['username']).first()
-        print(user)
         if user is None:
             err_log['msg'] = 'no such user'
             return err_log

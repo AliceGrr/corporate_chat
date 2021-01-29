@@ -21,7 +21,7 @@ def show_input_errors(self, err_log):
             '''
         )
     else:
-        self.ui.login_in.setStyleSheet('''''')
+        self.ui.password_in.setStyleSheet('''''')
     answer = err_log['msg']
     self.ui.error_label.setText(answer)
 
@@ -41,16 +41,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.to_sign_up_button.clicked.connect(self.to_registration_form)
         self.ui.sign_in_button.clicked.connect(self.login)
 
-    def to_registration_form(self):
-        """Переход на форму регистрации."""
-        registration_window.show()
-        self.close()
-
-    def to_chat_form(self):
-        """Переход на форму чата."""
-        chat_window.show()
-        self.close()
-
     def clear_form(self):
         """Очистка формы от введеных значений и маркеров ошибок."""
         self.ui.login_in.setText('')
@@ -58,6 +48,18 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.error_label.setText('')
         self.ui.login_in.setStyleSheet('''''')
         self.ui.password_in.setStyleSheet('''''')
+
+    def to_registration_form(self):
+        """Переход на форму регистрации."""
+        self.clear_form()
+        registration_window.show()
+        self.close()
+
+    def to_chat_form(self):
+        """Переход на форму чата."""
+        self.clear_form()
+        chat_window.show()
+        self.close()
 
     def login(self):
         """Вход пользователя в систему."""
@@ -70,7 +72,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            self.clear_form()
             chat_window.current_user = username
             # Переход на форму чата
             self.to_chat_form()
@@ -90,11 +91,6 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         # связки кнопок и функций
         self.ui.sign_up_button.clicked.connect(self.register)
 
-    def to_login_form(self):
-        """Переход на форму логина."""
-        login_window.show()
-        self.close()
-
     def clear_form(self):
         """Очистка формы от введеных значений и маркеров ошибок."""
         self.ui.login_in.setText('')
@@ -102,6 +98,12 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         self.ui.error_label.setText('')
         self.ui.login_in.setStyleSheet('''''')
         self.ui.password_in.setStyleSheet('''''')
+
+    def to_login_form(self):
+        """Переход на форму логина."""
+        self.clear_form()
+        login_window.show()
+        self.close()
 
     def register(self):
         """Регистрация пользователя."""
@@ -113,7 +115,6 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            self.clear_form()
             # переход на форму логина
             self.to_login_form()
 
