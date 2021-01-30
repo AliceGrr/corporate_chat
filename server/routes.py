@@ -72,7 +72,7 @@ def register():
 def send_message():
     """Отправка сообщений от пользователя к пользователю."""
     if request.method == 'POST':
-        msg = Messages(request.form['from_user'], request.form['to_user'], request.form['msg'])
+        msg = Messages(request.form['from_user'], request.form['to_chat'], request.form['msg'])
         db.session.add(msg)
         db.session.commit()
         return 'success'
@@ -102,4 +102,7 @@ def find_user_by_name():
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
 def start_new_chat():
     """Создание чата."""
-    pass
+    chat = Chats(request.form['users'])
+    db.session.add(chat)
+    db.session.commit()
+    return {'chat_id': chat.id}

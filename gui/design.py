@@ -121,7 +121,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui = chat.Ui_ChatForm()
         self.ui.setupUi(self)
         self.current_user = ''
-        self.current_chat = ''
+        self.current_chat = 0
+        self.ui.send_message.setEnabled(False)
 
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
@@ -137,18 +138,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if len(chats) > 0:
             for _chat in chats.keys():
                 self.ui.chats.addItem(_chat)
-            self.ui.send_message.setEnabled(False)
         else:
             self.ui.chats.addItem('no chats yet')
-            self.ui.send_message.setEnabled(True)
 
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
         from_user = self.current_user
-        to_user = self.current_chat
+        to_chat = self.current_chat
         requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                      data={'from_user': from_user, 'to_user': to_user, 'msg': msg_text})
+                      data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
         self.ui.messages.addItem(f'{from_user}: {msg_text}')
         self.ui.message_text.clear()
 
@@ -163,8 +162,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""
-        self.current_chat = chat.text()
+        self.ui.send_message.setEnabled(True)
+        companion = chat.text()
         self.ui.messages.clear()
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
+                                 data={'users': f'{companion}, {self.current_user}'})
+        chat_id = response.json()
+        self.current_chat = chat_id['chat_id']
 
 
 if __name__ == '__main__':
