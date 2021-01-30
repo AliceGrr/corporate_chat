@@ -64,6 +64,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     def to_chat_form(self):
         """Переход на форму чата."""
         change_windows(self, chat_window)
+        chat_window.view_chats()
 
     def login(self):
         """Вход пользователя в систему."""
@@ -122,22 +123,24 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user = ''
         self.current_chat = ''
 
-        # список всех чатов
-        response = requests.get('http://127.0.0.1:5000/corporate_chat/receive_user_list')
-        data = response.json()
-        if data['users']:
-            self.ui.chats.addItems(data['users'])
-            self.ui.send_message.setEnabled(False)
-        else:
-            self.ui.chats.addItem('no chats yet')
-            self.ui.send_message.setEnabled(True)
-
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
         self.ui.find_user_button.clicked.connect(self.find_user)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
+
+    def view_chats(self):
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
+                                 data={'username': self.current_user})
+        chats = response.json()
+        if len(chats) > 0:
+            for _chat in chats.keys():
+                self.ui.chats.addItem(_chat)
+            self.ui.send_message.setEnabled(False)
+        else:
+            self.ui.chats.addItem('no chats yet')
+            self.ui.send_message.setEnabled(True)
 
     def send_message(self):
         """Отправка сообщения в чате."""

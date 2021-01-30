@@ -1,6 +1,6 @@
 from . import app, db
 from flask import request
-from .models import Users, Messages
+from .models import Users, Messages, Chats
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import exc
 
@@ -78,18 +78,18 @@ def send_message():
         return 'success'
 
 
-@app.route('/corporate_chat/receive_message')
-def receive_message():
+@app.route('/corporate_chat/receive_messages')
+def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
-    # TODO: write a receive func
+    msgs = Chats.query.order_by(Chats.users == request.form['users'])
     pass
 
 
-@app.route('/corporate_chat/receive_user_list')
-def receive_user_list():
-    """Получение списка всех пользователей."""
-    users = [str(user) for user in Users.query.order_by(Users.username).all()]
-    return {'users': users}
+@app.route('/corporate_chat/receive_user_chats', methods=['POST'])
+def receive_user_chats():
+    """Получение списка всех чатов пользователя."""
+    chats = {str(chat): chat.id for chat in Chats.query.order_by(Chats.users.ilike(request.form['username'])).all()}
+    return chats
 
 
 @app.route('/corporate_chat/find_user_by_name', methods=['POST'])
@@ -97,3 +97,9 @@ def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
     users = [str(user) for user in Users.query.filter(Users.username.startswith(request.form['example_username'])).all()]
     return {'users': users}
+
+
+@app.route('/corporate_chat/start_new_chat', methods=['POST'])
+def start_new_chat():
+    """Создание чата."""
+    pass

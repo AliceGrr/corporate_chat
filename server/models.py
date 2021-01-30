@@ -44,6 +44,6 @@ class Chats(db.Model):
         self.users = users
 
     def __repr__(self):
-        return f'users in chat: {self.users}'
+        return f'{self.users}'
 
 
