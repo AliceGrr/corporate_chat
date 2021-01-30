@@ -78,11 +78,12 @@ def send_message():
         return 'success'
 
 
-@app.route('/corporate_chat/receive_messages')
+@app.route('/corporate_chat/receive_messages', methods=['POST'])
 def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
-    msgs = Chats.query.order_by(Chats.users == request.form['users'])
-    pass
+    chat = Chats.query.order_by(Chats.id == request.form['chat_id']).first()
+    msgs = [str(msg) for msg in chat.messages]
+    return {'msgs': msgs}
 
 
 @app.route('/corporate_chat/receive_user_chats', methods=['POST'])

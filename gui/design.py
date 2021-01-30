@@ -122,6 +122,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.setupUi(self)
         self.current_user = ''
         self.current_chat = 0
+        self.chats = {}
         self.ui.send_message.setEnabled(False)
 
         # связки кнопок и функций
@@ -134,9 +135,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_chats(self):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
-        chats = response.json()
-        if len(chats) > 0:
-            for _chat in chats.keys():
+        self.chats = response.json()
+        if len(self.chats) > 0:
+            for _chat in self.chats.keys():
                 self.ui.chats.addItem(_chat)
         else:
             self.ui.chats.addItem('no chats yet')
@@ -146,6 +147,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         msg_text = self.ui.message_text.toPlainText()
         from_user = self.current_user
         to_chat = self.current_chat
+        print(self.current_chat)
         requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
                       data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
         self.ui.messages.addItem(f'{from_user}: {msg_text}')
@@ -164,11 +166,25 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Открытие конкретного чата."""
         self.ui.send_message.setEnabled(True)
         companion = chat.text()
+        self.ui.chats.clear()
+        self.ui.chats.addItems(self.chats)
+        for chat in self.chats.keys():
+            if companion in chat:
+                self.current_chat = self.chats[chat]
+                break
+        else:
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
+                                     data={'users': f'{companion}, {self.current_user}'})
+            chat_id = response.json()
+            self.current_chat = chat_id['chat_id']
+            self.chats[companion] = self.current_chat
+            print(companion, self.current_chat)
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
+                                 data={'chat_id': self.current_chat})
+        msgs = response.json()
         self.ui.messages.clear()
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
-                                 data={'users': f'{companion}, {self.current_user}'})
-        chat_id = response.json()
-        self.current_chat = chat_id['chat_id']
+        self.ui.messages.addItems(msgs['msgs'])
+        print(companion, self.current_chat)
 
 
 if __name__ == '__main__':

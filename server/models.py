@@ -31,7 +31,7 @@ class Messages(db.Model):
         self.time_stamp = datetime.datetime.now()
 
     def __repr__(self):
-        return f'<from: {self.from_user}, to chat: {self.chat}, msg: {self.msg}, date/time: {self.time_stamp}>'
+        return f'{self.from_user}: {self.msg}'
 
 
 class Chats(db.Model):
