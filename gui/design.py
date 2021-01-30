@@ -71,7 +71,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         psw = self.ui.password_in.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat',
                                  data={'username': username, 'psw': psw})
-        print(response)
         err_log = response.json()
         if err_log['msg']:
             show_input_errors(self, err_log)
@@ -126,10 +125,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # список всех чатов
         response = requests.get('http://127.0.0.1:5000/corporate_chat/receive_user_list')
         data = response.json()
-        self.ui.chats.addItems(data['users'])
+        if data['users']:
+            self.ui.chats.addItems(data['users'])
+            self.ui.send_message.setEnabled(False)
+        else:
+            self.ui.chats.addItem('no chats yet')
+            self.ui.send_message.setEnabled(True)
 
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
+        self.ui.find_user_button.clicked.connect(self.find_user)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
@@ -142,6 +147,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
                       data={'from_user': from_user, 'to_user': to_user, 'msg': msg_text})
         self.ui.messages.addItem(f'{from_user}: {msg_text}')
+        self.ui.message_text.clear()
+
+    def find_user(self):
+        """Поиск пользователя по введенному значению."""
+        self.ui.chats.clear()
+        example_username = self.ui.find_user.text()
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
+                                 data={'example_username': example_username})
+        data = response.json()
+        self.ui.chats.addItems(data['users'])
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""

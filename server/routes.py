@@ -47,7 +47,7 @@ def login():
         elif check_password_hash(user.psw, request.form['psw']):
             return err_log
         else:
-            err_log['msg'] = 'uncorrect psw'
+            err_log['msg'] = 'incorrect psw'
             return err_log
 
 
@@ -89,4 +89,11 @@ def receive_message():
 def receive_user_list():
     """Получение списка всех пользователей."""
     users = [str(user) for user in Users.query.order_by(Users.username).all()]
+    return {'users': users}
+
+
+@app.route('/corporate_chat/find_user_by_name', methods=['POST'])
+def find_user_by_name():
+    """Получение списка подходящих по запросу пользователей."""
+    users = [str(user) for user in Users.query.filter(Users.username.startswith(request.form['example_username'])).all()]
     return {'users': users}

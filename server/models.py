@@ -21,7 +21,7 @@ class Messages(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     from_user = db.Column(db.String(50))
     msg = db.Column(db.String(200))
-    chat = db.Column(db.Integer)
+    chat = db.Column(db.Integer, db.ForeignKey('chats.id'))
     time_stamp = db.Column(db.DateTime())
 
     def __init__(self, from_user, chat, msg):
@@ -38,6 +38,7 @@ class Chats(db.Model):
     """Класс чата для БД."""
     id = db.Column(db.Integer, primary_key=True)
     users = db.Column(db.String(200))
+    messages = db.relationship('Messages', backref='chats')
 
     def __init__(self, users):
         self.users = users
