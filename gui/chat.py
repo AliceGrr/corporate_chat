@@ -36,6 +36,9 @@ class Ui_ChatForm(object):
         self.find_user_button.setGeometry(QtCore.QRect(240, 10, 31, 31))
         self.find_user_button.setText("")
         self.find_user_button.setObjectName("find_user_button")
+        self.chat_name = QtWidgets.QLabel(self.centralwidget)
+        self.chat_name.setGeometry(QtCore.QRect(280, 10, 331, 31))
+        self.chat_name.setObjectName("chat_name")
         ChatForm.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(ChatForm)
@@ -45,3 +48,4 @@ class Ui_ChatForm(object):
         _translate = QtCore.QCoreApplication.translate
         ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
         self.send_message.setText(_translate("ChatForm", "PushButton"))
+        self.chat_name.setText(_translate("ChatForm", "TextLabel"))

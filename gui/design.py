@@ -166,6 +166,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Открытие конкретного чата."""
         self.ui.send_message.setEnabled(True)
         companion = chat.text()
+        self.ui.chat_name.setText(companion)
         self.ui.chats.clear()
         self.ui.chats.addItems(self.chats)
         for chat in self.chats.keys():
@@ -175,16 +176,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
                                      data={'users': f'{companion}, {self.current_user}'})
-            chat_id = response.json()
-            self.current_chat = chat_id['chat_id']
-            self.chats[companion] = self.current_chat
-            print(companion, self.current_chat)
+            chat_info = response.json()
+            self.current_chat = chat_info['chat_id']
+            self.chats[chat_info['users']] = self.current_chat
+
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
                                  data={'chat_id': self.current_chat})
         msgs = response.json()
+        print(msgs)
         self.ui.messages.clear()
         self.ui.messages.addItems(msgs['msgs'])
-        print(companion, self.current_chat)
 
 
 if __name__ == '__main__':

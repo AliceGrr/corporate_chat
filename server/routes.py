@@ -40,7 +40,7 @@ def login():
         err_log = verify_user_data(request.form['username'], request.form['psw'])
         if err_log['msg']:
             return err_log
-        user = Users.query.filter_by(username=request.form['username']).first()
+        user = Users.query.filter(Users.username == request.form['username']).first()
         if user is None:
             err_log['msg'] = 'no such user'
             return err_log
@@ -81,7 +81,7 @@ def send_message():
 @app.route('/corporate_chat/receive_messages', methods=['POST'])
 def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
-    chat = Chats.query.order_by(Chats.id == request.form['chat_id']).first()
+    chat = Chats.query.filter(Chats.id == request.form['chat_id']).first()
     msgs = [str(msg) for msg in chat.messages]
     return {'msgs': msgs}
 
@@ -106,4 +106,4 @@ def start_new_chat():
     chat = Chats(request.form['users'])
     db.session.add(chat)
     db.session.commit()
-    return {'chat_id': chat.id}
+    return {'chat_id': chat.id, 'users': chat.users}
