@@ -1,11 +1,13 @@
 import sys
 from PyQt5 import QtWidgets
 import requests
+from PyQt5.QtGui import QIcon, QPixmap
+
 from gui import login, registration, chat
 
 
 def clear_form(self):
-    """Очистка формы от введеных значений и маркеров ошибок."""
+    """Очистка формы от введенных значений и маркеров ошибок."""
     self.ui.login_in.setText('')
     self.ui.password_in.setText('')
     self.ui.error_label.setText('')
@@ -112,6 +114,29 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
             # переход на форму логина
             self.to_login_form()
 
+# Шаблон для создания одного экземпляра сообщения в ListWidget с изображением
+# class MessageForm(QtWidgets.QWidget):
+#     """Форма одного сообщения"""
+#     def __init__(self, msg_text, msg_time):
+#         super().__init__()
+#
+#         # self.avatar = QtWidgets.QLabel()
+#         # self.load_image(':/kitte.png')
+#         self.msg = QtWidgets.QLabel(msg_text)
+#         self.time = QtWidgets.QLabel(msg_time)
+#
+#         layout = QtWidgets.QVBoxLayout()
+#         # layout.addWidget(self.avatar)
+#         layout.addWidget(self.msg)
+#         layout.addWidget(self.time)
+#
+#         self.setLayout(layout)
+#
+#     def load_image(self, file_name):
+#         pixmap = QPixmap(file_name)
+#         self.avatar.setPixmap(pixmap)
+#         self.avatar.resize(pixmap.width(), pixmap.height())
+
 
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     """Класс формы чата."""
@@ -142,16 +167,32 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             self.ui.chats.addItem('no chats yet')
 
+    # Функция для создания сообщения с датой и картинкой
+    # def add_msg_item(self, msg_text):
+    #     """Добавление нового msg объекта в QListWidget."""
+    #     item = QtWidgets.QListWidgetItem(self.ui.messages)
+    #     msg = MessageForm(msg_text, '03.02.12')
+    #     pixmap = QPixmap(':/kitte.png')
+    #     item.setIcon(QIcon.pixmap(pixmap))
+    #     item.setSizeHint(msg.sizeHint())
+    #     self.ui.messages.addItem(item)
+    #     self.ui.messages.setItemWidget(item, msg)
+    #     self.ui.message_text.clear(),
+
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
-        from_user = self.current_user
-        to_chat = self.current_chat
-        print(self.current_chat)
-        requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                      data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
-        self.ui.messages.addItem(f'{from_user}: {msg_text}')
-        self.ui.message_text.clear()
+        # Спрятано, чтобы не загружать сильно бд на время
+        # from_user = self.current_user
+        # to_chat = self.current_chat
+        # print(self.current_chat)
+        # requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+        #               data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
+
+        # Спрятано, пока не работает добавление ListWidgetItem с картинкой
+        # self.add_msg_item(msg_text)
+
+        self.ui.messages.addItem(msg_text)
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
@@ -183,15 +224,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
                                  data={'chat_id': self.current_chat})
         msgs = response.json()
-        print(msgs)
-        self.ui.messages.clear()
-        self.ui.messages.addItems(msgs['msgs'])
+        # self.ui.messages.clear()
+        # self.ui.messages.addItems(msgs['msgs'])
 
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     chat_window = ChatForm()
-    registration_window = RegistrationForm()
-    login_window = LoginForm()
-    login_window.show()
+    chat_window.current_user = 'Alice'
+    chat_window.view_chats()
+    chat_window.show()
+    # Спрятано до введения отслеживания авторизации
+    # registration_window = RegistrationForm()
+    # login_window = LoginForm()
+    # login_window.show()
     app.exec_()

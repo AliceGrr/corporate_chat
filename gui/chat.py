@@ -25,6 +25,7 @@ class Ui_ChatForm(object):
         self.find_user.setObjectName("find_user")
         self.messages = QtWidgets.QListWidget(self.centralwidget)
         self.messages.setGeometry(QtCore.QRect(280, 50, 911, 651))
+        self.messages.setIconSize(QtCore.QSize(30, 30))
         self.messages.setObjectName("messages")
         self.send_message = QtWidgets.QPushButton(self.centralwidget)
         self.send_message.setGeometry(QtCore.QRect(1110, 710, 81, 71))
@@ -38,6 +39,7 @@ class Ui_ChatForm(object):
         self.find_user_button.setObjectName("find_user_button")
         self.chat_name = QtWidgets.QLabel(self.centralwidget)
         self.chat_name.setGeometry(QtCore.QRect(280, 10, 331, 31))
+        self.chat_name.setText("")
         self.chat_name.setObjectName("chat_name")
         ChatForm.setCentralWidget(self.centralwidget)
 
@@ -48,4 +50,4 @@ class Ui_ChatForm(object):
         _translate = QtCore.QCoreApplication.translate
         ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
         self.send_message.setText(_translate("ChatForm", "PushButton"))
-        self.chat_name.setText(_translate("ChatForm", "TextLabel"))
+import icons_rc
