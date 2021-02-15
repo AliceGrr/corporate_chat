@@ -1,7 +1,6 @@
 import sys
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui
 import requests
-from PyQt5.QtGui import QIcon, QPixmap
 
 from gui import login, registration, chat
 
