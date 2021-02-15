@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui, QtCore
 import requests
 from PyQt5.QtGui import QIcon, QPixmap
 
@@ -114,28 +114,22 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
             # переход на форму логина
             self.to_login_form()
 
+
 # Шаблон для создания одного экземпляра сообщения в ListWidget с изображением
-# class MessageForm(QtWidgets.QWidget):
-#     """Форма одного сообщения"""
-#     def __init__(self, msg_text, msg_time):
-#         super().__init__()
-#
-#         # self.avatar = QtWidgets.QLabel()
-#         # self.load_image(':/kitte.png')
-#         self.msg = QtWidgets.QLabel(msg_text)
-#         self.time = QtWidgets.QLabel(msg_time)
-#
-#         layout = QtWidgets.QVBoxLayout()
-#         # layout.addWidget(self.avatar)
-#         layout.addWidget(self.msg)
-#         layout.addWidget(self.time)
-#
-#         self.setLayout(layout)
-#
-#     def load_image(self, file_name):
-#         pixmap = QPixmap(file_name)
-#         self.avatar.setPixmap(pixmap)
-#         self.avatar.resize(pixmap.width(), pixmap.height())
+class MessageForm(QtWidgets.QWidget):
+    """Форма одного сообщения"""
+
+    def __init__(self, msg_text, msg_time):
+        super().__init__()
+
+        self.msg = QtWidgets.QLabel(msg_text)
+        self.time = QtWidgets.QLabel(msg_time)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.msg)
+        layout.addWidget(self.time)
+
+        self.setLayout(layout)
 
 
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
@@ -157,6 +151,20 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
+    def add_msg_item(self, msg_text, msg_time):
+        """Добавление нового msg объекта в QListWidget."""
+        item = QtWidgets.QListWidgetItem(self.ui.messages)
+        msg = MessageForm(msg_text, msg_time)
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap((":/kitte.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        item.setIcon(icon)
+
+        item.setSizeHint(msg.sizeHint())
+        self.ui.messages.addItem(item)
+        self.ui.messages.setItemWidget(item, msg)
+        self.ui.message_text.clear()
+
     def view_chats(self):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
@@ -167,17 +175,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             self.ui.chats.addItem('no chats yet')
 
-    # Функция для создания сообщения с датой и картинкой
-    # def add_msg_item(self, msg_text):
-    #     """Добавление нового msg объекта в QListWidget."""
-    #     item = QtWidgets.QListWidgetItem(self.ui.messages)
-    #     msg = MessageForm(msg_text, '03.02.12')
-    #     pixmap = QPixmap(':/kitte.png')
-    #     item.setIcon(QIcon.pixmap(pixmap))
-    #     item.setSizeHint(msg.sizeHint())
-    #     self.ui.messages.addItem(item)
-    #     self.ui.messages.setItemWidget(item, msg)
-    #     self.ui.message_text.clear(),
+    def view_msgs(self):
+        """Выводит сообщения данного чата."""
+        self.ui.messages.clear()
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
+                                 data={'chat_id': self.current_chat})
+        msgs = response.json()
+        for msg in msgs['msgs']:
+            self.add_msg_item(msg['msg_text'], msg['send_time'])
 
     def send_message(self):
         """Отправка сообщения в чате."""
@@ -189,10 +194,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
         #               data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
 
-        # Спрятано, пока не работает добавление ListWidgetItem с картинкой
-        # self.add_msg_item(msg_text)
-
-        self.ui.messages.addItem(msg_text)
+        self.add_msg_item(msg_text, '03.03.03')
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
@@ -220,12 +222,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             chat_info = response.json()
             self.current_chat = chat_info['chat_id']
             self.chats[chat_info['users']] = self.current_chat
-
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
-                                 data={'chat_id': self.current_chat})
-        msgs = response.json()
-        # self.ui.messages.clear()
-        # self.ui.messages.addItems(msgs['msgs'])
+        self.view_msgs()
 
 
 if __name__ == '__main__':
