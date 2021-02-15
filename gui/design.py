@@ -114,9 +114,8 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
             self.to_login_form()
 
 
-# Шаблон для создания одного экземпляра сообщения в ListWidget с изображением
-class MessageForm(QtWidgets.QWidget):
-    """Форма одного сообщения"""
+class MessageItemForm(QtWidgets.QWidget):
+    """Форма одного сообщения."""
 
     def __init__(self, msg_text, msg_time):
         super().__init__()
@@ -127,6 +126,20 @@ class MessageForm(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.msg)
         layout.addWidget(self.time)
+
+        self.setLayout(layout)
+
+
+class ChatItemForm(QtWidgets.QWidget):
+    """Форма одного чата в списке доступных."""
+
+    def __init__(self, chat_name):
+        super().__init__()
+
+        self.chat_name = QtWidgets.QLabel(chat_name)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.chat_name)
 
         self.setLayout(layout)
 
@@ -151,9 +164,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.itemClicked.connect(self.open_chat)
 
     def add_msg_item(self, msg_text, msg_time):
-        """Добавление нового msg объекта в QListWidget."""
+        """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
-        msg = MessageForm(msg_text, msg_time)
+        msg = MessageItemForm(msg_text, msg_time)
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap((":/kitte.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -164,13 +177,28 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.messages.setItemWidget(item, msg)
         self.ui.message_text.clear()
 
+    def add_chat_item(self, chat_name):
+        """Добавление нового chat_item объекта в QListWidget."""
+        item = QtWidgets.QListWidgetItem(self.ui.chats)
+        chat = ChatItemForm(chat_name)
+
+        item.chat_name = chat.chat_name
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap((":/kitte.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        item.setIcon(icon)
+
+        item.setSizeHint(chat.sizeHint())
+        self.ui.chats.addItem(item)
+        self.ui.chats.setItemWidget(item, chat)
+
     def view_chats(self):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
         self.chats = response.json()
         if len(self.chats) > 0:
-            for _chat in self.chats.keys():
-                self.ui.chats.addItem(_chat)
+            for chat_name in self.chats.keys():
+                self.add_chat_item(chat_name)
         else:
             self.ui.chats.addItem('no chats yet')
 
@@ -207,10 +235,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def open_chat(self, chat):
         """Открытие конкретного чата."""
         self.ui.send_message.setEnabled(True)
-        companion = chat.text()
+        companion = chat.chat_name.text()
         self.ui.chat_name.setText(companion)
-        self.ui.chats.clear()
-        self.ui.chats.addItems(self.chats)
+        # self.ui.chats.clear()
+        # self.ui.chats.addItems(self.chats)
         for chat in self.chats.keys():
             if companion in chat:
                 self.current_chat = self.chats[chat]
