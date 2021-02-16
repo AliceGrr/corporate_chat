@@ -165,33 +165,33 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
+    def load_avatar(self):
+        """Загрузка изображения для аватара."""
+        icon = QIcon()
+        icon_path = os.getcwd() + "\gui\images\kitte.png"
+        icon.addPixmap(QPixmap((icon_path)))
+        return icon
+
     def add_msg_item(self, msg_text, msg_time):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time)
-        icon = QIcon()
 
-        icon_path = os.getcwd() + "\gui\images\kitte.png"
-        icon.addPixmap(QPixmap((icon_path)))
-        item.setIcon(icon)
-
+        item.setIcon(self.load_avatar())
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name):
+    def add_chat_item(self, chat_name, chat_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem()
-        icon = QIcon()
         chat = ChatItemForm(chat_name)
 
-        icon_path = os.getcwd() + "\gui\images\kitte.png"
-        icon.addPixmap(QPixmap(icon_path))
-        item.setIcon(icon)
+        item.chat_name = chat_name
+        item.chat_id = chat_id
 
-        item.chat_name = chat.chat_name
-
+        item.setIcon(self.load_avatar())
         item.setSizeHint(chat.sizeHint())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat)
@@ -201,8 +201,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'username': self.current_user})
         self.chats = response.json()
         if len(self.chats) > 0:
-            for chat_name in self.chats.keys():
-                self.add_chat_item(chat_name)
+            for chat_name, chat_id in self.chats.items():
+                self.add_chat_item(chat_name, chat_id)
         else:
             self.ui.chats.addItem('no chats yet')
 
@@ -224,7 +224,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # print(self.current_chat)
         # requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
         #               data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
-
         self.add_msg_item(msg_text, '03.03.03')
 
     def find_user(self):
@@ -234,26 +233,28 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
                                  data={'example_username': example_username})
         data = response.json()
-        self.ui.chats.addItems(data['users'])
+        print(data)
+        for user in data['users']:
+            self.add_chat_item(user)
+
+    def create_new_chat(self, companion):
+        """Создает новый чат."""
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
+                                 data={'users': f'{companion}, {self.current_user}'})
+        chat_info = response.json()
+        self.current_chat = chat_info['chat_id']
+        self.chats[chat_info['users']] = self.current_chat
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""
         self.ui.send_message.setEnabled(True)
-        companion = chat.chat_name.text()
+        companion = chat.chat_name
         self.ui.chat_name.setText(companion)
-        # self.ui.chats.clear()
-        # self.ui.chats.addItems(self.chats)
-        for chat in self.chats.keys():
-            if companion in chat:
-                self.current_chat = self.chats[chat]
-                break
+        if chat.chat_id is None:
+            self.create_new_chat(companion)
         else:
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
-                                     data={'users': f'{companion}, {self.current_user}'})
-            chat_info = response.json()
-            self.current_chat = chat_info['chat_id']
-            self.chats[chat_info['users']] = self.current_chat
-        self.view_msgs()
+            self.current_chat = chat.chat_id
+            self.view_msgs()
 
 
 if __name__ == '__main__':
