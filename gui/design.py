@@ -1,6 +1,8 @@
+import os
 import sys
 from PyQt5 import QtWidgets, QtGui
 import requests
+from PyQt5.QtGui import QIcon, QPixmap
 
 from gui import login, registration, chat
 
@@ -167,9 +169,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time)
+        icon = QIcon()
 
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap((":/kitte.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon_path = os.getcwd() + "\gui\images\kitte.png"
+        icon.addPixmap(QPixmap((icon_path)))
         item.setIcon(icon)
 
         item.setSizeHint(msg.sizeHint())
@@ -179,14 +182,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def add_chat_item(self, chat_name):
         """Добавление нового chat_item объекта в QListWidget."""
-        item = QtWidgets.QListWidgetItem(self.ui.chats)
+        item = QtWidgets.QListWidgetItem()
+        icon = QIcon()
         chat = ChatItemForm(chat_name)
 
-        item.chat_name = chat.chat_name
-
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap((":/kitte.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon_path = os.getcwd() + "\gui\images\kitte.png"
+        icon.addPixmap(QPixmap(icon_path))
         item.setIcon(icon)
+
+        item.chat_name = chat.chat_name
 
         item.setSizeHint(chat.sizeHint())
         self.ui.chats.addItem(item)

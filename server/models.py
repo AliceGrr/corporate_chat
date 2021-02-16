@@ -39,9 +39,11 @@ class Chats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     users = db.Column(db.String(200))
     messages = db.relationship('Messages', backref='chats')
+    chat_name = db.Column(db.String(100))
 
     def __init__(self, users):
         self.users = users
+        self.chat_name = users
 
     def __repr__(self):
         return f'{self.users}'

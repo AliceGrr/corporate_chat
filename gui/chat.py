@@ -50,4 +50,3 @@ class Ui_ChatForm(object):
         _translate = QtCore.QCoreApplication.translate
         ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
         self.send_message.setText(_translate("ChatForm", "PushButton"))
-import icons_rc
