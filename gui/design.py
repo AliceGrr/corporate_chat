@@ -181,10 +181,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
+        self.ui.messages.scrollToItem(item)
+
         self.ui.message_text.clear()
 
     def add_chat_item(self, chat_name, chat_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
+        chat_name = chat_name.replace(self.current_user, '')
+        chat_name = chat_name.replace(',', '')
+
         item = QtWidgets.QListWidgetItem()
         chat = ChatItemForm(chat_name)
 
@@ -228,19 +233,33 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
-        self.ui.chats.clear()
         example_username = self.ui.find_user.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
                                  data={'example_username': example_username})
-        data = response.json()
-        print(data)
-        for user in data['users']:
+        user_list = (response.json())['users']
+
+        print(user_list)
+
+        for index in range(self.ui.chats.count()):
+            existing_chat = self.ui.chats.item(index).chat_name
+            print(existing_chat)
+            if existing_chat.lower().\
+                    startswith(example_username):
+                user_list.remove(existing_chat)
+            else:
+                print(self.ui.chats.item(index))
+                self.ui.chats.removeItemWidget(self.ui.chats.takeItem(index))
+
+        print(user_list)
+        self.ui.chats.addItem('~~separator~~')
+
+        for user in user_list:
             self.add_chat_item(user)
 
     def create_new_chat(self, companion):
         """Создает новый чат."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
-                                 data={'users': f'{companion}, {self.current_user}'})
+                                 data={'users': f'{companion},{self.current_user}'})
         chat_info = response.json()
         self.current_chat = chat_info['chat_id']
         self.chats[chat_info['users']] = self.current_chat
