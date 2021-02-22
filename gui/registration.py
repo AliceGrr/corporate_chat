@@ -68,6 +68,18 @@ class Ui_RegisterForm(object):
         self.login_in = QtWidgets.QLineEdit(self.centralwidget)
         self.login_in.setGeometry(QtCore.QRect(320, 240, 160, 40))
         self.login_in.setObjectName("login_in")
+        self.to_login_button = QtWidgets.QPushButton(self.centralwidget)
+        self.to_login_button.setGeometry(QtCore.QRect(340, 510, 131, 23))
+        self.to_login_button.setStyleSheet("QPushButton\n"
+"{border: 0;\n"
+"padding: 0;\n"
+"background-color: rgb(255, 255, 255);\n"
+"font: 25 12pt \"Yu Gothic UI Semibold\";\n"
+"color:rgb(28, 94, 217)}\n"
+"QPushButton:hover {color: rgb(20, 69, 182);}\n"
+"QPushButton:pressed {color: rgb(16, 58, 148);}\n"
+"")
+        self.to_login_button.setObjectName("to_login_button")
         RegisterForm.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(RegisterForm)
@@ -81,3 +93,4 @@ class Ui_RegisterForm(object):
         self.label_3.setText(_translate("RegisterForm", "Username"))
         self.label_4.setText(_translate("RegisterForm", "Password"))
         self.sign_up_button.setText(_translate("RegisterForm", "Sign up"))
+        self.to_login_button.setText(_translate("RegisterForm", "Back to login"))

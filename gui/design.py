@@ -97,6 +97,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 
         # связки кнопок и функций
         self.ui.sign_up_button.clicked.connect(self.register)
+        self.ui.to_login_button.clicked.connect(self.to_login_form)
 
     def to_login_form(self):
         """Переход на форму логина."""
@@ -224,11 +225,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
         # Спрятано, чтобы не загружать сильно бд на время
-        # from_user = self.current_user
-        # to_chat = self.current_chat
-        # print(self.current_chat)
-        # requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-        #               data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
+        from_user = self.current_user
+        to_chat = self.current_chat
+        print(self.current_chat)
+        requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+                      data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
         self.add_msg_item(msg_text, '03.03.03')
 
     def find_user(self):
@@ -237,24 +238,29 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
                                  data={'example_username': example_username})
         user_list = (response.json())['users']
+        if self.current_user in user_list and len(user_list) > 0:
+                user_list.remove(self.current_user)
 
-        print(user_list)
+        if len(user_list) > 0:
+            for index in range(self.ui.chats.count()):
+                existing_chat = self.ui.chats.item(index).chat_name
+                if existing_chat.lower().\
+                        startswith(example_username):
+                    user_list.remove(existing_chat)
+                else:
+                    self.ui.chats.removeItemWidget(self.ui.chats.takeItem(index))
 
-        for index in range(self.ui.chats.count()):
-            existing_chat = self.ui.chats.item(index).chat_name
-            print(existing_chat)
-            if existing_chat.lower().\
-                    startswith(example_username):
-                user_list.remove(existing_chat)
+            self.ui.chats.addItem('~~separator~~')
+
+            if user_list:
+                for user in user_list:
+                    self.add_chat_item(user)
             else:
-                print(self.ui.chats.item(index))
-                self.ui.chats.removeItemWidget(self.ui.chats.takeItem(index))
-
-        print(user_list)
-        self.ui.chats.addItem('~~separator~~')
-
-        for user in user_list:
-            self.add_chat_item(user)
+                self.ui.chats.clear()
+                self.ui.chats.addItem('no such user')
+        else:
+            self.ui.chats.clear()
+            self.ui.chats.addItem('no such user')
 
     def create_new_chat(self, companion):
         """Создает новый чат."""
