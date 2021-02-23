@@ -136,14 +136,16 @@ class MessageItemForm(QtWidgets.QWidget):
 class ChatItemForm(QtWidgets.QWidget):
     """Форма одного чата в списке доступных."""
 
-    def __init__(self, chat_name):
+    def __init__(self, chat_name, last_msg=''):
         super().__init__()
 
         self.chat_name = QtWidgets.QLabel(chat_name)
+        self.last_msg = QtWidgets.QLabel(last_msg)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.chat_name)
-
+        if last_msg != '':
+            layout.addWidget(self.last_msg)
         self.setLayout(layout)
 
 
@@ -186,16 +188,20 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name, chat_id=None):
+    def add_chat_item(self, chat_name, last_msg, chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
 
         item = QtWidgets.QListWidgetItem()
-        chat = ChatItemForm(chat_name)
+        chat = ChatItemForm(chat_name, last_msg)
 
         item.chat_name = chat_name
-        item.chat_id = chat_id
+
+        if chat_id is None:
+            item.user_id = user_id
+        else:
+            item.chat_id = chat_id
 
         item.setIcon(self.load_avatar())
         item.setSizeHint(chat.sizeHint())
@@ -207,8 +213,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'username': self.current_user})
         self.chats = response.json()
         if len(self.chats) > 0:
-            for chat_name, chat_id in self.chats.items():
-                self.add_chat_item(chat_name, chat_id)
+            for chat, chat_info in self.chats.items():
+                self.add_chat_item(chat, chat_info['last_msg'], chat_info['chat_id'])
         else:
             self.ui.chats.addItem('no chats yet')
 
@@ -224,13 +230,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
-        # Спрятано, чтобы не загружать сильно бд на время
-        from_user = self.current_user
-        to_chat = self.current_chat
-        print(self.current_chat)
-        requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                      data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
-        self.add_msg_item(msg_text, '03.03.03')
+        if msg_text == '':
+            pass
+        else:
+            from_user = self.current_user
+            to_chat = self.current_chat
+            print(self.current_chat)
+            requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+                          data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
+            self.add_msg_item(msg_text, '03.03.03')
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""

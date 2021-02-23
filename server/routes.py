@@ -95,7 +95,7 @@ def receive_messages():
 @app.route('/corporate_chat/receive_user_chats', methods=['POST'])
 def receive_user_chats():
     """Получение списка всех чатов пользователя."""
-    chats = {str(chat): chat.id for chat in Chats.query.order_by(Chats.users.ilike(request.form['username'])).all()}
+    chats = {str(chat): {'chat_id': chat.id, 'last_msg': str(chat)} for chat in Chats.query.order_by(Chats.users.ilike(request.form['username'])).all()}
     return chats
 
 
