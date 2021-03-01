@@ -114,21 +114,39 @@ def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
     user = Users.query.filter(Users.id == request.form['current_user_id']).first()
     user_chat_ids = [chat.chat_ids for chat in user.chats]
+    print(user_chat_ids)
 
-    suitable_chats = {}
+    user_chats = {}
     for user_chat_id in user_chat_ids:
-        suitable_chats.update({chat.user_ids: chat.chat_ids
+        user_chats.update({chat.user_ids: chat.chat_ids
                                for chat in UserChats.query.filter
-                               (and_(UserChats.user_ids != request.form['current_user_id'],
-                                     UserChats.chat_ids == user_chat_id))})
+                               (and_(UserChats.chat_ids == user_chat_id),
+                                UserChats.user_ids != request.form['current_user_id'])})
 
-    suitable_users = {str(user): user.id for user in
-                      Users.query.filter(
-                          Users.username.startswith(request.form['example_username']))}
+    suitable_users = {user.id: str(user) for user in
+                      Users.query.filter(and_(
+                          Users.username.startswith(request.form['example_username']),
+                          Users.id != request.form['current_user_id']))}
 
-    print(suitable_chats, suitable_users)
+    print(user_chats, suitable_users)
+    chats_info = []
+    for user_id, chat_id in user_chats.items():
+        if user_id in suitable_users:
+            del suitable_users[user_id]
 
-    return {'suitable_chats': suitable_chats,
+            chats_info += [
+                {'chat_name': chat.chat.chat_name,
+                 'chat_id': chat.chat.id,
+                 'last_msg': chat.chat.last_activity,
+                 }
+                for chat in UserChats.query.filter
+                (and_(UserChats.chat_ids == chat_id,
+                      UserChats.user_ids == user_id))
+            ]
+
+    chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
+    print(chats, suitable_users)
+    return {'suitable_chats': chats,
             'suitable_users': suitable_users}
 
 

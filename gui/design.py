@@ -250,16 +250,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        'current_user_id': self.current_user_id})
         user_list = response.json()
 
-        if len(user_list) > 0:
+        if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+            self.ui.chats.clear()
             self.ui.no_user_label.setText('')
+
+            for suitable_chat in user_list['suitable_chats']:
+                self.add_chat_item(suitable_chat['chat_name'], last_msg=suitable_chat['last_msg'], chat_id=suitable_chat['chat_id'])
+
             self.ui.chats.addItem('~~separator~~')
 
-            if len(user_list) > 0:
-                for user, id in user_list.items():
-                    self.add_chat_item(user, user_id=id)
-            else:
-                self.ui.chats.clear()
-                self.ui.no_user_label.setText('no such user')
+            for suitable_user_id, suitable_user_name in user_list['suitable_users'].items():
+                self.add_chat_item(suitable_user_name, user_id=suitable_user_id)
+
         else:
             self.ui.chats.clear()
             self.ui.no_user_label.setText('no such user')
@@ -289,8 +291,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     chat_window = ChatForm()
-    chat_window.current_user = 'Alice'
-    chat_window.current_user_id = 1
+    chat_window.current_user = 'Marko'
+    chat_window.current_user_id = 3
     chat_window.view_chats()
     chat_window.show()
     # Спрятано до введения отслеживания авторизации
