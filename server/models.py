@@ -7,6 +7,7 @@ class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50))
     psw = db.Column(db.String(128))
+    chats = db.relationship('UserChats', backref='user')
 
     def __init__(self, username, psw):
         self.username = username
@@ -37,15 +38,22 @@ class Messages(db.Model):
 class Chats(db.Model):
     """Класс чата для БД."""
     id = db.Column(db.Integer, primary_key=True)
-    users = db.Column(db.String(200))
-    messages = db.relationship('Messages', backref='chats')
+    messages = db.relationship('Messages', backref='chatm')
+    users = db.relationship('UserChats', backref='chat')
     chat_name = db.Column(db.String(100))
+    last_activity = db.Column(db.DateTime())
 
     def __init__(self, users):
-        self.users = users
         self.chat_name = users
-
-    def __repr__(self):
-        return f'{self.users}'
+        self.last_activity = datetime.datetime.now()
 
 
+class UserChats(db.Model):
+    """Класс таблицы для связки пользователей и чатов."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_ids = db.Column(db.Integer, db.ForeignKey('users.id'))
+    chat_ids = db.Column(db.Integer, db.ForeignKey('chats.id'))
+
+    def __init__(self, user_id, chat_id):
+        self.user_ids = user_id
+        self.chat_ids = chat_id

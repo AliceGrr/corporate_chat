@@ -41,6 +41,9 @@ class Ui_ChatForm(object):
         self.chat_name.setGeometry(QtCore.QRect(280, 10, 331, 31))
         self.chat_name.setText("")
         self.chat_name.setObjectName("chat_name")
+        self.no_user_label = QtWidgets.QLabel(self.centralwidget)
+        self.no_user_label.setGeometry(QtCore.QRect(60, 330, 171, 41))
+        self.no_user_label.setObjectName("no_user_label")
         ChatForm.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(ChatForm)
@@ -50,3 +53,4 @@ class Ui_ChatForm(object):
         _translate = QtCore.QCoreApplication.translate
         ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
         self.send_message.setText(_translate("ChatForm", "PushButton"))
+        self.no_user_label.setText(_translate("ChatForm", "TextLabel"))

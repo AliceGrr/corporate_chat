@@ -80,6 +80,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
             show_input_errors(self, err_log)
         else:
             chat_window.current_user = username
+            chat_window.current_user_id = err_log['user_id']
             # Переход на форму чата
             self.to_chat_form()
 
@@ -120,10 +121,10 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 class MessageItemForm(QtWidgets.QWidget):
     """Форма одного сообщения."""
 
-    def __init__(self, msg_text, msg_time):
+    def __init__(self, msg_text, msg_time, sender):
         super().__init__()
 
-        self.msg = QtWidgets.QLabel(msg_text)
+        self.msg = QtWidgets.QLabel(f'{sender}: {msg_text}')
         self.time = QtWidgets.QLabel(msg_time)
 
         layout = QtWidgets.QVBoxLayout()
@@ -157,8 +158,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui = chat.Ui_ChatForm()
         self.ui.setupUi(self)
         self.current_user = ''
+        self.current_user_id = 0
         self.current_chat = 0
-        self.chats = {}
+
         self.ui.send_message.setEnabled(False)
 
         # связки кнопок и функций
@@ -178,7 +180,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def add_msg_item(self, msg_text, msg_time):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
-        msg = MessageItemForm(msg_text, msg_time)
+        msg = MessageItemForm(msg_text, msg_time, self.current_user)
 
         item.setIcon(self.load_avatar())
         item.setSizeHint(msg.sizeHint())
@@ -188,7 +190,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name, last_msg, chat_id=None, user_id=None):
+    def add_chat_item(self, chat_name, last_msg='', chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
@@ -198,10 +200,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         item.chat_name = chat_name
 
-        if chat_id is None:
-            item.user_id = user_id
-        else:
-            item.chat_id = chat_id
+        item.user_id = user_id
+        item.chat_id = chat_id
 
         item.setIcon(self.load_avatar())
         item.setSizeHint(chat.sizeHint())
@@ -211,12 +211,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_chats(self):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
-        self.chats = response.json()
-        if len(self.chats) > 0:
-            for chat, chat_info in self.chats.items():
-                self.add_chat_item(chat, chat_info['last_msg'], chat_info['chat_id'])
+        chats = (response.json())['chats']
+        self.ui.chats.clear()
+        if len(chats) > 0:
+            self.ui.no_user_label.setText('')
+            for chat in chats:
+                self.add_chat_item(chat['chat_name'], chat['last_msg'], chat['chat_id'])
         else:
-            self.ui.chats.addItem('no chats yet')
+            self.ui.no_user_label.setText('no such user')
 
     def view_msgs(self):
         """Выводит сообщения данного чата."""
@@ -233,50 +235,44 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if msg_text == '':
             pass
         else:
-            from_user = self.current_user
-            to_chat = self.current_chat
-            print(self.current_chat)
-            requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                          data={'from_user': from_user, 'to_chat': to_chat, 'msg': msg_text})
-            self.add_msg_item(msg_text, '03.03.03')
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+                                     data={'sender': self.current_user, 'to_chat': self.current_chat, 'msg': msg_text})
+            msg_time = response.json()['send_time']
+            print(msg_time)
+            self.add_msg_item(msg_text, msg_time)
+            self.view_chats()
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
         example_username = self.ui.find_user.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
-                                 data={'example_username': example_username})
-        user_list = (response.json())['users']
-        if self.current_user in user_list and len(user_list) > 0:
-                user_list.remove(self.current_user)
+                                 data={'example_username': example_username,
+                                       'current_user_id': self.current_user_id})
+        user_list = response.json()
 
         if len(user_list) > 0:
-            for index in range(self.ui.chats.count()):
-                existing_chat = self.ui.chats.item(index).chat_name
-                if existing_chat.lower().\
-                        startswith(example_username):
-                    user_list.remove(existing_chat)
-                else:
-                    self.ui.chats.removeItemWidget(self.ui.chats.takeItem(index))
-
+            self.ui.no_user_label.setText('')
             self.ui.chats.addItem('~~separator~~')
 
-            if user_list:
-                for user in user_list:
-                    self.add_chat_item(user)
+            if len(user_list) > 0:
+                for user, id in user_list.items():
+                    self.add_chat_item(user, user_id=id)
             else:
                 self.ui.chats.clear()
-                self.ui.chats.addItem('no such user')
+                self.ui.no_user_label.setText('no such user')
         else:
             self.ui.chats.clear()
-            self.ui.chats.addItem('no such user')
+            self.ui.no_user_label.setText('no such user')
 
-    def create_new_chat(self, companion):
+    def create_new_chat(self, companion, companion_id):
         """Создает новый чат."""
+        user_ids = ''.join(str(id) for id in [self.current_user_id, companion_id])
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
-                                 data={'users': f'{companion},{self.current_user}'})
+                                 data={'users': f'{companion},{self.current_user}',
+                                       'users_ids': user_ids})
         chat_info = response.json()
         self.current_chat = chat_info['chat_id']
-        self.chats[chat_info['users']] = self.current_chat
+        self.view_chats()
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""
@@ -284,7 +280,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         companion = chat.chat_name
         self.ui.chat_name.setText(companion)
         if chat.chat_id is None:
-            self.create_new_chat(companion)
+            self.create_new_chat(companion, chat.user_id)
         else:
             self.current_chat = chat.chat_id
             self.view_msgs()
@@ -294,6 +290,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     chat_window = ChatForm()
     chat_window.current_user = 'Alice'
+    chat_window.current_user_id = 1
     chat_window.view_chats()
     chat_window.show()
     # Спрятано до введения отслеживания авторизации
