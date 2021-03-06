@@ -1,7 +1,6 @@
 from . import app, db
 from flask import request
 from .models import Users, Messages, Chats, UserChats
-from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import exc, and_
 
 
@@ -43,7 +42,7 @@ def login():
     if user is None:
         err_log['msg'] = 'no such user'
         return err_log
-    elif check_password_hash(user.psw, request.form['psw']):
+    elif user.check_password(request.form['psw']):
         err_log['user_id'] = user.id
         return err_log
     else:
@@ -58,7 +57,8 @@ def register():
     if err_log['msg']:
         return err_log
     try:
-        user = Users(request.form['username'], generate_password_hash(request.form['psw']))
+        user = Users(request.form['username'])
+        user.set_password(request.form['psw'])
         db.session.add(user)
         db.session.commit()
         return err_log

@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
 
@@ -9,9 +10,14 @@ class Users(db.Model):
     psw = db.Column(db.String(128))
     chats = db.relationship('UserChats', backref='user')
 
-    def __init__(self, username, psw):
+    def set_password(self, password):
+        self.psw = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.psw, password)
+
+    def __init__(self, username):
         self.username = username
-        self.psw = psw
 
     def __repr__(self):
         return f'{self.username}'
