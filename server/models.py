@@ -94,5 +94,14 @@ class Chats(db.Model):
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
 
+    @staticmethod
+    def find_by_id(id):
+        return Users.query.filter(
+            Users.id == id).first()
+
+    def set_last_activity(self, last_activity):
+       self.last_activity = last_activity
+
+
     def __init__(self, users):
         self.chat_name = users

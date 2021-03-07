@@ -111,6 +111,8 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 
     def to_login_form(self):
         """Переход на форму логина."""
+        self.ui.email_in.setText('')
+        self.ui.email_in.setStyleSheet('''''')
         change_windows(self, login_window)
 
     def register(self):

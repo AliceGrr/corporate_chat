@@ -38,7 +38,6 @@ def verify_user_data(username, psw, email='line'):
 @app.route('/corporate_chat', methods=['POST'])
 def login():
     """Вход пользователя."""
-    print('err_log create')
     err_log = verify_user_data(request.form['username'], request.form['psw'])
     if err_log['msg']:
         return err_log
@@ -57,7 +56,9 @@ def login():
 @app.route('/corporate_chat/register', methods=['POST'])
 def register():
     """Регистрация пользователей."""
-    err_log = verify_user_data(request.form['username'], request.form['psw'], request.form['email'])
+    err_log = {'email_err': False}
+    err_log.update(verify_user_data(request.form['username'], request.form['psw'], request.form['email']))
+    print(err_log)
     if err_log['msg']:
         return err_log
     try:
@@ -77,9 +78,8 @@ def send_message():
     msg = Messages(request.form['sender'], request.form['to_chat'], request.form['msg'])
     db.session.add(msg)
 
-    chat = Chats.query.filter(Chats.id == request.form['to_chat']).first()
-    chat.last_activity = msg.time_stamp
-    db.session.add(chat)
+    chat = Chats.find_by_id(request.form['to_chat'])
+    chat.set_last_ativity(msg.time_stamp)
     db.session.commit()
     return {'send_time': msg.time_stamp}
 
@@ -87,13 +87,14 @@ def send_message():
 @app.route('/corporate_chat/receive_messages', methods=['POST'])
 def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
-    chat = Chats.query.filter(Chats.id == request.form['chat_id']).first()
-    msgs = []
-    for msg in chat.messages:
-        msgs.append(
-            {'msg_text': msg.msg,
-             'send_time': msg.time_stamp}
-        )
+    chat = Chats.find_by_id(request.form['chat_id'])
+    msgs = [
+        {'sender': msg.sender,
+         'msg_text': msg.msg,
+         'send_time': msg.time_stamp
+         }
+        for msg in chat.messages
+    ]
     return {'msgs': msgs}
 
 
@@ -119,22 +120,7 @@ def find_user_by_name():
     user = Users.find_by_id(request.form['current_user_id'])
     suitable_users = Users.suitable_users(request.form['example_username'])
     return {'suitable_users': {user.id: user.username for user in suitable_users}}
-    # user = Users.query.filter(Users.id == request.form['current_user_id']).first()
-    # user_chat_ids = [chat.chat_ids for chat in user.chats]
-    # print(user_chat_ids)
-    #
-    # user_chats = {}
-    # for user_chat_id in user_chat_ids:
-    #     user_chats.update({chat.user_ids: chat.chat_ids
-    #                            for chat in UserChats.query.filter
-    #                            (and_(UserChats.chat_ids == user_chat_id),
-    #                             UserChats.user_ids != request.form['current_user_id'])})
-    #
-    # suitable_users = {user.id: str(user) for user in
-    #                   Users.query.filter(and_(
-    #                       Users.username.startswith(request.form['example_username']),
-    #                       Users.id != request.form['current_user_id']))}
-    #
+
     # print(user_chats, suitable_users)
     # chats_info = []
     # for user_id, chat_id in user_chats.items():
@@ -165,10 +151,8 @@ def start_new_chat():
     db.session.commit()
 
     users_ids = list(request.form['users_ids'])
-    print(users_ids)
     for user_id in users_ids:
         user = Users.find_by_id(int(user_id))
-        print(user.username)
         user.add_to_chat(chat)
         db.session.commit()
 
