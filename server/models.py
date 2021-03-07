@@ -16,9 +16,9 @@ class Users(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     last_activity = db.Column(db.DateTime())
     chats = db.relationship(
-        'Users', secondary=usersInChats,
-        secondaryjoin=(usersInChats.c.user_id == id),
-        backref=db.backref('chats_id', lazy='dynamic'))
+        'Chats', secondary=usersInChats,
+        primaryjoin=(usersInChats.c.user_id == id),
+        backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
 
     @staticmethod
     def suitable_users(example_username):
@@ -47,11 +47,11 @@ class Users(db.Model):
 
     def add_to_chat(self, chat):
         if not self.is_in_chat(self):
-            self.usersInChats.append(chat)
+            self.chats.append(chat)
 
     def remove_from_chat(self, chat):
         if self.is_in_chat(self):
-            self.usersInChats.remove(chat)
+            self.chats.remove(chat)
 
     def is_in_chat(self, user):
         return self.chats.filter(
@@ -88,12 +88,11 @@ class Chats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     messages = db.relationship('Messages', backref='chats')
     users = db.relationship(
-        'Chats', secondary=usersInChats,
+        'Users', secondary=usersInChats,
         primaryjoin=(usersInChats.c.chat_id == id),
-        backref=db.backref('users_id', lazy='dynamic'))
+        backref=db.backref('users', lazy='dynamic'))
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
 
     def __init__(self, users):
         self.chat_name = users
-        self.last_activity = datetime.datetime.now()

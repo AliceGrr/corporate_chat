@@ -100,7 +100,7 @@ def receive_messages():
 @app.route('/corporate_chat/receive_user_chats', methods=['POST'])
 def receive_user_chats():
     """Получение списка всех чатов пользователя."""
-    user = Users.query.filter(Users.username == request.form['username']).first()
+    user = Users.find_by_name(request.form['username'])
     user_chats = user.find_user_chats()
     chats_info = [
         {'chat_name': chat.chat_name,
@@ -109,6 +109,7 @@ def receive_user_chats():
          }
         for chat in user_chats
     ]
+    print(chats_info)
     return {'chats': chats_info}
 
 
@@ -156,7 +157,6 @@ def find_user_by_name():
     #         'suitable_users': suitable_users}
 
 
-
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
 def start_new_chat():
     """Создание чата."""
@@ -165,8 +165,10 @@ def start_new_chat():
     db.session.commit()
 
     users_ids = list(request.form['users_ids'])
+    print(users_ids)
     for user_id in users_ids:
         user = Users.find_by_id(int(user_id))
+        print(user.username)
         user.add_to_chat(chat)
         db.session.commit()
 
