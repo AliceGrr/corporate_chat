@@ -41,6 +41,15 @@ def show_input_errors(self, err_log):
         )
     else:
         self.ui.password_in.setStyleSheet('''''')
+    if 'email_err' in err_log:
+        if err_log['email_err']:
+            self.ui.email_in.setStyleSheet(
+                '''
+                border: 2px solid rgb(255, 55, 118);
+                '''
+            )
+        else:
+            self.ui.email_in.setStyleSheet('''''')
     answer = err_log['msg']
     self.ui.error_label.setText(answer)
 
@@ -108,8 +117,9 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         """Регистрация пользователя."""
         username = self.ui.login_in.text()
         psw = self.ui.password_in.text()
+        email = self.ui.email_in.text()
         response = requests.post('http://127.0.0.1:5000/corporate_chat/register',
-                                 data={'username': username, 'psw': psw})
+                                 data={'username': username, 'psw': psw, 'email': email})
         err_log = response.json()
         if err_log['msg']:
             show_input_errors(self, err_log)

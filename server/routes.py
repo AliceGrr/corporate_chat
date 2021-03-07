@@ -1,6 +1,6 @@
 from . import app, db
 from flask import request
-from .models import Users, Messages, Chats, UserChats
+from .models import Users, Messages, Chats
 from sqlalchemy import exc, and_
 
 
@@ -20,12 +20,15 @@ def is_field_incorrect(data):
     return is_field_empty(data) or is_field_contains_whitespaces(data)
 
 
-def verify_user_data(username, psw):
+def verify_user_data(username, psw, email='line'):
     """Проверка корректности вводимых данных"""
     err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
     if is_field_incorrect(username):
         err_log['msg'] += 'Username ' + is_field_incorrect(username)
         err_log['username_err'] = True
+    if is_field_incorrect(email):
+        err_log['msg'] += 'Email ' + is_field_incorrect(email)
+        err_log['email_err'] = True
     if is_field_incorrect(psw):
         err_log['msg'] += 'Password ' + is_field_incorrect(psw)
         err_log['psw_err'] = True
@@ -35,6 +38,7 @@ def verify_user_data(username, psw):
 @app.route('/corporate_chat', methods=['POST'])
 def login():
     """Вход пользователя."""
+    print('err_log create')
     err_log = verify_user_data(request.form['username'], request.form['psw'])
     if err_log['msg']:
         return err_log
@@ -53,11 +57,11 @@ def login():
 @app.route('/corporate_chat/register', methods=['POST'])
 def register():
     """Регистрация пользователей."""
-    err_log = verify_user_data(request.form['username'], request.form['psw'])
+    err_log = verify_user_data(request.form['username'], request.form['psw'], request.form['email'])
     if err_log['msg']:
         return err_log
     try:
-        user = Users(request.form['username'])
+        user = Users(request.form['username'], request.form['email'])
         user.set_password(request.form['psw'])
         db.session.add(user)
         db.session.commit()

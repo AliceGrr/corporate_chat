@@ -21,7 +21,7 @@ class Ui_LoginForm(object):
 "QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
-"QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+"QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
 "QLabel {color:rgb(28, 94, 217,);}")
         self.centralwidget = QtWidgets.QWidget(LoginForm)
         self.centralwidget.setObjectName("centralwidget")
@@ -42,7 +42,7 @@ class Ui_LoginForm(object):
         self.label_4.setStyleSheet("font: 25 16pt \"Yu Gothic UI Light\";")
         self.label_4.setObjectName("label_4")
         self.error_label = QtWidgets.QLabel(self.centralwidget)
-        self.error_label.setGeometry(QtCore.QRect(260, 380, 281, 51))
+        self.error_label.setGeometry(QtCore.QRect(260, 370, 281, 51))
         font = QtGui.QFont()
         font.setFamily("Yu Gothic UI Semibold")
         font.setPointSize(12)
@@ -54,7 +54,7 @@ class Ui_LoginForm(object):
         self.error_label.setAlignment(QtCore.Qt.AlignCenter)
         self.error_label.setObjectName("error_label")
         self.sign_in_button = QtWidgets.QPushButton(self.centralwidget)
-        self.sign_in_button.setGeometry(QtCore.QRect(340, 450, 120, 50))
+        self.sign_in_button.setGeometry(QtCore.QRect(340, 430, 120, 50))
         font = QtGui.QFont()
         font.setFamily("Yu Gothic UI Semibold")
         font.setPointSize(14)
@@ -64,12 +64,15 @@ class Ui_LoginForm(object):
         self.sign_in_button.setObjectName("sign_in_button")
         self.password_in = QtWidgets.QLineEdit(self.centralwidget)
         self.password_in.setGeometry(QtCore.QRect(320, 320, 160, 40))
+        self.password_in.setStyleSheet("QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 8pt \"Yu Gothic UI Light\";}")
+        self.password_in.setText("")
         self.password_in.setObjectName("password_in")
         self.login_in = QtWidgets.QLineEdit(self.centralwidget)
         self.login_in.setGeometry(QtCore.QRect(320, 240, 160, 40))
+        self.login_in.setText("")
         self.login_in.setObjectName("login_in")
         self.to_sign_up_button = QtWidgets.QPushButton(self.centralwidget)
-        self.to_sign_up_button.setGeometry(QtCore.QRect(300, 510, 211, 23))
+        self.to_sign_up_button.setGeometry(QtCore.QRect(300, 490, 211, 23))
         self.to_sign_up_button.setStyleSheet("QPushButton\n"
 "{border: 0;\n"
 "padding: 0;\n"
