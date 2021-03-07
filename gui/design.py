@@ -259,13 +259,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'example_username': example_username,
                                        'current_user_id': self.current_user_id})
         user_list = response.json()
+        print(user_list['suitable_users'])
 
-        if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+        # if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+        if len(user_list['suitable_users']) > 0:
             self.ui.chats.clear()
             self.ui.no_user_label.setText('')
 
-            for suitable_chat in user_list['suitable_chats']:
-                self.add_chat_item(suitable_chat['chat_name'], last_msg=suitable_chat['last_msg'], chat_id=suitable_chat['chat_id'])
+            # for suitable_chat in user_list['suitable_chats']:
+            #     self.add_chat_item(suitable_chat['chat_name'], last_msg=suitable_chat['last_msg'], chat_id=suitable_chat['chat_id'])
 
             self.ui.chats.addItem('~~separator~~')
 

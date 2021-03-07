@@ -1,6 +1,6 @@
 from . import app, db
 from flask import request
-from .models import Users, Messages, Chats
+from .models import Users, Messages, Chats, usersInChats
 from sqlalchemy import exc, and_
 
 
@@ -42,7 +42,7 @@ def login():
     err_log = verify_user_data(request.form['username'], request.form['psw'])
     if err_log['msg']:
         return err_log
-    user = Users.query.filter(Users.username == request.form['username']).first()
+    user = Users.find_by_name(request.form['username'])
     if user is None:
         err_log['msg'] = 'no such user'
         return err_log
@@ -101,7 +101,7 @@ def receive_messages():
 def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     user = Users.query.filter(Users.username == request.form['username']).first()
-    user_chats = [chat.chat for chat in user.chats]
+    user_chats = user.find_user_chats()
     chats_info = [
         {'chat_name': chat.chat_name,
          'chat_id': chat.id,
@@ -109,49 +109,52 @@ def receive_user_chats():
          }
         for chat in user_chats
     ]
-    chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
-    return {'chats': chats}
+    return {'chats': chats_info}
 
 
 @app.route('/corporate_chat/find_user_by_name', methods=['POST'])
 def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
-    user = Users.query.filter(Users.id == request.form['current_user_id']).first()
-    user_chat_ids = [chat.chat_ids for chat in user.chats]
-    print(user_chat_ids)
+    user = Users.find_by_id(request.form['current_user_id'])
+    suitable_users = Users.suitable_users(request.form['example_username'])
+    return {'suitable_users': {user.id: user.username for user in suitable_users}}
+    # user = Users.query.filter(Users.id == request.form['current_user_id']).first()
+    # user_chat_ids = [chat.chat_ids for chat in user.chats]
+    # print(user_chat_ids)
+    #
+    # user_chats = {}
+    # for user_chat_id in user_chat_ids:
+    #     user_chats.update({chat.user_ids: chat.chat_ids
+    #                            for chat in UserChats.query.filter
+    #                            (and_(UserChats.chat_ids == user_chat_id),
+    #                             UserChats.user_ids != request.form['current_user_id'])})
+    #
+    # suitable_users = {user.id: str(user) for user in
+    #                   Users.query.filter(and_(
+    #                       Users.username.startswith(request.form['example_username']),
+    #                       Users.id != request.form['current_user_id']))}
+    #
+    # print(user_chats, suitable_users)
+    # chats_info = []
+    # for user_id, chat_id in user_chats.items():
+    #     if user_id in suitable_users:
+    #         del suitable_users[user_id]
+    #
+    #         chats_info += [
+    #             {'chat_name': chat.chat.chat_name,
+    #              'chat_id': chat.chat.id,
+    #              'last_msg': chat.chat.last_activity,
+    #              }
+    #             for chat in UserChats.query.filter
+    #             (and_(UserChats.chat_ids == chat_id,
+    #                   UserChats.user_ids == user_id))
+    #         ]
+    #
+    # chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
+    # print(chats, suitable_users)
+    # return {'suitable_chats': chats,
+    #         'suitable_users': suitable_users}
 
-    user_chats = {}
-    for user_chat_id in user_chat_ids:
-        user_chats.update({chat.user_ids: chat.chat_ids
-                               for chat in UserChats.query.filter
-                               (and_(UserChats.chat_ids == user_chat_id),
-                                UserChats.user_ids != request.form['current_user_id'])})
-
-    suitable_users = {user.id: str(user) for user in
-                      Users.query.filter(and_(
-                          Users.username.startswith(request.form['example_username']),
-                          Users.id != request.form['current_user_id']))}
-
-    print(user_chats, suitable_users)
-    chats_info = []
-    for user_id, chat_id in user_chats.items():
-        if user_id in suitable_users:
-            del suitable_users[user_id]
-
-            chats_info += [
-                {'chat_name': chat.chat.chat_name,
-                 'chat_id': chat.chat.id,
-                 'last_msg': chat.chat.last_activity,
-                 }
-                for chat in UserChats.query.filter
-                (and_(UserChats.chat_ids == chat_id,
-                      UserChats.user_ids == user_id))
-            ]
-
-    chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
-    print(chats, suitable_users)
-    return {'suitable_chats': chats,
-            'suitable_users': suitable_users}
 
 
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
@@ -161,13 +164,10 @@ def start_new_chat():
     db.session.add(chat)
     db.session.commit()
 
-    chat_id = chat.id
     users_ids = list(request.form['users_ids'])
-
     for user_id in users_ids:
-        print(user_id, chat_id)
-        userchat = UserChats(int(user_id), chat_id)
-        db.session.add(userchat)
+        user = Users.find_by_id(int(user_id))
+        user.add_to_chat(chat)
         db.session.commit()
 
     return {'chat_id': chat.id, 'users': chat.chat_name}
