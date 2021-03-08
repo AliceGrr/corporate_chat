@@ -1,7 +1,7 @@
 from . import app, db
 from flask import request
-from .models import Users, Messages, Chats, usersInChats
-from sqlalchemy import exc, and_
+from .models import Users, Messages, Chats
+from sqlalchemy import exc
 
 
 def is_field_empty(data):
@@ -43,13 +43,13 @@ def login():
         return err_log
     user = Users.find_by_name(request.form['username'])
     if user is None:
-        err_log['msg'] = 'no such user'
+        err_log['msg'] = 'No such user'
         return err_log
     elif user.check_password(request.form['psw']):
         err_log['user_id'] = user.id
         return err_log
     else:
-        err_log['msg'] = 'incorrect psw'
+        err_log['msg'] = 'Incorrect psw'
         return err_log
 
 
@@ -58,7 +58,6 @@ def register():
     """Регистрация пользователей."""
     err_log = {'email_err': False}
     err_log.update(verify_user_data(request.form['username'], request.form['psw'], request.form['email']))
-    print(err_log)
     if err_log['msg']:
         return err_log
     try:
@@ -68,7 +67,7 @@ def register():
         db.session.commit()
         return err_log
     except exc.IntegrityError:
-        err_log['msg'] = 'user with this name exists'
+        err_log['msg'] = 'User with this name exists'
         return err_log
 
 
@@ -110,37 +109,30 @@ def receive_user_chats():
          }
         for chat in user_chats
     ]
-    print(chats_info)
     return {'chats': chats_info}
 
 
 @app.route('/corporate_chat/find_user_by_name', methods=['POST'])
 def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
-    user = Users.find_by_id(request.form['current_user_id'])
-    suitable_users = Users.suitable_users(request.form['example_username'])
-    return {'suitable_users': {user.id: user.username for user in suitable_users}}
+    users = Users.get_suitable_users(request.form['example_username'])
+    chats = Users.get_suitable_chats(request.form['example_username'], request.form['current_user_id'])
 
-    # print(user_chats, suitable_users)
-    # chats_info = []
-    # for user_id, chat_id in user_chats.items():
-    #     if user_id in suitable_users:
-    #         del suitable_users[user_id]
-    #
-    #         chats_info += [
-    #             {'chat_name': chat.chat.chat_name,
-    #              'chat_id': chat.chat.id,
-    #              'last_msg': chat.chat.last_activity,
-    #              }
-    #             for chat in UserChats.query.filter
-    #             (and_(UserChats.chat_ids == chat_id,
-    #                   UserChats.user_ids == user_id))
-    #         ]
-    #
+    suitable_users = {}
+    suitable_chats = []
+    for user in users:
+        for chat in chats:
+            if user.is_in_chat(chat):
+                suitable_chats.append({
+                    'chat_name': chat.chat_name,
+                    'chat_id': chat.id,
+                    'last_msg': chat.last_activity
+                })
+            else:
+                suitable_users.update({user.id: user.username})
+    return {'suitable_users': suitable_users,
+            'suitable_chats': suitable_chats}
     # chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
-    # print(chats, suitable_users)
-    # return {'suitable_chats': chats,
-    #         'suitable_users': suitable_users}
 
 
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])

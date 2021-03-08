@@ -1,3 +1,4 @@
+from sqlalchemy import and_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
@@ -21,13 +22,22 @@ class Users(db.Model):
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
 
     @staticmethod
-    def suitable_users(example_username):
-        return Users.query.filter(
-            Users.username.startswith(example_username))
+    def get_suitable_chats(example_username, user_id):
+        return Chats.query\
+            .join(usersInChats, (usersInChats.c.chat_id == Chats.id))\
+            .join(Users, (usersInChats.c.user_id == Users.id))\
+            .filter(and_(Users.username.startswith(example_username), Users.id != user_id))\
+            .order_by(Chats.last_activity.desc())
+
+    @staticmethod
+    def get_suitable_users(example_username):
+        return Users.query\
+            .filter(Users.username.startswith(example_username))
 
     def find_user_chats(self):
-        return Chats.query.join(
-            usersInChats, (usersInChats.c.user_id == self.id)).order_by(Chats.last_activity.desc())
+        return Chats.query\
+            .join(usersInChats, (usersInChats.c.user_id == self.id))\
+            .order_by(Chats.last_activity.desc())
 
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
@@ -37,25 +47,28 @@ class Users(db.Model):
 
     @staticmethod
     def find_by_name(username):
-        return Users.query.filter(
-            Users.username == username).first()
+        return Users.query\
+            .filter(Users.username == username)\
+            .first()
 
     @staticmethod
-    def find_by_id(id):
-        return Users.query.filter(
-            Users.id == id).first()
+    def find_by_id(user_id):
+        return Users.query\
+            .filter(Users.id == user_id)\
+            .first()
 
     def add_to_chat(self, chat):
-        if not self.is_in_chat(self):
+        if not self.is_in_chat(chat):
             self.chats.append(chat)
 
     def remove_from_chat(self, chat):
-        if self.is_in_chat(self):
+        if self.is_in_chat(chat):
             self.chats.remove(chat)
 
-    def is_in_chat(self, user):
-        return self.chats.filter(
-            usersInChats.c.user_id == user.id).count() > 0
+    def is_in_chat(self, chat):
+        return self.chats\
+                   .filter(usersInChats.c.chat_id == chat.id)\
+                   .count() > 0
 
     def __init__(self, username, email):
         self.username = username
@@ -90,14 +103,15 @@ class Chats(db.Model):
     users = db.relationship(
         'Users', secondary=usersInChats,
         primaryjoin=(usersInChats.c.chat_id == id),
-        backref=db.backref('users', lazy='dynamic'))
+        backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
 
     @staticmethod
-    def find_by_id(id):
-        return Chats.query.filter(
-            Chats.id == id).first()
+    def find_by_id(chat_id):
+        return Chats.query\
+            .filter(Chats.id == chat_id)\
+            .first()
 
     def __init__(self, users):
         self.chat_name = users
