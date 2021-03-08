@@ -189,10 +189,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon.addPixmap(QPixmap((icon_path)))
         return icon
 
-    def add_msg_item(self, msg_text, msg_time):
+    def add_msg_item(self, msg_text, msg_time, sender):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
-        msg = MessageItemForm(msg_text, msg_time, self.current_user)
+        msg = MessageItemForm(msg_text, msg_time, sender)
 
         item.setIcon(self.load_avatar())
         item.setSizeHint(msg.sizeHint())
@@ -239,7 +239,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'chat_id': self.current_chat})
         msgs = response.json()
         for msg in msgs['msgs']:
-            self.add_msg_item(msg['msg_text'], msg['send_time'])
+            self.add_msg_item(msg['msg_text'], msg['send_time'], msg['sender'])
 
     def send_message(self):
         """Отправка сообщения в чате."""
@@ -250,8 +250,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
                                      data={'sender': self.current_user, 'to_chat': self.current_chat, 'msg': msg_text})
             msg_time = response.json()['send_time']
-            print(msg_time)
-            self.add_msg_item(msg_text, msg_time)
+            self.add_msg_item(msg_text, msg_time, self.current_user)
             self.view_chats()
 
     def find_user(self):

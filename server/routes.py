@@ -79,7 +79,7 @@ def send_message():
     db.session.add(msg)
 
     chat = Chats.find_by_id(request.form['to_chat'])
-    chat.set_last_ativity(msg.time_stamp)
+    chat.last_activity = msg.time_stamp
     db.session.commit()
     return {'send_time': msg.time_stamp}
 
