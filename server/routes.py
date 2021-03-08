@@ -2,6 +2,7 @@ from . import app, db
 from flask import request
 from .models import Users, Messages, Chats
 from sqlalchemy import exc
+import re
 
 
 def is_field_empty(data):
@@ -20,6 +21,14 @@ def is_field_incorrect(data):
     return is_field_empty(data) or is_field_contains_whitespaces(data)
 
 
+def verify_email(email, err_log):
+    """Проверка email по шаблону."""
+    email_regex = re.compile(r'[^@]+@[^@]+\.[^@]+')
+    if not email_regex.match(email):
+        err_log['msg'] += 'Invalid email\n'
+        err_log['email_err'] = True
+
+
 def verify_user_data(username, psw, email='line'):
     """Проверка корректности вводимых данных"""
     err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
@@ -29,6 +38,8 @@ def verify_user_data(username, psw, email='line'):
     if is_field_incorrect(email):
         err_log['msg'] += 'Email ' + is_field_incorrect(email)
         err_log['email_err'] = True
+    else:
+        verify_email(email, err_log)
     if is_field_incorrect(psw):
         err_log['msg'] += 'Password ' + is_field_incorrect(psw)
         err_log['psw_err'] = True
@@ -132,7 +143,6 @@ def find_user_by_name():
                 suitable_users.update({user.id: user.username})
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
-    # chats = sorted(chats_info, key=lambda x: x['last_msg'], reverse=True)
 
 
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])

@@ -306,12 +306,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     chat_window = ChatForm()
-    chat_window.current_user = 'Alice'
-    chat_window.current_user_id = 1
-    chat_window.view_chats()
-    chat_window.show()
+    # chat_window.current_user = 'Alice'
+    # chat_window.current_user_id = 1
+    # chat_window.view_chats()
+    # chat_window.show()
     # Спрятано до введения отслеживания авторизации
-    # registration_window = RegistrationForm()
-    # login_window = LoginForm()
-    # login_window.show()
+    registration_window = RegistrationForm()
+    login_window = LoginForm()
+    login_window.show()
     app.exec_()
