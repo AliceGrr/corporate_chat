@@ -1,7 +1,10 @@
 import os
 import sys
+import urllib
+
 from PyQt5 import QtWidgets
 import requests
+from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon, QPixmap
 
 from gui import login, registration, chat
@@ -182,11 +185,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
-    def load_avatar(self):
+    def view_avatar(self, url=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\gui\images\kitte.png"
-        icon.addPixmap(QPixmap((icon_path)))
+        icon_path = os.getcwd() + r"\gui\images\kitte.png"
+        icon.addPixmap(QPixmap(icon_path))
         return icon
 
     def add_msg_item(self, msg_text, msg_time, sender):
@@ -194,7 +197,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time, sender)
 
-        item.setIcon(self.load_avatar())
+        item.setIcon(self.view_avatar())
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
@@ -202,7 +205,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name, last_msg='', chat_id=None, user_id=None):
+    def add_chat_item(self, chat_name, url='', last_msg='', chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
@@ -215,7 +218,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.user_id = user_id
         item.chat_id = chat_id
 
-        item.setIcon(self.load_avatar())
+        item.setIcon(self.view_avatar(url))
         item.setSizeHint(chat.sizeHint())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat)
@@ -228,7 +231,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if len(chats) > 0:
             self.ui.no_user_label.setText('')
             for chat in chats:
-                self.add_chat_item(chat['chat_name'], chat['last_msg'], chat['chat_id'])
+                self.add_chat_item(chat_name=chat['chat_name'],
+                                   last_msg=chat['last_msg'],
+                                   chat_id=chat['chat_id'],)
         else:
             self.ui.no_user_label.setText('no such user')
 

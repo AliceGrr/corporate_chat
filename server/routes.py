@@ -27,9 +27,11 @@ def verify_email(email, err_log):
     if not email_regex.match(email):
         err_log['msg'] += 'Invalid email\n'
         err_log['email_err'] = True
+        return False
+    return True
 
 
-def verify_user_data(username, psw, email='line'):
+def verify_user_data(username, psw, email='line@mail.com'):
     """Проверка корректности вводимых данных"""
     err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
     if is_field_incorrect(username):
@@ -38,8 +40,8 @@ def verify_user_data(username, psw, email='line'):
     if is_field_incorrect(email):
         err_log['msg'] += 'Email ' + is_field_incorrect(email)
         err_log['email_err'] = True
-    else:
-        verify_email(email, err_log)
+    elif verify_email(email, err_log):
+        pass
     if is_field_incorrect(psw):
         err_log['msg'] += 'Password ' + is_field_incorrect(psw)
         err_log['psw_err'] = True
@@ -50,6 +52,7 @@ def verify_user_data(username, psw, email='line'):
 def login():
     """Вход пользователя."""
     err_log = verify_user_data(request.form['username'], request.form['psw'])
+    print(err_log)
     if err_log['msg']:
         return err_log
     user = Users.find_by_name(request.form['username'])

@@ -2,6 +2,7 @@ from sqlalchemy import and_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
+from hashlib import md5
 
 usersInChats = db.Table('usersInChats',
                         db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
@@ -20,6 +21,11 @@ class Users(db.Model):
         'Chats', secondary=usersInChats,
         primaryjoin=(usersInChats.c.user_id == id),
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
+
+    def avatar(self, size):
+        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+            digest, size)
 
     @staticmethod
     def get_suitable_chats(example_username, user_id):
