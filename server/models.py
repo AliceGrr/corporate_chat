@@ -35,10 +35,9 @@ class Users(db.Model):
             .filter(and_(Users.username.startswith(example_username), Users.id != user_id))\
             .order_by(Chats.last_activity.desc())
 
-    @staticmethod
-    def get_suitable_users(example_username):
+    def get_suitable_users(self, example_username):
         return Users.query\
-            .filter(Users.username.startswith(example_username))
+            .filter(and_(Users.username.startswith(example_username), Users.id != self.id))
 
     def find_user_chats(self):
         return Chats.query\

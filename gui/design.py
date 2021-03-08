@@ -1,6 +1,6 @@
 import os
 import sys
-import urllib
+from urllib import request
 
 from PyQt5 import QtWidgets
 import requests
@@ -187,9 +187,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_avatar(self, url=''):
         """Загрузка изображения для аватара."""
-        icon = QIcon()
-        icon_path = os.getcwd() + r"\gui\images\kitte.png"
-        icon.addPixmap(QPixmap(icon_path))
+        if url:
+            icon = QIcon()
+            data = request.urlopen(url).read()
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            icon.addPixmap(pixmap)
+        else:
+            icon = QIcon()
+            icon_path = os.getcwd() + r"\gui\images\kitte.png"
+            icon.addPixmap(QPixmap(icon_path))
         return icon
 
     def add_msg_item(self, msg_text, msg_time, sender):
@@ -233,9 +240,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             for chat in chats:
                 self.add_chat_item(chat_name=chat['chat_name'],
                                    last_msg=chat['last_msg'],
-                                   chat_id=chat['chat_id'],)
+                                   chat_id=chat['chat_id'],
+                                   url=chat['avatar'])
         else:
-            self.ui.no_user_label.setText('no such user')
+            self.ui.no_user_label.setText('no chats yet')
 
     def view_msgs(self):
         """Выводит сообщения данного чата."""
@@ -265,22 +273,25 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'example_username': example_username,
                                        'current_user_id': self.current_user_id})
         user_list = response.json()
-        print(user_list['suitable_users'])
-        print(user_list['suitable_chats'])
 
         if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+            self.ui.chats.clear()
+            self.ui.no_user_label.setText('')
 
             if len(user_list['suitable_chats']) > 0:
-                self.ui.chats.clear()
-                self.ui.no_user_label.setText('')
+                self.ui.chats.addItem('~~chats~~')
                 for suitable_chat in user_list['suitable_chats']:
-                    self.add_chat_item(suitable_chat['chat_name'], last_msg=suitable_chat['last_msg'], chat_id=suitable_chat['chat_id'])
+                    self.add_chat_item(chat_name=suitable_chat['chat_name'],
+                                       last_msg=suitable_chat['last_msg'],
+                                       chat_id=suitable_chat['chat_id'],
+                                       url=suitable_chat['avatar'])
 
             if len(user_list['suitable_users']) > 0:
-                self.ui.chats.addItem('~~separator~~')
-                for suitable_user_id, suitable_user_name in user_list['suitable_users'].items():
-                    print(suitable_user_id)
-                    self.add_chat_item(suitable_user_name, user_id=suitable_user_id)
+                self.ui.chats.addItem('~~users~~')
+                for suitable_user in user_list['suitable_users']:
+                    self.add_chat_item(chat_name=suitable_user['username'],
+                                       user_id=suitable_user['user_id'],
+                                       url=suitable_user['avatar'])
 
         else:
             self.ui.chats.clear()
