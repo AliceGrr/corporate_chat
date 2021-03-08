@@ -175,6 +175,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user = ''
         self.current_user_id = 0
         self.current_chat = 0
+        self.temp_chat = None
 
         self.ui.send_message.setEnabled(False)
 
@@ -257,9 +258,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
-        if msg_text == '':
-            pass
-        else:
+        if msg_text:
+            if self.temp_chat:
+                self.create_new_chat(self.temp_chat.chat_name, self.temp_chat.user_id)
+                self.temp_chat = None
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
                                      data={'sender': self.current_user, 'to_chat': self.current_chat, 'msg': msg_text})
             msg_time = response.json()['send_time']
@@ -269,33 +271,37 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def find_user(self):
         """Поиск пользователя по введенному значению."""
         example_username = self.ui.find_user.text()
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
-                                 data={'example_username': example_username,
-                                       'current_user_id': self.current_user_id})
-        user_list = response.json()
+        if example_username:
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
+                                     data={'example_username': example_username,
+                                           'current_user_id': self.current_user_id})
+            user_list = response.json()
 
-        if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
-            self.ui.chats.clear()
-            self.ui.no_user_label.setText('')
+            if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+                self.ui.chats.clear()
+                self.ui.no_user_label.setText('')
 
-            if len(user_list['suitable_chats']) > 0:
-                self.ui.chats.addItem('~~chats~~')
-                for suitable_chat in user_list['suitable_chats']:
-                    self.add_chat_item(chat_name=suitable_chat['chat_name'],
-                                       last_msg=suitable_chat['last_msg'],
-                                       chat_id=suitable_chat['chat_id'],
-                                       url=suitable_chat['avatar'])
+                if len(user_list['suitable_chats']) > 0:
+                    self.ui.chats.addItem('~~chats~~')
+                    for suitable_chat in user_list['suitable_chats']:
+                        self.add_chat_item(chat_name=suitable_chat['chat_name'],
+                                           last_msg=suitable_chat['last_msg'],
+                                           chat_id=suitable_chat['chat_id'],
+                                           url=suitable_chat['avatar'])
 
-            if len(user_list['suitable_users']) > 0:
-                self.ui.chats.addItem('~~users~~')
-                for suitable_user in user_list['suitable_users']:
-                    self.add_chat_item(chat_name=suitable_user['username'],
-                                       user_id=suitable_user['user_id'],
-                                       url=suitable_user['avatar'])
+                if len(user_list['suitable_users']) > 0:
+                    self.ui.chats.addItem('~~users~~')
+                    for suitable_user in user_list['suitable_users']:
+                        self.add_chat_item(chat_name=suitable_user['username'],
+                                           user_id=suitable_user['user_id'],
+                                           url=suitable_user['avatar'])
 
+            else:
+                self.ui.chats.clear()
+                self.ui.no_user_label.setText('no such user')
         else:
-            self.ui.chats.clear()
-            self.ui.no_user_label.setText('no such user')
+            self.ui.chat_name.setText('')
+            self.view_chats()
 
     def create_new_chat(self, companion, companion_id):
         """Создает новый чат."""
@@ -313,7 +319,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         companion = chat.chat_name
         self.ui.chat_name.setText(companion)
         if chat.chat_id is None:
-            self.create_new_chat(companion, chat.user_id)
+            self.temp_chat = chat
         else:
             self.current_chat = chat.chat_id
             self.view_msgs()
