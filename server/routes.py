@@ -93,20 +93,22 @@ def send_message():
     chat = Chats.find_by_id(request.form['to_chat'])
     chat.last_activity = msg.time_stamp
     db.session.commit()
-    return {'send_time': msg.time_stamp}
+    return {'send_time': {'send_time': msg.time_stamp}}
 
 
 @app.route('/corporate_chat/receive_messages', methods=['POST'])
 def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
     chat = Chats.find_by_id(request.form['chat_id'])
-    msgs = [
-        {'sender': msg.sender,
-         'msg_text': msg.msg,
-         'send_time': msg.time_stamp
-         }
-        for msg in chat.messages
-    ]
+    msgs = []
+    for msg in chat.messages:
+        user = Users.find_by_name(msg.sender)
+        msgs.append(
+            {'sender': msg.sender,
+             'msg_text': msg.msg,
+             'send_time': msg.time_stamp,
+             'avatar': user.set_avatar(128)
+             })
     return {'msgs': msgs}
 
 
@@ -115,7 +117,6 @@ def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     current_user = Users.find_by_name(request.form['username'])
     user_chats = current_user.find_user_chats()
-    print(user_chats)
 
     chats_info = []
     for chat in user_chats:
@@ -124,16 +125,13 @@ def receive_user_chats():
             if len([users]) > 2:
                 pass
             else:
-                if user.username == current_user.username:
-                    pass
-                else:
-                    chats_info.append(
-                        {'chat_name': chat.chat_name,
-                         'chat_id': chat.id,
-                         'last_msg': chat.last_activity,
-                         'avatar': user.set_avatar(128)
-                         }
-                    )
+                chats_info.append(
+                    {'chat_name': chat.chat_name,
+                     'chat_id': chat.id,
+                     'last_msg': chat.last_activity,
+                     'avatar': user.set_avatar(128)
+                     }
+                )
     for chat_info in chats_info:
         print(chat_info)
     return {'chats': chats_info}
@@ -162,7 +160,7 @@ def find_user_by_name():
             suitable_users.append({
                 'user_id': user.id,
                 'username': user.username,
-                'avatar': user.avatar(128),
+                'avatar': user.set_avatar(128),
             })
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
