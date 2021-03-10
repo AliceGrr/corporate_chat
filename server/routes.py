@@ -113,16 +113,29 @@ def receive_messages():
 @app.route('/corporate_chat/receive_user_chats', methods=['POST'])
 def receive_user_chats():
     """Получение списка всех чатов пользователя."""
-    user = Users.find_by_name(request.form['username'])
-    user_chats = user.find_user_chats()
-    chats_info = [
-        {'chat_name': chat.chat_name,
-         'chat_id': chat.id,
-         'last_msg': chat.last_activity,
-         'avatar': user.avatar(128)
-         }
-        for chat in user_chats
-    ]
+    current_user = Users.find_by_name(request.form['username'])
+    user_chats = current_user.find_user_chats()
+    print(user_chats)
+
+    chats_info = []
+    for chat in user_chats:
+        users = current_user.find_users_in_chats(chat.id)
+        for user in users:
+            if len([users]) > 2:
+                pass
+            else:
+                if user.username == current_user.username:
+                    pass
+                else:
+                    chats_info.append(
+                        {'chat_name': chat.chat_name,
+                         'chat_id': chat.id,
+                         'last_msg': chat.last_activity,
+                         'avatar': user.set_avatar(128)
+                         }
+                    )
+    for chat_info in chats_info:
+        print(chat_info)
     return {'chats': chats_info}
 
 

@@ -17,32 +17,43 @@ class Users(db.Model):
     psw_hash = db.Column(db.String(128))
     email = db.Column(db.String(120), index=True, unique=True)
     last_activity = db.Column(db.DateTime())
+    avatar = db.Column(db.String(128))
     chats = db.relationship(
         'Chats', secondary=usersInChats,
         primaryjoin=(usersInChats.c.user_id == id),
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
 
-    def avatar(self, size):
+    def set_avatar(self, size):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
-            digest, size)
+        return f'https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}'
+
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+        self.avatar = self.set_avatar(128)
 
     @staticmethod
     def get_suitable_chats(example_username, user_id):
-        return Chats.query\
-            .join(usersInChats, (usersInChats.c.chat_id == Chats.id))\
-            .join(Users, (usersInChats.c.user_id == Users.id))\
-            .filter(and_(Users.username.startswith(example_username), Users.id != user_id))\
+        return Chats.query \
+            .join(usersInChats, (usersInChats.c.chat_id == Chats.id)) \
+            .join(Users, (usersInChats.c.user_id == Users.id)) \
+            .filter(and_(Users.username.startswith(example_username), Users.id != user_id)) \
             .order_by(Chats.last_activity.desc())
 
     def get_suitable_users(self, example_username):
-        return Users.query\
+        return Users.query \
             .filter(and_(Users.username.startswith(example_username), Users.id != self.id))
 
     def find_user_chats(self):
-        return Chats.query\
-            .join(usersInChats, (usersInChats.c.user_id == self.id))\
+        return Chats.query \
+            .join(usersInChats)\
+            .filter(usersInChats.c.user_id == self.id) \
             .order_by(Chats.last_activity.desc())
+
+    def find_users_in_chats(self, id):
+        return Users.query \
+            .join(usersInChats)\
+            .filter(and_(Users.id != self.id, usersInChats.c.chat_id == id))
 
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
@@ -52,14 +63,14 @@ class Users(db.Model):
 
     @staticmethod
     def find_by_name(username):
-        return Users.query\
-            .filter(Users.username == username)\
+        return Users.query \
+            .filter(Users.username == username) \
             .first()
 
     @staticmethod
     def find_by_id(user_id):
-        return Users.query\
-            .filter(Users.id == user_id)\
+        return Users.query \
+            .filter(Users.id == user_id) \
             .first()
 
     def add_to_chat(self, chat):
@@ -71,13 +82,9 @@ class Users(db.Model):
             self.chats.remove(chat)
 
     def is_in_chat(self, chat):
-        return self.chats\
-                   .filter(usersInChats.c.chat_id == chat.id)\
+        return self.chats \
+                   .filter(usersInChats.c.chat_id == chat.id) \
                    .count() > 0
-
-    def __init__(self, username, email):
-        self.username = username
-        self.email = email
 
     def __repr__(self):
         return f'{self.username}'
@@ -114,8 +121,8 @@ class Chats(db.Model):
 
     @staticmethod
     def find_by_id(chat_id):
-        return Chats.query\
-            .filter(Chats.id == chat_id)\
+        return Chats.query \
+            .filter(Chats.id == chat_id) \
             .first()
 
     def __init__(self, users):
