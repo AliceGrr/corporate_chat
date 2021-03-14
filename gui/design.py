@@ -187,20 +187,19 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_avatar(self, filename=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        url = ''
-        if url:
-            filename = url
-            print(url)
-            icon_path = os.getcwd() + r"\gui\images\kio.png"
-            loaded_icon = QPixmap(icon_path)
-            if loaded_icon.isNull():
-                data = request.urlopen(url).read()
-                pixmap = QPixmap()
-                pixmap.loadFromData(data)
-                icon.addPixmap(pixmap)
-            else:
-                print(icon_path)
-                icon.addPixmap(loaded_icon)
+        icon_path = os.getcwd() + "\\gui\\images\\" + filename
+        print(icon_path)
+        loaded_icon = QPixmap(icon_path)
+        if loaded_icon.isNull():
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
+                                     data={'id': self.current_user_id},
+                                     stream=True)
+            with open(icon_path, 'wb') as f:
+                for block in response.iter_content(1024):
+                    if not block:
+                        break
+                    f.write(block)
+        icon.addPixmap(loaded_icon)
         return icon
 
     def add_msg_item(self, msg_text, msg_time, sender, url=''):

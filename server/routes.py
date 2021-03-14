@@ -1,5 +1,7 @@
+import os
+
 from . import app, db
-from flask import request
+from flask import request, send_from_directory, send_file
 from .models import Users, Messages, Chats
 from sqlalchemy import exc
 import re
@@ -107,7 +109,7 @@ def receive_messages():
             {'sender': msg.sender,
              'msg_text': msg.msg,
              'send_time': msg.time_stamp,
-             'avatar': user.set_avatar(128)
+             'avatar': user.avatar
              })
     return {'msgs': msgs}
 
@@ -129,7 +131,7 @@ def receive_user_chats():
                     {'chat_name': chat.chat_name,
                      'chat_id': chat.id,
                      'last_msg': chat.last_activity,
-                     'avatar': user.set_avatar(128)
+                     'avatar': user.avatar
                      }
                 )
     for chat_info in chats_info:
@@ -153,14 +155,14 @@ def find_user_by_name():
                     'chat_name': chat.chat_name,
                     'chat_id': chat.id,
                     'last_msg': chat.last_activity,
-                    'avatar': user.avatar(128),
+                    'avatar': user.avatar,
                 })
                 break
         else:
             suitable_users.append({
                 'user_id': user.id,
                 'username': user.username,
-                'avatar': user.set_avatar(128),
+                'avatar': user.avatar,
             })
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
@@ -180,3 +182,13 @@ def start_new_chat():
         db.session.commit()
 
     return {'chat_id': chat.id, 'users': chat.chat_name}
+
+
+@app.route('/corporate_chat/load_avatar', methods=['POST'])
+def load_avatar():
+    """Отправка аватаров клиенту."""
+    print('find!')
+    user = Users.find_by_id(request.form['id'])
+    path = os.getcwd() + app.config['UPLOAD_FOLDER']
+    return send_from_directory(path,
+                               user.avatar)
