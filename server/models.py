@@ -1,3 +1,4 @@
+import requests
 from sqlalchemy import and_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
@@ -23,14 +24,29 @@ class Users(db.Model):
         primaryjoin=(usersInChats.c.user_id == id),
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
 
-    def set_avatar(self, size):
+    def load_avatar(self, url):
+        filename = f'{self.username}_offline.png'
+        filepath = 'server/images/' + filename
+        with open(filepath, 'wb') as f:
+            response = requests.get(url, stream=True)
+            for block in response.iter_content(1024):
+                if not block:
+                    break
+                f.write(block)
+        return filename
+
+    def set_avatar(self):
+        url = self.get_avatar_url(128)
+        self.avatar = self.load_avatar(url)
+
+    def get_avatar_url(self, size):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return f'https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}'
 
     def __init__(self, username, email):
         self.username = username
         self.email = email
-        self.avatar = self.set_avatar(128)
+        self.set_avatar()
 
     @staticmethod
     def get_suitable_chats(example_username, user_id):

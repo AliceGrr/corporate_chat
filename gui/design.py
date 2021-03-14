@@ -1,10 +1,8 @@
 import os
 import sys
 from urllib import request
-
 from PyQt5 import QtWidgets
 import requests
-from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon, QPixmap
 
 from gui import login, registration, chat
@@ -93,7 +91,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         else:
             chat_window.current_user = username
             chat_window.current_user_id = err_log['user_id']
-            # Переход на форму чата
             self.to_chat_form()
 
 
@@ -187,18 +184,23 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
-    def view_avatar(self, url=''):
+    def view_avatar(self, filename=''):
         """Загрузка изображения для аватара."""
+        icon = QIcon()
+        url = ''
         if url:
-            icon = QIcon()
-            data = request.urlopen(url).read()
-            pixmap = QPixmap()
-            pixmap.loadFromData(data)
-            icon.addPixmap(pixmap)
-        else:
-            icon = QIcon()
-            icon_path = os.getcwd() + r"\gui\images\kitte.png"
-            icon.addPixmap(QPixmap(icon_path))
+            filename = url
+            print(url)
+            icon_path = os.getcwd() + r"\gui\images\kio.png"
+            loaded_icon = QPixmap(icon_path)
+            if loaded_icon.isNull():
+                data = request.urlopen(url).read()
+                pixmap = QPixmap()
+                pixmap.loadFromData(data)
+                icon.addPixmap(pixmap)
+            else:
+                print(icon_path)
+                icon.addPixmap(loaded_icon)
         return icon
 
     def add_msg_item(self, msg_text, msg_time, sender, url=''):
