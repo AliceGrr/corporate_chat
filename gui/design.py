@@ -184,7 +184,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
-    def view_avatar(self, filename=''):
+    def view_avatar(self, id='', filename=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\images\\" + filename
@@ -192,13 +192,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         loaded_icon = QPixmap(icon_path)
         if loaded_icon.isNull():
             response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
-                                     data={'id': self.current_user_id},
+                                     data={'id': id},
                                      stream=True)
             with open(icon_path, 'wb') as f:
                 for block in response.iter_content(1024):
                     if not block:
+                        f.close()
                         break
                     f.write(block)
+        loaded_icon = QPixmap(icon_path)
         icon.addPixmap(loaded_icon)
         return icon
 
@@ -207,7 +209,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time, sender)
 
-        item.setIcon(self.view_avatar(url))
+        item.setIcon(self.view_avatar(filename=url))
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
@@ -228,7 +230,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.user_id = user_id
         item.chat_id = chat_id
 
-        item.setIcon(self.view_avatar(url))
+        item.setIcon(self.view_avatar(item.user_id, url))
         item.setSizeHint(chat.sizeHint())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat)

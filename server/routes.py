@@ -190,5 +190,4 @@ def load_avatar():
     print('find!')
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
-    return send_from_directory(path,
-                               user.avatar)
+    return send_file(f'{path}{user.avatar}')
