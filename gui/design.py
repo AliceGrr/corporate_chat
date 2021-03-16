@@ -133,10 +133,10 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 class MessageItemForm(QtWidgets.QWidget):
     """Форма одного сообщения."""
 
-    def __init__(self, msg_text, msg_time, sender):
+    def __init__(self, msg_text, msg_time, sender_name):
         super().__init__()
 
-        self.msg = QtWidgets.QLabel(f'{sender}: {msg_text}')
+        self.msg = QtWidgets.QLabel(f'{sender_name}: {msg_text}')
         self.time = QtWidgets.QLabel(msg_time)
 
         layout = QtWidgets.QVBoxLayout()
@@ -184,11 +184,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
-    def view_avatar(self, id='', filename=''):
+    def view_avatar(self, filename, id=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\images\\" + filename
-        print(icon_path)
         loaded_icon = QPixmap(icon_path)
         if loaded_icon.isNull():
             response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
@@ -200,16 +199,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                         f.close()
                         break
                     f.write(block)
-        loaded_icon = QPixmap(icon_path)
-        icon.addPixmap(loaded_icon)
+        icon.addPixmap(QPixmap(icon_path))
         return icon
 
-    def add_msg_item(self, msg_text, msg_time, sender, url=''):
+    def add_msg_item(self, msg_text, msg_time, sender, sender_name, filename=''):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
-        msg = MessageItemForm(msg_text, msg_time, sender)
+        msg = MessageItemForm(msg_text, msg_time, sender_name)
 
-        item.setIcon(self.view_avatar(filename=url))
+        item.setIcon(self.view_avatar(filename=filename, id=sender))
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
@@ -217,7 +215,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name, url='', last_msg='', chat_id=None, user_id=None):
+    def add_chat_item(self, chat_name, filename, last_msg='', chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
@@ -230,7 +228,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.user_id = user_id
         item.chat_id = chat_id
 
-        item.setIcon(self.view_avatar(item.user_id, url))
+        item.setIcon(self.view_avatar(filename=filename, id=item.user_id))
         item.setSizeHint(chat.sizeHint())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat)
@@ -246,7 +244,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.add_chat_item(chat_name=chat['chat_name'],
                                    last_msg=chat['last_msg'],
                                    chat_id=chat['chat_id'],
-                                   url=chat['avatar'])
+                                   filename=chat['avatar'],
+                                   user_id=chat['companion_id'])
         else:
             self.ui.no_user_label.setText('no chats yet')
 
@@ -257,7 +256,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'chat_id': self.current_chat})
         msgs = response.json()
         for msg in msgs['msgs']:
-            self.add_msg_item(msg['msg_text'], msg['send_time'], msg['sender'], msg['avatar'])
+            self.add_msg_item(msg_text=msg['msg_text'],
+                              msg_time=msg['send_time'],
+                              sender_name=msg['sender_name'],
+                              sender=msg['sender'],
+                              filename=msg['avatar'])
 
     def send_message(self):
         """Отправка сообщения в чате."""
@@ -267,9 +270,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.create_new_chat(self.temp_chat.chat_name, self.temp_chat.user_id)
                 self.temp_chat = None
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                                     data={'sender': self.current_user, 'to_chat': self.current_chat, 'msg': msg_text})
+                                     data={'sender': self.current_user_id, 'to_chat': self.current_chat,
+                                           'msg': msg_text})
             msg_time = response.json()['send_time']
-            self.add_msg_item(msg_text, msg_time['send_time'], self.current_user)
+            self.add_msg_item(msg_text=msg_text,
+                              msg_time=msg_time['send_time'],
+                              sender_name=self.current_user,
+                              sender=self.current_user_id)
             self.view_chats()
 
     def find_user(self):
@@ -291,14 +298,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                         self.add_chat_item(chat_name=suitable_chat['chat_name'],
                                            last_msg=suitable_chat['last_msg'],
                                            chat_id=suitable_chat['chat_id'],
-                                           url=suitable_chat['avatar'])
+                                           filename=suitable_chat['avatar'])
 
                 if len(user_list['suitable_users']) > 0:
                     self.ui.chats.addItem('~~users~~')
                     for suitable_user in user_list['suitable_users']:
                         self.add_chat_item(chat_name=suitable_user['username'],
                                            user_id=suitable_user['user_id'],
-                                           url=suitable_user['avatar'])
+                                           filename=suitable_user['avatar'])
 
             else:
                 self.ui.chats.clear()

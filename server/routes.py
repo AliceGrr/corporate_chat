@@ -1,7 +1,7 @@
 import os
 
 from . import app, db
-from flask import request, send_from_directory, send_file
+from flask import request, send_file
 from .models import Users, Messages, Chats
 from sqlalchemy import exc
 import re
@@ -104,9 +104,10 @@ def receive_messages():
     chat = Chats.find_by_id(request.form['chat_id'])
     msgs = []
     for msg in chat.messages:
-        user = Users.find_by_name(msg.sender)
+        user = Users.find_by_id(msg.sender)
         msgs.append(
             {'sender': msg.sender,
+             'sender_name': user.username,
              'msg_text': msg.msg,
              'send_time': msg.time_stamp,
              'avatar': user.avatar
@@ -131,11 +132,12 @@ def receive_user_chats():
                     {'chat_name': chat.chat_name,
                      'chat_id': chat.id,
                      'last_msg': chat.last_activity,
-                     'avatar': user.avatar
+                     'avatar': user.avatar,
+                     'companion_id': user.id,
                      }
                 )
-    for chat_info in chats_info:
-        print(chat_info)
+    for chat in chats_info:
+        print(chat)
     return {'chats': chats_info}
 
 
@@ -187,7 +189,7 @@ def start_new_chat():
 @app.route('/corporate_chat/load_avatar', methods=['POST'])
 def load_avatar():
     """Отправка аватаров клиенту."""
-    print('find!')
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
+    print(path)
     return send_file(f'{path}{user.avatar}')

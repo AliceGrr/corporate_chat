@@ -26,7 +26,7 @@ class Users(db.Model):
 
     def load_avatar(self, url):
         filename = f'{self.username}_offline.png'
-        filepath = '\\server\\images\\' + filename
+        filepath = '/server/images/' + filename
         with open(filepath, 'wb') as f:
             response = requests.get(url, stream=True)
             for block in response.iter_content(1024):
@@ -109,7 +109,7 @@ class Users(db.Model):
 class Messages(db.Model):
     """Класс сообщений для БД."""
     id = db.Column(db.Integer, primary_key=True)
-    sender = db.Column(db.String(50))
+    sender = db.Column(db.Integer)
     msg = db.Column(db.String(200))
     chat = db.Column(db.Integer, db.ForeignKey('chats.id'))
     time_stamp = db.Column(db.DateTime())
