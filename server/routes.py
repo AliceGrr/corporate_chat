@@ -136,8 +136,6 @@ def receive_user_chats():
                      'companion_id': user.id,
                      }
                 )
-    for chat in chats_info:
-        print(chat)
     return {'chats': chats_info}
 
 
@@ -145,27 +143,24 @@ def receive_user_chats():
 def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
     current_user = Users.find_by_id(request.form['current_user_id'])
+    user_chat_ids = [chat.id for chat in current_user.find_user_chats()]
+    print(user_chat_ids)
     users = current_user.get_suitable_users(request.form['example_username'])
-    chats = Users.get_suitable_chats(request.form['example_username'], request.form['current_user_id'])
+    chats = current_user.get_suitable_chats(request.form['example_username'], user_chat_ids)
+    print(chats)
 
-    suitable_users = []
-    suitable_chats = []
-    for user in users:
-        for chat in chats:
-            if user.is_in_chat(chat):
-                suitable_chats.append({
-                    'chat_name': chat.chat_name,
-                    'chat_id': chat.id,
-                    'last_msg': chat.last_activity,
-                    'avatar': user.avatar,
-                })
-                break
-        else:
-            suitable_users.append({
-                'user_id': user.id,
-                'username': user.username,
-                'avatar': user.avatar,
-            })
+    suitable_chats = [{
+                    'chat_name': chat.Chats.chat_name,
+                    'chat_id': chat.Chats.id,
+                    'last_msg': chat.Chats.last_activity,
+                    'avatar': chat.avatar,
+                } for chat in chats]
+    suitable_users = [{'user_id': user.id,
+                       'username': user.username,
+                       'avatar': user.avatar,
+                       } for user in users
+                      if user.username not in [chat.username for chat in chats]]
+
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
 

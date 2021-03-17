@@ -287,6 +287,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                      data={'example_username': example_username,
                                            'current_user_id': self.current_user_id})
             user_list = response.json()
+            print(user_list['suitable_chats'])
+            print(user_list['suitable_users'])
 
             if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
                 self.ui.chats.clear()
