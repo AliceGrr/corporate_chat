@@ -1,11 +1,9 @@
 import os
 import sys
-from urllib import request
 from PyQt5 import QtWidgets
 import requests
 from PyQt5.QtGui import QIcon, QPixmap
-
-from gui import login, registration, chat
+from gui.gui_classes import login, registration, chat
 
 
 def clear_form(self):
@@ -26,29 +24,18 @@ def change_windows(self, window_to_open):
 
 def show_input_errors(self, err_log):
     """Выделение ошибок ввода данных."""
+    err_style = '''border: 2px solid rgb(255, 55, 118);'''
     if err_log['username_err']:
-        self.ui.login_in.setStyleSheet(
-            '''
-            border: 2px solid rgb(255, 55, 118);
-            '''
-        )
+        self.ui.login_in.setStyleSheet(err_style)
     else:
         self.ui.login_in.setStyleSheet('''''')
     if err_log['psw_err']:
-        self.ui.password_in.setStyleSheet(
-            '''
-            border: 2px solid rgb(255, 55, 118);
-            '''
-        )
+        self.ui.password_in.setStyleSheet(err_style)
     else:
         self.ui.password_in.setStyleSheet('''''')
     if 'email_err' in err_log:
         if err_log['email_err']:
-            self.ui.email_in.setStyleSheet(
-                '''
-                border: 2px solid rgb(255, 55, 118);
-                '''
-            )
+            self.ui.email_in.setStyleSheet(err_style)
         else:
             self.ui.email_in.setStyleSheet('''''')
     answer = err_log['msg']
@@ -184,14 +171,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
-    def view_avatar(self, filename, id=''):
+    @staticmethod
+    def view_avatar(filename, user_id=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\\gui\\images\\" + filename
+        icon_path = os.getcwd() + "\\gui\\cache\\images\\" + filename
         loaded_icon = QPixmap(icon_path)
         if loaded_icon.isNull():
             response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
-                                     data={'id': id},
+                                     data={'id': user_id},
                                      stream=True)
             with open(icon_path, 'wb') as f:
                 for block in response.iter_content(1024):
@@ -207,7 +195,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time, sender_name)
 
-        item.setIcon(self.view_avatar(filename=filename, id=sender))
+        item.setIcon(self.view_avatar(filename=filename, user_id=sender))
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
@@ -221,17 +209,17 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         chat_name = chat_name.replace(',', '')
 
         item = QtWidgets.QListWidgetItem()
-        chat = ChatItemForm(chat_name, last_msg)
+        chat_item = ChatItemForm(chat_name, last_msg)
 
         item.chat_name = chat_name
 
         item.user_id = user_id
         item.chat_id = chat_id
 
-        item.setIcon(self.view_avatar(filename=filename, id=item.user_id))
-        item.setSizeHint(chat.sizeHint())
+        item.setIcon(self.view_avatar(filename=filename, user_id=item.user_id))
+        item.setSizeHint(chat_item.sizeHint())
         self.ui.chats.addItem(item)
-        self.ui.chats.setItemWidget(item, chat)
+        self.ui.chats.setItemWidget(item, chat_item)
 
     def view_chats(self):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
@@ -318,7 +306,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def create_new_chat(self, companion, companion_id):
         """Создает новый чат."""
-        user_ids = ''.join(str(id) for id in [self.current_user_id, companion_id])
+        user_ids = ''.join(str(user_id) for user_id in [self.current_user_id, companion_id])
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
                                  data={'users': f'{companion},{self.current_user}',
                                        'users_ids': user_ids})
