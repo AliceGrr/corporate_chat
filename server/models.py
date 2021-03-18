@@ -89,9 +89,7 @@ class Users(db.Model):
 
     @staticmethod
     def find_by_id(user_id):
-        return Users.query \
-            .filter(Users.id == user_id) \
-            .first()
+        return Users.query.get(user_id)
 
     def add_to_chat(self, chat):
         if not self.is_in_chat(chat):
@@ -125,7 +123,7 @@ class Messages(db.Model):
         self.time_stamp = datetime.datetime.now()
 
     def __repr__(self):
-        return f'{self.from_user}: {self.msg}'
+        return self.msg
 
 
 class Chats(db.Model):
@@ -141,9 +139,13 @@ class Chats(db.Model):
 
     @staticmethod
     def find_by_id(chat_id):
-        return Chats.query \
-            .filter(Chats.id == chat_id) \
-            .first()
+        return Chats.query.get(chat_id)
+
+    def get_last_msg(self):
+        last_msg = Messages.query \
+            .filter(Messages.chat == self.id) \
+            .order_by(Messages.time_stamp.desc()).first()
+        return last_msg.msg
 
     def __init__(self, users):
         self.chat_name = users

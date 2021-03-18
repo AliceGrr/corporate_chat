@@ -94,8 +94,11 @@ def send_message():
 
     chat = Chats.find_by_id(request.form['to_chat'])
     chat.last_activity = msg.time_stamp
+
+    user = Users.find_by_id(request.form['sender'])
+    user.last_activity = msg.time_stamp
     db.session.commit()
-    return {'send_time': {'send_time': msg.time_stamp}}
+    return {'send_time': msg.time_stamp}
 
 
 @app.route('/corporate_chat/receive_messages', methods=['POST'])
@@ -131,9 +134,9 @@ def receive_user_chats():
                 chats_info.append(
                     {'chat_name': chat.chat_name,
                      'chat_id': chat.id,
-                     'last_msg': chat.last_activity,
                      'avatar': user.avatar,
                      'companion_id': user.id,
+                     'last_msg': chat.get_last_msg(),
                      }
                 )
     return {'chats': chats_info}

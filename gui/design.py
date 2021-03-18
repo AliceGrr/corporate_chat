@@ -44,7 +44,6 @@ def show_input_errors(self, err_log):
 
 class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     """Класс формы входа."""
-
     def __init__(self):
         super().__init__()
         self.ui = login.Ui_LoginForm()
@@ -61,10 +60,10 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         """Переход на форму регистрации."""
         change_windows(self, registration_window)
 
-    def to_chat_form(self):
+    def to_chat_form(self, username, user_id, avatar):
         """Переход на форму чата."""
         change_windows(self, chat_window)
-        chat_window.view_chats()
+        chat_window.load_data(username, user_id, avatar)
 
     def login(self):
         """Вход пользователя в систему."""
@@ -76,10 +75,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            chat_window.current_user = username
-            chat_window.current_user_id = err_log['user_id']
-            chat_window.current_user_avatar = err_log['avatar']
-            self.to_chat_form()
+            self.to_chat_form(username, err_log['user_id'], err_log['avatar'])
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
@@ -171,6 +167,19 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
+
+    def clear_find_user(self):
+        self.ui.find_user.clear()
+        self.view_chats()
+
+    def load_data(self, username, user_id, avatar):
+        """Получает всю необходимую для работы информацию."""
+        self.current_user_avatar = avatar
+        self.current_user_id = user_id
+        self.current_user = username
+        self.view_chats()
+        self.ui.username_label.setText(username)
+        # self.ui.username_label.setIcon(self.view_avatar(avatar, user_id))
 
     @staticmethod
     def view_avatar(filename, user_id=''):
@@ -264,7 +273,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                            'msg': msg_text})
             msg_time = response.json()['send_time']
             self.add_msg_item(msg_text=msg_text,
-                              msg_time=msg_time['send_time'],
+                              msg_time=msg_time,
                               sender_name=self.current_user,
                               sender=self.current_user_id,
                               filename=self.current_user_avatar)
@@ -303,7 +312,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.chats.clear()
                 self.ui.no_user_label.setText('no such user')
         else:
-            self.ui.chat_name.setText('')
+            self.ui.chat_name_lanel.setText('')
             self.view_chats()
 
     def create_new_chat(self, companion, companion_id):
@@ -319,8 +328,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def open_chat(self, chat):
         """Открытие конкретного чата."""
         self.ui.send_message.setEnabled(True)
-        companion = chat.chat_name
-        self.ui.chat_name.setText(companion)
+        self.ui.chat_name_lanel.setText(chat.chat_name)
         if chat.chat_id is None:
             self.temp_chat = chat
         else:

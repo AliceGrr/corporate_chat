@@ -21,7 +21,7 @@ class Ui_LoginForm(object):
 "QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
-"QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
+"QLineEdit {padding: 5; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
 "QLabel {color:rgb(28, 94, 217,);}")
         self.centralwidget = QtWidgets.QWidget(LoginForm)
         self.centralwidget.setObjectName("centralwidget")
