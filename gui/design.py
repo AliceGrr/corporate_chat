@@ -65,7 +65,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     def to_chat_form(self, username, user_id, avatar):
         """Переход на форму чата."""
         change_windows(self, chat_window)
-        chat_window.load_data(username, user_id, avatar)
+        chat_window.load_user_data(username, user_id, avatar)
 
     def login(self):
         """Вход пользователя в систему."""
@@ -167,6 +167,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.temp_chat = None
 
         self.ui.send_message.setEnabled(False)
+        self.ui.chat_settings.setIcon(self.load_button_icon('settings.png'))
+        self.ui.log_out.setIcon(self.load_button_icon('logout.png'))
+        self.ui.find_user_button.setIcon(self.load_button_icon('search.png'))
+        self.ui.send_message.setIcon(self.load_button_icon('send.png'))
 
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
@@ -179,28 +183,24 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.find_user.clear()
         self.view_chats()
 
-    def load_data(self, username, user_id, avatar):
+    def load_user_data(self, username, user_id, avatar):
         """Получает всю необходимую для работы информацию."""
         self.current_user_avatar = avatar
         self.current_user_id = user_id
         self.current_user = username
         self.view_chats()
         self.ui.username_label.setText(username)
-        self.ui.avatar_label.setPixmap(self.view_avatar(avatar, user_id, mode='label'))
-        self.ui.chat_settings.setIcon(self.load_button_icon('settings.png'))
-        self.ui.log_out.setIcon(self.load_button_icon('logout.png'))
+        self.ui.avatar_label.setPixmap(self.load_avatar(avatar, user_id, mode='label'))
 
     @staticmethod
-    def load_button_icon(icon_name, mode=''):
+    def load_button_icon(icon_name,):
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\resourses\\" + icon_name
-        if mode == 'label':
-            return QPixmap(icon_path)
         icon.addPixmap(QPixmap(icon_path))
         return icon
 
     @staticmethod
-    def view_avatar(filename, user_id='', mode=''):
+    def load_avatar(filename, user_id='', mode=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\cache\\images\\" + filename
@@ -225,7 +225,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time, sender_name)
 
-        item.setIcon(self.view_avatar(filename=filename, user_id=sender))
+        item.setIcon(self.load_avatar(filename=filename, user_id=sender))
         item.setSizeHint(msg.sizeHint())
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
@@ -246,7 +246,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.user_id = user_id
         item.chat_id = chat_id
 
-        item.setIcon(self.view_avatar(filename=filename, user_id=item.user_id))
+        item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
         item.setSizeHint(chat_item.sizeHint())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat_item)
