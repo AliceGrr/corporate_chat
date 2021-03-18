@@ -137,6 +137,7 @@ def receive_user_chats():
                      'avatar': user.avatar,
                      'companion_id': user.id,
                      'last_msg': chat.get_last_msg(),
+                     'last_activity': chat.last_activity,
                      }
                 )
     return {'chats': chats_info}
@@ -154,6 +155,7 @@ def find_user_by_name():
                     'chat_id': chat.Chats.id,
                     'last_msg': chat.Chats.last_activity,
                     'avatar': chat.avatar,
+                    'last_activity': chat.Chats.last_activity
                 } for chat in chats]
     suitable_users = [{'user_id': user.id,
                        'username': user.username,

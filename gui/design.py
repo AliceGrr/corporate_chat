@@ -3,6 +3,7 @@ import sys
 from PyQt5 import QtWidgets
 import requests
 from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import Qt
 from gui.gui_classes import login, registration, chat
 
 
@@ -44,6 +45,7 @@ def show_input_errors(self, err_log):
 
 class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     """Класс формы входа."""
+
     def __init__(self):
         super().__init__()
         self.ui = login.Ui_LoginForm()
@@ -117,15 +119,19 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 class MessageItemForm(QtWidgets.QWidget):
     """Форма одного сообщения."""
 
-    def __init__(self, msg_text, msg_time, sender_name):
+    def __init__(self, msg_text, msg_time, sender):
         super().__init__()
 
-        self.msg = QtWidgets.QLabel(f'{sender_name}: {msg_text}')
+        self.sender = QtWidgets.QLabel(sender)
         self.time = QtWidgets.QLabel(msg_time)
+        self.text = QtWidgets.QLabel(msg_text)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.msg)
-        layout.addWidget(self.time)
+        self.time.setAlignment(Qt.AlignRight)
+
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.sender, 0, 0)
+        layout.addWidget(self.text, 1, 0)
+        layout.addWidget(self.time, 0, 1)
 
         self.setLayout(layout)
 
@@ -133,16 +139,17 @@ class MessageItemForm(QtWidgets.QWidget):
 class ChatItemForm(QtWidgets.QWidget):
     """Форма одного чата в списке доступных."""
 
-    def __init__(self, chat_name, last_msg=''):
+    def __init__(self, chat_name, last_msg='', last_activity=''):
         super().__init__()
 
         self.chat_name = QtWidgets.QLabel(chat_name)
-        self.last_msg = QtWidgets.QLabel(last_msg)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.chat_name)
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.chat_name, 0, 0)
         if last_msg != '':
-            layout.addWidget(self.last_msg)
+            self.last_msg = QtWidgets.QLabel(last_msg)
+            self.last_activity = QtWidgets.QLabel(last_activity)
+            layout.addWidget(self.last_msg, 1, 0)
+            layout.addWidget(self.last_activity, 0, 1)
         self.setLayout(layout)
 
 
@@ -213,13 +220,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
-    def add_chat_item(self, chat_name, filename, last_msg='', chat_id=None, user_id=None):
+    def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
 
         item = QtWidgets.QListWidgetItem()
-        chat_item = ChatItemForm(chat_name, last_msg)
+        chat_item = ChatItemForm(chat_name, last_msg, last_activity)
 
         item.chat_name = chat_name
 
@@ -243,7 +250,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                    last_msg=chat['last_msg'],
                                    chat_id=chat['chat_id'],
                                    filename=chat['avatar'],
-                                   user_id=chat['companion_id'])
+                                   user_id=chat['companion_id'],
+                                   last_activity=chat['last_activity'])
         else:
             self.ui.no_user_label.setText('no chats yet')
 
@@ -299,7 +307,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                         self.add_chat_item(chat_name=suitable_chat['chat_name'],
                                            last_msg=suitable_chat['last_msg'],
                                            chat_id=suitable_chat['chat_id'],
-                                           filename=suitable_chat['avatar'])
+                                           filename=suitable_chat['avatar'],
+                                           last_activity=suitable_chat['last_activity'])
 
                 if len(user_list['suitable_users']) > 0:
                     self.ui.chats.addItem('~~users~~')
