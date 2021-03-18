@@ -1,5 +1,4 @@
 import os
-
 from . import app, db
 from flask import request, send_file
 from .models import Users, Messages, Chats
@@ -62,6 +61,7 @@ def login():
         return err_log
     elif user.check_password(request.form['psw']):
         err_log['user_id'] = user.id
+        err_log['avatar'] = user.avatar
         return err_log
     else:
         err_log['msg'] = 'Incorrect psw'
@@ -143,11 +143,8 @@ def receive_user_chats():
 def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
     current_user = Users.find_by_id(request.form['current_user_id'])
-    user_chat_ids = [chat.id for chat in current_user.find_user_chats()]
-    print(user_chat_ids)
-    users = current_user.get_suitable_users(request.form['example_username'])
-    chats = current_user.get_suitable_chats(request.form['example_username'], user_chat_ids)
-    print(chats)
+    users = current_user.get_suitable_users(request.form['requested_username'])
+    chats = current_user.get_suitable_chats(request.form['requested_username'])
 
     suitable_chats = [{
                     'chat_name': chat.Chats.chat_name,
@@ -186,5 +183,4 @@ def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
-    print(path)
     return send_file(f'{path}{user.avatar}')

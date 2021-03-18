@@ -16,13 +16,13 @@ class Ui_ChatForm(object):
         ChatForm.setObjectName("ChatForm")
         ChatForm.resize(1201, 796)
         ChatForm.setStyleSheet("QMainWindow {background-color:rgb(255, 255, 255)}\n"
-"QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
-"QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
-"QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
-"QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
-"QLabel {color:rgb(28, 94, 217,);}\n"
-"QListWidget {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
-"QPlainTextEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}")
+                               "QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+                               "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
+                               "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
+                               "QLineEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
+                               "QLabel {color:rgb(28, 94, 217,);}\n"
+                               "QListWidget {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+                               "QPlainTextEdit {border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}")
         self.centralwidget = QtWidgets.QWidget(ChatForm)
         self.centralwidget.setObjectName("centralwidget")
         self.chats = QtWidgets.QListWidget(self.centralwidget)
@@ -30,6 +30,10 @@ class Ui_ChatForm(object):
         self.chats.setObjectName("chats")
         self.find_user = QtWidgets.QLineEdit(self.centralwidget)
         self.find_user.setGeometry(QtCore.QRect(10, 10, 221, 31))
+        self.find_user.setText("")
+        self.find_user.setDragEnabled(False)
+        self.find_user.setReadOnly(False)
+        self.find_user.setClearButtonEnabled(True)
         self.find_user.setObjectName("find_user")
         self.messages = QtWidgets.QListWidget(self.centralwidget)
         self.messages.setGeometry(QtCore.QRect(280, 50, 911, 651))

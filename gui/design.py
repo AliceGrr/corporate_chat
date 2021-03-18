@@ -78,6 +78,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         else:
             chat_window.current_user = username
             chat_window.current_user_id = err_log['user_id']
+            chat_window.current_user_avatar = err_log['avatar']
             self.to_chat_form()
 
 
@@ -190,7 +191,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon.addPixmap(QPixmap(icon_path))
         return icon
 
-    def add_msg_item(self, msg_text, msg_time, sender, sender_name, filename=''):
+    def add_msg_item(self, msg_text, msg_time, sender, sender_name, filename):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.messages)
         msg = MessageItemForm(msg_text, msg_time, sender_name)
@@ -255,6 +256,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         msg_text = self.ui.message_text.toPlainText()
         if msg_text:
             if self.temp_chat:
+                self.ui.find_user.setText('')
                 self.create_new_chat(self.temp_chat.chat_name, self.temp_chat.user_id)
                 self.temp_chat = None
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
@@ -264,19 +266,19 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.add_msg_item(msg_text=msg_text,
                               msg_time=msg_time['send_time'],
                               sender_name=self.current_user,
-                              sender=self.current_user_id)
+                              sender=self.current_user_id,
+                              filename=self.current_user_avatar)
             self.view_chats()
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
-        example_username = self.ui.find_user.text()
-        if example_username:
+        requested_username = self.ui.find_user.text()
+
+        if requested_username:
             response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
-                                     data={'example_username': example_username,
+                                     data={'requested_username': requested_username,
                                            'current_user_id': self.current_user_id})
             user_list = response.json()
-            print(user_list['suitable_chats'])
-            print(user_list['suitable_users'])
 
             if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
                 self.ui.chats.clear()
@@ -329,11 +331,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     chat_window = ChatForm()
-    # chat_window.current_user = 'Alice'
-    # chat_window.current_user_id = 1
-    # chat_window.view_chats()
-    # chat_window.show()
-    # Спрятано до введения отслеживания авторизации
     registration_window = RegistrationForm()
     login_window = LoginForm()
     login_window.show()

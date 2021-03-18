@@ -1,7 +1,5 @@
 import os
-
 import requests
-from sqlalchemy import and_, not_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
@@ -50,32 +48,32 @@ class Users(db.Model):
         self.email = email
         self.set_avatar()
 
-    def get_suitable_chats(self, example_username, user_chat_ids):
+    def get_suitable_chats(self, example_username):
         return db.session.query(Chats, Users.avatar, Users.username) \
             .join(usersInChats, (usersInChats.c.chat_id == Chats.id)) \
             .join(Users, (usersInChats.c.user_id == Users.id)) \
-            .filter(and_(Users.username.startswith(example_username),
-                         (Chats.id.in_(user_chat_ids)),
-                         Users.id != self.id)) \
+            .filter(Users.username.startswith(example_username),
+                    Chats.id.in_([chat.id for chat in self.find_user_chats()]),
+                    Users.id != self.id) \
             .order_by(Chats.last_activity.desc())
 
     def get_suitable_users(self, example_username):
         return Users.query \
             .join(usersInChats, (usersInChats.c.user_id == Users.id)) \
             .join(Chats, (usersInChats.c.chat_id == Chats.id)) \
-            .filter(and_(Users.username.startswith(example_username),
-                         (Users.id != self.id)))
+            .filter(Users.username.startswith(example_username),
+                    Users.id != self.id)
 
     def find_user_chats(self):
         return Chats.query \
-            .join(usersInChats)\
+            .join(usersInChats) \
             .filter(usersInChats.c.user_id == self.id) \
             .order_by(Chats.last_activity.desc())
 
     def find_users_in_chats(self, chat_id):
         return Users.query \
-            .join(usersInChats)\
-            .filter(and_(Users.id != self.id, usersInChats.c.chat_id == chat_id))
+            .join(usersInChats) \
+            .filter(Users.id != self.id, usersInChats.c.chat_id == chat_id)
 
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
