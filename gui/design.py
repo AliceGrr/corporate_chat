@@ -3,11 +3,13 @@ import sys
 from PyQt5 import QtWidgets
 import requests
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
 
 PASSWORD_IN_STYLE = '''QLineEdit {padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";}'''
 ERR_STYLE = '''border: 2px solid rgb(255, 55, 118);'''
+USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
+TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 
 
 def change_windows(self, window_to_open):
@@ -124,14 +126,18 @@ class MessageItemForm(QtWidgets.QWidget):
 
     def __init__(self, msg_text, msg_time, sender):
         super().__init__()
+        layout = QtWidgets.QGridLayout()
 
         self.sender = QtWidgets.QLabel(sender)
         self.time = QtWidgets.QLabel(msg_time)
         self.text = QtWidgets.QLabel(msg_text)
 
+        self.sender.setStyleSheet(USERNAMES_STYLE)
+        self.time.setStyleSheet(TEXT_STYLE)
+        self.text.setStyleSheet(TEXT_STYLE)
+
         self.time.setAlignment(Qt.AlignRight)
 
-        layout = QtWidgets.QGridLayout()
         layout.addWidget(self.sender, 0, 0)
         layout.addWidget(self.text, 1, 0)
         layout.addWidget(self.time, 0, 1)
@@ -144,15 +150,22 @@ class ChatItemForm(QtWidgets.QWidget):
 
     def __init__(self, chat_name, last_msg='', last_activity=''):
         super().__init__()
+        layout = QtWidgets.QGridLayout()
 
         self.chat_name = QtWidgets.QLabel(chat_name)
-        layout = QtWidgets.QGridLayout()
+        self.chat_name.setStyleSheet(USERNAMES_STYLE)
+
         layout.addWidget(self.chat_name, 0, 0)
         if last_msg != '':
             self.last_msg = QtWidgets.QLabel(last_msg)
             self.last_activity = QtWidgets.QLabel(last_activity)
+
+            self.last_msg.setStyleSheet(TEXT_STYLE)
+            self.last_activity.setStyleSheet(TEXT_STYLE)
+
             layout.addWidget(self.last_msg, 1, 0)
             layout.addWidget(self.last_activity, 0, 1)
+
         self.setLayout(layout)
 
 
@@ -172,6 +185,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.block_buttons()
         self.load_buttons_icons()
         self.hide_menu()
+        self.set_avatars_size()
 
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
@@ -182,6 +196,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
+
+    def set_avatars_size(self):
+        """Установка размеров аватаров."""
+        size = QSize(40, 40)
+        self.ui.chats.setIconSize(size)
+        self.ui.messages.setIconSize(size)
 
     def load_buttons_icons(self):
         """Загрузка иконок кнопок."""
@@ -195,6 +215,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Блокировка кнопок."""
         self.ui.send_message.setDisabled(True)
         self.ui.chat_settings.setDisabled(True)
+
+    def unblock_buttons(self):
+        """Разблокировка кнопок."""
+        self.ui.send_message.setEnabled(True)
+        self.ui.chat_settings.setEnabled(True)
 
     def hide_menu(self):
         """Выключение меню."""
@@ -215,7 +240,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.last_activite_label.clear()
         self.ui.chats.clear()
         self.ui.messages.clear()
-        self.ui.avatar_label.clear()
 
     def to_login_form(self):
         """Переход на форму логина."""
@@ -408,9 +432,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""
-        self.ui.send_message.setEnabled(True)
-        self.ui.chat_settings.setEnabled(True)
+        self.unblock_buttons()
+
         self.ui.chat_name_lanel.setText(chat.chat_name)
+        self.ui.last_activite_label.setText('was 1 minute ago')
+
         if chat.chat_id is None:
             self.temp_chat = chat
         else:
