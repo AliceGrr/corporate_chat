@@ -22,8 +22,8 @@ class Ui_ChatForm(object):
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
 "QLineEdit {padding: 5; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
-"QLabel {color:rgb(28, 94, 217,);}\n"
 "QListWidget {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+"QLabel {color: rgb(28, 94, 217);}\n"
 "QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
 "")
         self.centralwidget = QtWidgets.QWidget(ChatForm)
@@ -51,6 +51,7 @@ class Ui_ChatForm(object):
         self.send_message.setObjectName("send_message")
         self.message_text = QtWidgets.QPlainTextEdit(self.centralwidget)
         self.message_text.setGeometry(QtCore.QRect(339, 730, 761, 70))
+        self.message_text.setStyleSheet("")
         self.message_text.setObjectName("message_text")
         self.find_user_button = QtWidgets.QPushButton(self.centralwidget)
         self.find_user_button.setGeometry(QtCore.QRect(280, 10, 50, 50))

@@ -38,6 +38,18 @@ def show_input_errors(self, err_log):
     self.ui.error_label.setText(answer)
 
 
+def download_avatar(user_id, icon_path):
+    response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
+                             data={'id': user_id},
+                             stream=True)
+    with open(icon_path, 'wb') as f:
+        for block in response.iter_content(1024):
+            if not block:
+                f.close()
+                break
+            f.write(block)
+
+
 class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     """Класс формы входа."""
 
@@ -132,17 +144,21 @@ class MessageItemForm(QtWidgets.QWidget):
         self.time = QtWidgets.QLabel(msg_time)
         self.text = QtWidgets.QLabel(msg_text)
 
-        self.sender.setStyleSheet(USERNAMES_STYLE)
-        self.time.setStyleSheet(TEXT_STYLE)
-        self.text.setStyleSheet(TEXT_STYLE)
-
-        self.time.setAlignment(Qt.AlignRight)
+        self.set_styles()
 
         layout.addWidget(self.sender, 0, 0)
         layout.addWidget(self.text, 1, 0)
         layout.addWidget(self.time, 0, 1)
 
         self.setLayout(layout)
+
+    def set_styles(self):
+        """Установка стилей."""
+        self.sender.setStyleSheet(USERNAMES_STYLE)
+        self.time.setStyleSheet(TEXT_STYLE)
+        self.text.setStyleSheet(TEXT_STYLE)
+
+        self.time.setAlignment(Qt.AlignRight)
 
 
 class ChatItemForm(QtWidgets.QWidget):
@@ -181,6 +197,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_chat = 0
         self.current_user_avatar = ''
         self.temp_chat = None
+        self.chat_edit_mode = False
 
         self.block_buttons()
         self.load_buttons_icons()
@@ -193,9 +210,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.log_out.clicked.connect(self.log_out)
         self.ui.menu_button.clicked.connect(self.show_menu)
         self.ui.avatar.clicked.connect(self.hide_menu)
+        self.ui.chat_settings.clicked.connect(self.open_chat_editor)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
+
+    def open_chat_editor(self):
+        """Открывает окно редактирования чата."""
+        pass
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -282,23 +304,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         return icon
 
     @staticmethod
-    def load_avatar(filename, user_id='', mode=''):
+    def load_avatar(filename, user_id=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\cache\\images\\" + filename
-        loaded_icon = QPixmap(icon_path)
-        if mode == 'label':
-            return loaded_icon
-        if loaded_icon.isNull():
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
-                                     data={'id': user_id},
-                                     stream=True)
-            with open(icon_path, 'wb') as f:
-                for block in response.iter_content(1024):
-                    if not block:
-                        f.close()
-                        break
-                    f.write(block)
+        if QPixmap(icon_path).isNull():
+            download_avatar(icon_path=icon_path,
+                            user_id=user_id)
         icon.addPixmap(QPixmap(icon_path))
         return icon
 
