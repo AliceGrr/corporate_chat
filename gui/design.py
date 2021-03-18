@@ -186,14 +186,27 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user = username
         self.view_chats()
         self.ui.username_label.setText(username)
-        # self.ui.username_label.setIcon(self.view_avatar(avatar, user_id))
+        self.ui.avatar_label.setPixmap(self.view_avatar(avatar, user_id, mode='label'))
+        self.ui.chat_settings.setIcon(self.load_button_icon('settings.png'))
+        self.ui.log_out.setIcon(self.load_button_icon('logout.png'))
 
     @staticmethod
-    def view_avatar(filename, user_id=''):
+    def load_button_icon(icon_name, mode=''):
+        icon = QIcon()
+        icon_path = os.getcwd() + "\\gui\\resourses\\" + icon_name
+        if mode == 'label':
+            return QPixmap(icon_path)
+        icon.addPixmap(QPixmap(icon_path))
+        return icon
+
+    @staticmethod
+    def view_avatar(filename, user_id='', mode=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\cache\\images\\" + filename
         loaded_icon = QPixmap(icon_path)
+        if mode == 'label':
+            return loaded_icon
         if loaded_icon.isNull():
             response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
                                      data={'id': user_id},
