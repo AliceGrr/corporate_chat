@@ -7,18 +7,9 @@ from PyQt5.QtCore import Qt
 from gui.gui_classes import login, registration, chat
 
 
-def clear_form(self):
-    """Очистка формы от введенных значений и маркеров ошибок."""
-    self.ui.login_in.setText('')
-    self.ui.password_in.setText('')
-    self.ui.error_label.setText('')
-    self.ui.login_in.setStyleSheet('''''')
-    self.ui.password_in.setStyleSheet('''''')
-
-
 def change_windows(self, window_to_open):
     """Переход на другое окно."""
-    clear_form(self)
+    self.clear_form()
     window_to_open.show()
     self.close()
 
@@ -58,6 +49,14 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.to_sign_up_button.clicked.connect(self.to_registration_form)
         self.ui.sign_in_button.clicked.connect(self.login)
 
+    def clear_form(self):
+        """Очистка формы от введенных значений и маркеров ошибок."""
+        self.ui.login_in.clear()
+        self.ui.password_in.clear()
+        self.ui.error_label.clear()
+        self.ui.login_in.setStyleSheet('''''')
+        self.ui.password_in.setStyleSheet('''''')
+
     def to_registration_form(self):
         """Переход на форму регистрации."""
         change_windows(self, registration_window)
@@ -95,10 +94,18 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         self.ui.sign_up_button.clicked.connect(self.register)
         self.ui.to_login_button.clicked.connect(self.to_login_form)
 
+    def clear_form(self):
+        """Очистка формы от введенных значений и маркеров ошибок."""
+        self.ui.login_in.clear()
+        self.ui.password_in.clear()
+        self.ui.error_label.clear()
+        self.ui.email_in.clear()
+        self.ui.login_in.setStyleSheet('''''')
+        self.ui.password_in.setStyleSheet('''''')
+        self.ui.email_in.setStyleSheet('''''')
+
     def to_login_form(self):
         """Переход на форму логина."""
-        self.ui.email_in.setText('')
-        self.ui.email_in.setStyleSheet('''''')
         change_windows(self, login_window)
 
     def register(self):
@@ -175,13 +182,40 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
         self.ui.find_user_button.clicked.connect(self.find_user)
+        self.ui.log_out.clicked.connect(self.log_out)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
 
+    def clear_form(self):
+        """Очистка формы от введенных значений и маркеров ошибок."""
+        self.ui.message_text.clear()
+        self.ui.find_user.clear()
+        self.ui.username_label.clear()
+        self.ui.chat_name_lanel.clear()
+        self.ui.last_activite_label.clear()
+        self.ui.chats.clear()
+        self.ui.messages.clear()
+        self.ui.avatar_label.clear()
+
+    def to_login_form(self):
+        """Переход на форму логина."""
+        change_windows(self, login_window)
+
+    def log_out(self):
+        self.delete_user_data()
+        self.to_login_form()
+
     def clear_find_user(self):
         self.ui.find_user.clear()
         self.view_chats()
+
+    def delete_user_data(self):
+        self.current_user = ''
+        self.current_user_id = 0
+        self.current_chat = 0
+        self.current_user_avatar = ''
+        self.temp_chat = None
 
     def load_user_data(self, username, user_id, avatar):
         """Получает всю необходимую для работы информацию."""
@@ -193,7 +227,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.avatar_label.setPixmap(self.load_avatar(avatar, user_id, mode='label'))
 
     @staticmethod
-    def load_button_icon(icon_name,):
+    def load_button_icon(icon_name):
+        """Загрузка изображения для кнопки."""
         icon = QIcon()
         icon_path = os.getcwd() + "\\gui\\resourses\\" + icon_name
         icon.addPixmap(QPixmap(icon_path))
@@ -252,6 +287,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.setItemWidget(item, chat_item)
 
     def view_chats(self):
+        """Показ чатов данного пользователя."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
         chats = (response.json())['chats']
