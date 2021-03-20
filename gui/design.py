@@ -70,7 +70,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.login_in.returnPressed.connect(self.ui.password_in.setFocus)
 
 
-
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
         self.ui.login_in.clear()
@@ -120,7 +119,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 
         # по нажатию Enter в login_in переводит фокус на email_in
         self.ui.login_in.returnPressed.connect(self.ui.email_in.setFocus)
-        # по нажатию Enter в email_im переводит фокус на password_in
+        # по нажатию Enter в email_in переводит фокус на password_in
         self.ui.email_in.returnPressed.connect(self.ui.password_in.setFocus)
 
     def clear_form(self):
@@ -232,7 +231,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # поиск пользователя по каждому введенному символу
         self.ui.find_user.textChanged.connect(self.find_user)
 
-        # self.ui.send_message.clicked.connect(self.send_message)
+        self.ui.send_message.clicked.connect(self.send_message)
         # self.ui.send_message.setAutoDefault(True)  # click on <Enter>
         # self.ui.message_text..connect(self.ui.send_message.click)
 

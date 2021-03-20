@@ -123,25 +123,44 @@ def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     current_user = Users.find_by_name(request.form['username'])
     user_chats = current_user.find_user_chats()
+    print(user_chats)
 
     chats_info = []
     for chat in user_chats:
-        users = current_user.find_users_in_chats(chat.id)
-        for user in users:
-            if len([users]) > 2:
-                pass
-            else:
-                last_msg = chat.get_last_msg()[:30]
-                last_msg = last_msg.replace("\n","")
-                chats_info.append(
-                    {'chat_name': chat.chat_name,
-                     'chat_id': chat.id,
-                     'avatar': user.avatar,
-                     'companion_id': user.id,
-                     'last_msg': last_msg,
-                     'last_activity': chat.last_activity,
-                     }
-                )
+        print(chat.amount_of_users())
+        if chat.amount_of_users() > 2:
+            pass
+        else:
+            user = current_user.find_companion(chat.id)
+            last_msg = chat.get_last_msg()[:30]
+            last_msg = last_msg.replace("\n", "")
+            chats_info.append(
+                {'chat_name': chat.chat_name,
+                 'chat_id': chat.id,
+                 'avatar': user.avatar,
+                 'companion_id': user.id,
+                 'last_msg': last_msg,
+                 'last_activity': chat.last_activity,
+                 }
+            )
+    # chats_info = []
+    # for chat in user_chats:
+    #     users = current_user.find_users_in_chats(chat.id)
+    #     for user in users:
+    #         if len([users]) > 2:
+    #             pass
+    #         else:
+    #             last_msg = chat.get_last_msg()[:30]
+    #             last_msg = last_msg.replace("\n","")
+    #             chats_info.append(
+    #                 {'chat_name': chat.chat_name,
+    #                  'chat_id': chat.id,
+    #                  'avatar': user.avatar,
+    #                  'companion_id': user.id,
+    #                  'last_msg': last_msg,
+    #                  'last_activity': chat.last_activity,
+    #                  }
+    #             )
     return {'chats': chats_info}
 
 
@@ -153,12 +172,12 @@ def find_user_by_name():
     chats = current_user.get_suitable_chats(request.form['requested_username'])
 
     suitable_chats = [{
-                    'chat_name': chat.Chats.chat_name,
-                    'chat_id': chat.Chats.id,
-                    'last_msg': chat.Chats.last_activity,
-                    'avatar': chat.avatar,
-                    'last_activity': chat.Chats.last_activity
-                } for chat in chats]
+        'chat_name': chat.Chats.chat_name,
+        'chat_id': chat.Chats.id,
+        'last_msg': chat.Chats.last_activity,
+        'avatar': chat.avatar,
+        'last_activity': chat.Chats.last_activity
+    } for chat in chats]
     suitable_users = [{'user_id': user.id,
                        'username': user.username,
                        'avatar': user.avatar,

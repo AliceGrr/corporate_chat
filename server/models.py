@@ -64,14 +64,15 @@ class Users(db.Model):
 
     def find_user_chats(self):
         return Chats.query \
-            .join(usersInChats) \
+            .join(usersInChats, usersInChats.c.chat_id == Chats.id) \
             .filter(usersInChats.c.user_id == self.id) \
             .order_by(Chats.last_activity.desc())
 
-    def find_users_in_chats(self, chat_id):
+    def find_companion(self, chat_id):
         return Users.query \
-            .join(usersInChats) \
-            .filter(Users.id != self.id, usersInChats.c.chat_id == chat_id)
+            .join(usersInChats, usersInChats.c.user_id == Users.id) \
+            .filter(Users.id != self.id, usersInChats.c.chat_id == chat_id) \
+            .first()
 
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
@@ -132,6 +133,12 @@ class Chats(db.Model):
     chat_name = db.Column(db.String(100))
     owner = db.Column(db.Integer)
     last_activity = db.Column(db.DateTime())
+
+    def amount_of_users(self):
+        return Chats.query \
+            .join(usersInChats, usersInChats.c.chat_id == Chats.id) \
+            .filter(Chats.id == self.id) \
+            .count()
 
     @staticmethod
     def find_by_id(chat_id):
