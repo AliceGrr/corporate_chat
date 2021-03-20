@@ -17,7 +17,7 @@ class Ui_RegisterForm(object):
         RegisterForm.resize(800, 600)
         RegisterForm.setMinimumSize(QtCore.QSize(800, 600))
         RegisterForm.setMaximumSize(QtCore.QSize(800, 600))
-        RegisterForm.setStyleSheet("QMainWindow {background-color:rgb(255, 255, 255)}\n"
+        RegisterForm.setStyleSheet("QMainWindow {background-color:rgb(249, 249, 249)}\n"
 "QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
@@ -75,7 +75,6 @@ class Ui_RegisterForm(object):
         self.to_login_button.setStyleSheet("QPushButton\n"
 "{border: 0;\n"
 "padding: 0;\n"
-"background-color: rgb(255, 255, 255);\n"
 "font: 25 12pt \"Yu Gothic UI Semibold\";\n"
 "color:rgb(28, 94, 217)}\n"
 "QPushButton:hover {color: rgb(20, 69, 182);}\n"

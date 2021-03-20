@@ -31,7 +31,7 @@ QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); borde
 QPushButton:hover {background-color:rgb(230, 230, 230);}
 QPushButton:pressed {background-color:rgb(212, 212, 212);}
 QLineEdit {padding: 5; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt &quot;Yu Gothic UI Light&quot;;}
-QListWidget {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}
+QListWidget {background-color:rgb(249, 249, 249); padding: 2; color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}
 QLabel {color: rgb(28, 94, 217);}
 QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt &quot;Yu Gothic UI Light&quot;;}
 </string>
@@ -58,7 +58,7 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
      <rect>
       <x>70</x>
       <y>10</y>
-      <width>200</width>
+      <width>260</width>
       <height>50</height>
      </rect>
     </property>
@@ -124,25 +124,6 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
     </property>
     <property name="styleSheet">
      <string notr="true"/>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="find_user_button">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>10</y>
-      <width>50</width>
-      <height>50</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>30</width>
-      <height>30</height>
-     </size>
     </property>
    </widget>
    <widget class="QLabel" name="no_user_label">
@@ -240,8 +221,11 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
       <x>10</x>
       <y>10</y>
       <width>321</width>
-      <height>61</height>
+      <height>51</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:rgb(249, 249, 249)</string>
     </property>
     <widget class="QPushButton" name="log_out">
      <property name="geometry">
@@ -251,6 +235,11 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
        <width>50</width>
        <height>50</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}
+QPushButton:hover {background-color:rgb(230, 230, 230);}
+QPushButton:pressed {background-color:rgb(212, 212, 212);}</string>
      </property>
      <property name="text">
       <string/>
@@ -268,11 +257,11 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
        <x>60</x>
        <y>0</y>
        <width>201</width>
-       <height>51</height>
+       <height>50</height>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">padding: 8; font: 63 14pt &quot;Yu Gothic UI Semibold&quot;;</string>
+      <string notr="true">padding: 8; font: 63 14pt &quot;Yu Gothic UI Semibold&quot;; border-radius: 10px; border: 1px solid #CCCCCC; background-color:rgb(255, 255, 255)</string>
      </property>
      <property name="text">
       <string/>
@@ -289,6 +278,11 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
        <width>50</width>
        <height>50</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}
+QPushButton:hover {background-color:rgb(230, 230, 230);}
+QPushButton:pressed {background-color:rgb(212, 212, 212);}</string>
      </property>
      <property name="text">
       <string/>

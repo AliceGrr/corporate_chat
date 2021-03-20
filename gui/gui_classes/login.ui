@@ -26,7 +26,7 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow {background-color:rgb(255, 255, 255)}
+   <string notr="true">QMainWindow {background-color:rgb(249, 249, 249)}
 QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}
 QPushButton:hover {background-color:rgb(230, 230, 230);}
 QPushButton:pressed {background-color:rgb(212, 212, 212);}
@@ -194,7 +194,6 @@ QLabel {color:rgb(28, 94, 217,);}</string>
      <string notr="true">QPushButton
 {border: 0;
 padding: 0;
-background-color: rgb(255, 255, 255);
 font: 25 12pt &quot;Yu Gothic UI Semibold&quot;;
 color:rgb(28, 94, 217)}
 QPushButton:hover {color: rgb(20, 69, 182);}

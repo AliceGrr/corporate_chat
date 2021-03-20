@@ -206,11 +206,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связки кнопок и функций
         self.ui.send_message.clicked.connect(self.send_message)
-        self.ui.find_user_button.clicked.connect(self.find_user)
         self.ui.log_out.clicked.connect(self.log_out)
         self.ui.menu_button.clicked.connect(self.show_menu)
         self.ui.avatar.clicked.connect(self.hide_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
+        self.ui.find_user.textChanged.connect(self.find_user)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
@@ -229,7 +229,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Загрузка иконок кнопок."""
         self.ui.chat_settings.setIcon(self.load_icon('settings.png'))
         self.ui.log_out.setIcon(self.load_icon('logout.png'))
-        self.ui.find_user_button.setIcon(self.load_icon('search.png'))
         self.ui.send_message.setIcon(self.load_icon('send.png'))
         self.ui.menu_button.setIcon(self.load_icon('menu.png'))
 
@@ -380,6 +379,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
+        msg_text = ' '.join(msg_text.split())
         if msg_text:
             if self.temp_chat:
                 self.ui.find_user.setText('')

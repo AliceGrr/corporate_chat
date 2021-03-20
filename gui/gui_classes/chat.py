@@ -22,7 +22,7 @@ class Ui_ChatForm(object):
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}\n"
 "QLineEdit {padding: 5; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
-"QListWidget {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+"QListWidget {background-color:rgb(249, 249, 249); padding: 2; color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "QLabel {color: rgb(28, 94, 217);}\n"
 "QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 25 14pt \"Yu Gothic UI Light\";}\n"
 "")
@@ -33,7 +33,7 @@ class Ui_ChatForm(object):
         self.chats.setIconSize(QtCore.QSize(30, 30))
         self.chats.setObjectName("chats")
         self.find_user = QtWidgets.QLineEdit(self.centralwidget)
-        self.find_user.setGeometry(QtCore.QRect(70, 10, 200, 50))
+        self.find_user.setGeometry(QtCore.QRect(70, 10, 260, 50))
         self.find_user.setStyleSheet("")
         self.find_user.setText("")
         self.find_user.setDragEnabled(False)
@@ -53,11 +53,6 @@ class Ui_ChatForm(object):
         self.message_text.setGeometry(QtCore.QRect(339, 730, 761, 70))
         self.message_text.setStyleSheet("")
         self.message_text.setObjectName("message_text")
-        self.find_user_button = QtWidgets.QPushButton(self.centralwidget)
-        self.find_user_button.setGeometry(QtCore.QRect(280, 10, 50, 50))
-        self.find_user_button.setText("")
-        self.find_user_button.setIconSize(QtCore.QSize(30, 30))
-        self.find_user_button.setObjectName("find_user_button")
         self.no_user_label = QtWidgets.QLabel(self.centralwidget)
         self.no_user_label.setGeometry(QtCore.QRect(60, 330, 171, 41))
         self.no_user_label.setStyleSheet("font: 25 15pt \"Yu Gothic UI Light\";")
@@ -85,21 +80,28 @@ class Ui_ChatForm(object):
         self.menu_button.setObjectName("menu_button")
         self.menu = QtWidgets.QWidget(self.centralwidget)
         self.menu.setEnabled(True)
-        self.menu.setGeometry(QtCore.QRect(10, 10, 321, 61))
+        self.menu.setGeometry(QtCore.QRect(10, 10, 321, 51))
+        self.menu.setStyleSheet("background-color:rgb(249, 249, 249)")
         self.menu.setObjectName("menu")
         self.log_out = QtWidgets.QPushButton(self.menu)
         self.log_out.setGeometry(QtCore.QRect(270, 0, 50, 50))
+        self.log_out.setStyleSheet("QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+"QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
+"QPushButton:pressed {background-color:rgb(212, 212, 212);}")
         self.log_out.setText("")
         self.log_out.setIconSize(QtCore.QSize(30, 30))
         self.log_out.setObjectName("log_out")
         self.username_label = QtWidgets.QLabel(self.menu)
-        self.username_label.setGeometry(QtCore.QRect(60, 0, 201, 51))
-        self.username_label.setStyleSheet("padding: 8; font: 63 14pt \"Yu Gothic UI Semibold\";")
+        self.username_label.setGeometry(QtCore.QRect(60, 0, 201, 50))
+        self.username_label.setStyleSheet("padding: 8; font: 63 14pt \"Yu Gothic UI Semibold\"; border-radius: 10px; border: 1px solid #CCCCCC; background-color:rgb(255, 255, 255)")
         self.username_label.setText("")
         self.username_label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.username_label.setObjectName("username_label")
         self.avatar = QtWidgets.QPushButton(self.menu)
         self.avatar.setGeometry(QtCore.QRect(0, 0, 50, 50))
+        self.avatar.setStyleSheet("QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+"QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
+"QPushButton:pressed {background-color:rgb(212, 212, 212);}")
         self.avatar.setText("")
         self.avatar.setIconSize(QtCore.QSize(40, 40))
         self.avatar.setObjectName("avatar")
