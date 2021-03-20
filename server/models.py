@@ -59,8 +59,6 @@ class Users(db.Model):
 
     def get_suitable_users(self, example_username):
         return Users.query \
-            .join(usersInChats, (usersInChats.c.user_id == Users.id)) \
-            .join(Chats, (usersInChats.c.chat_id == Chats.id)) \
             .filter(Users.username.startswith(example_username),
                     Users.id != self.id)
 
@@ -122,9 +120,6 @@ class Messages(db.Model):
         self.msg = msg
         self.time_stamp = datetime.datetime.now()
 
-    def __repr__(self):
-        return self.msg
-
 
 class Chats(db.Model):
     """Класс чата для БД."""
@@ -135,6 +130,7 @@ class Chats(db.Model):
         primaryjoin=(usersInChats.c.chat_id == id),
         backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
     chat_name = db.Column(db.String(100))
+    owner = db.Column(db.Integer)
     last_activity = db.Column(db.DateTime())
 
     @staticmethod
@@ -145,7 +141,10 @@ class Chats(db.Model):
         last_msg = Messages.query \
             .filter(Messages.chat == self.id) \
             .order_by(Messages.time_stamp.desc()).first()
-        return last_msg.msg
+        if last_msg:
+            return last_msg.msg
+        else:
+            return ''
 
     def __init__(self, users):
         self.chat_name = users

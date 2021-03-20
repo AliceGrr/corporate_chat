@@ -250,6 +250,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def show_menu(self):
         """Показ меню."""
+        self.ui.find_user.clear()
         self.ui.menu.show()
         self.ui.menu.setEnabled(True)
 
@@ -442,6 +443,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_chat = chat_info['chat_id']
         self.view_chats()
 
+    def clear_msgs(self):
+        self.ui.messages.clear()
+        self.ui.message_text.clear()
+
     def open_chat(self, chat):
         """Открытие конкретного чата."""
         self.unblock_buttons()
@@ -451,6 +456,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         if chat.chat_id is None:
             self.temp_chat = chat
+            self.clear_msgs()
         else:
             self.current_chat = chat.chat_id
             self.view_msgs()
