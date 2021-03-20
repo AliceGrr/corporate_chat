@@ -2,7 +2,7 @@ import os
 import sys
 from PyQt5 import QtWidgets
 import requests
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QKeyEvent
 from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
 
@@ -60,7 +60,16 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
 
         # связки кнопок и функций
         self.ui.to_sign_up_button.clicked.connect(self.to_registration_form)
+
+        # по нажатию Enter в password_in вызывает login
         self.ui.sign_in_button.clicked.connect(self.login)
+        self.ui.sign_in_button.setAutoDefault(True)
+        self.ui.password_in.returnPressed.connect(self.login)
+
+        # по нажатию Enter в login_in переводит фокус на password_in
+        self.ui.login_in.returnPressed.connect(self.ui.password_in.setFocus)
+
+
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -103,6 +112,16 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         # связки кнопок и функций
         self.ui.sign_up_button.clicked.connect(self.register)
         self.ui.to_login_button.clicked.connect(self.to_login_form)
+
+        # по нажатию Enter в password_in вызывает register
+        self.ui.sign_up_button.clicked.connect(self.register)
+        self.ui.sign_up_button.setAutoDefault(True)
+        self.ui.password_in.returnPressed.connect(self.register)
+
+        # по нажатию Enter в login_in переводит фокус на email_in
+        self.ui.login_in.returnPressed.connect(self.ui.email_in.setFocus)
+        # по нажатию Enter в email_im переводит фокус на password_in
+        self.ui.email_in.returnPressed.connect(self.ui.password_in.setFocus)
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -205,12 +224,17 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.set_avatars_size()
 
         # связки кнопок и функций
-        self.ui.send_message.clicked.connect(self.send_message)
         self.ui.log_out.clicked.connect(self.log_out)
         self.ui.menu_button.clicked.connect(self.show_menu)
         self.ui.avatar.clicked.connect(self.hide_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
+
+        # поиск пользователя по каждому введенному символу
         self.ui.find_user.textChanged.connect(self.find_user)
+
+        # self.ui.send_message.clicked.connect(self.send_message)
+        # self.ui.send_message.setAutoDefault(True)  # click on <Enter>
+        # self.ui.message_text..connect(self.ui.send_message.click)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
@@ -379,7 +403,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def send_message(self):
         """Отправка сообщения в чате."""
         msg_text = self.ui.message_text.toPlainText()
-        msg_text = ' '.join(msg_text.split())
+        msg_text = msg_text.strip()
         if msg_text:
             if self.temp_chat:
                 self.ui.find_user.setText('')

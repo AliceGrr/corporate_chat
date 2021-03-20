@@ -131,12 +131,14 @@ def receive_user_chats():
             if len([users]) > 2:
                 pass
             else:
+                last_msg = chat.get_last_msg()[:30]
+                last_msg = last_msg.replace("\n","")
                 chats_info.append(
                     {'chat_name': chat.chat_name,
                      'chat_id': chat.id,
                      'avatar': user.avatar,
                      'companion_id': user.id,
-                     'last_msg': chat.get_last_msg(),
+                     'last_msg': last_msg,
                      'last_activity': chat.last_activity,
                      }
                 )
