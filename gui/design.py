@@ -218,11 +218,11 @@ class UserItemForm(QtWidgets.QWidget):
         self.username = QtWidgets.QLabel(username)
         self.username.setStyleSheet(USERNAMES_STYLE)
 
-        self.add_button = QtWidgets.QPushButton('add')
-        self.add_button.setFixedSize(40, 40)
+        self.action_button = QtWidgets.QPushButton('add')
+        self.action_button.setFixedSize(40, 40)
 
         layout.addWidget(self.username)
-        layout.addWidget(self.add_button)
+        layout.addWidget(self.action_button)
 
         self.setLayout(layout)
 
@@ -286,6 +286,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.add_user_item(username=user['username'],
                                user_id=user['user_id'],
                                filename=user['avatar'])
+
+    def add_user_to_chat(self):
+        print('success!')
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -398,6 +401,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.chats)
         user = UserItemForm(username)
+        user.action_button.clicked.connect(self.add_user_to_chat)
 
         item.user_id = user_id
 
