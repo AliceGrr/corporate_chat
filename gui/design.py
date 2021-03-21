@@ -208,6 +208,25 @@ class ChatItemForm(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
+class UserItemForm(QtWidgets.QWidget):
+    """Форма одного пользователя."""
+
+    def __init__(self, username, action=''):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout()
+
+        self.username = QtWidgets.QLabel(username)
+        self.username.setStyleSheet(USERNAMES_STYLE)
+
+        self.add_button = QtWidgets.QPushButton('add')
+        self.add_button.setFixedSize(40, 40)
+
+        layout.addWidget(self.username)
+        layout.addWidget(self.add_button)
+
+        self.setLayout(layout)
+
+
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     """Класс формы чата."""
 
@@ -218,6 +237,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.temp_chat = None
         self.current_chat_id = 0
+        self.current_chat_users_amount = 0
 
         self.current_user = ''
         self.current_user_id = 0
@@ -227,13 +247,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.block_buttons()
         self.load_buttons_icons()
-        self.hide_menu()
+        self.hide_user_menu()
+        self.hide_chat_menu()
         self.set_avatars_size()
 
         # связки кнопок и функций
         self.ui.log_out.clicked.connect(self.log_out)
-        self.ui.menu_button.clicked.connect(self.show_menu)
-        self.ui.avatar.clicked.connect(self.hide_menu)
+        self.ui.menu_button.clicked.connect(self.show_user_menu)
+        self.ui.avatar.clicked.connect(self.hide_user_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
 
         # поиск пользователя по каждому введенному символу
@@ -247,7 +268,24 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def open_chat_editor(self):
         """Открывает окно редактирования чата."""
-        pass
+        if self.chat_edit_mode:
+            self.chat_edit_mode = False
+            self.hide_chat_menu()
+            self.view_chats()
+        else:
+            self.chat_edit_mode = True
+            self.show_chat_menu()
+            self.view_users_in_chat()
+
+    def view_users_in_chat(self):
+        self.ui.chats.clear()
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
+                                 data={'chat_id': self.current_chat_id})
+        users = (response.json())['users']
+        for user in users:
+            self.add_user_item(username=user['username'],
+                               user_id=user['user_id'],
+                               filename=user['avatar'])
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -266,22 +304,34 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Блокировка кнопок."""
         self.ui.send_message.setDisabled(True)
         self.ui.chat_settings.setDisabled(True)
+        self.ui.message_text.setDisabled(True)
 
     def unblock_buttons(self):
         """Разблокировка кнопок."""
         self.ui.send_message.setEnabled(True)
         self.ui.chat_settings.setEnabled(True)
+        self.ui.message_text.setEnabled(True)
 
-    def hide_menu(self):
+    def hide_chat_menu(self):
         """Выключение меню."""
-        self.ui.menu.hide()
-        self.ui.menu.setDisabled(True)
+        self.ui.chat_menu.hide()
+        self.ui.chat_menu.setDisabled(True)
 
-    def show_menu(self):
+    def show_chat_menu(self):
+        """Показ меню."""
+        self.ui.chat_menu.show()
+        self.ui.chat_menu.setEnabled(True)
+
+    def hide_user_menu(self):
+        """Выключение меню."""
+        self.ui.user_menu.hide()
+        self.ui.user_menu.setDisabled(True)
+
+    def show_user_menu(self):
         """Показ меню."""
         self.ui.find_user.clear()
-        self.ui.menu.show()
-        self.ui.menu.setEnabled(True)
+        self.ui.user_menu.show()
+        self.ui.user_menu.setEnabled(True)
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -301,7 +351,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Выход из чата."""
         self.delete_user_data()
         self.block_buttons()
-        self.hide_menu()
+        self.hide_user_menu()
         self.to_login_form()
 
     def clear_find_user(self):
@@ -343,6 +393,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                             user_id=user_id)
         icon.addPixmap(QPixmap(icon_path))
         return icon
+
+    def add_user_item(self, username, user_id, filename):
+        """Добавление нового msg_item объекта в QListWidget."""
+        item = QtWidgets.QListWidgetItem(self.ui.chats)
+        user = UserItemForm(username)
+
+        item.user_id = user_id
+
+        item.setIcon(self.load_avatar(filename=filename, user_id=user_id))
+        item.setSizeHint(self.chat_items_size())
+        self.ui.chats.addItem(item)
+        self.ui.chats.setItemWidget(item, user)
 
     def add_msg_item(self, msg_text, msg_time, sender, sender_name, filename):
         """Добавление нового msg_item объекта в QListWidget."""
@@ -483,6 +545,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         chat_info = response.json()
         self.view_chats()
         self.current_chat_id = chat_info['chat_id']
+        self.current_chat_users_amount = chat_info['amount_of_users']
 
     def clear_msgs(self):
         self.ui.messages.clear()
@@ -500,6 +563,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.clear_msgs()
         else:
             self.current_chat_id = chat.chat_id
+            self.current_chat_users_amount = chat.amount_of_users
             self.view_msgs()
 
 

@@ -189,7 +189,9 @@ def start_new_chat():
         user.add_to_chat(chat)
         db.session.commit()
 
-    return {'chat_id': chat.id, 'users': chat.chat_name}
+    return {'chat_id': chat.id,
+            'users': chat.chat_name,
+            'amount_of_users': chat.amount_of_users(), }
 
 
 @app.route('/corporate_chat/load_avatar', methods=['POST'])
@@ -198,3 +200,15 @@ def load_avatar():
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
     return send_file(f'{path}{user.avatar}')
+
+
+@app.route('/corporate_chat/users_in_chat', methods=['POST'])
+def users_in_chat():
+    """Список пользователей чата."""
+    users = Users.find_users_in_chat(request.form['chat_id'])
+    return {'users': [{
+        'user_id': user.id,
+        'username': user.username,
+        'avatar': user.avatar,
+    } for user in users]}
+

@@ -74,6 +74,13 @@ class Users(db.Model):
             .filter(Users.id != self.id, usersInChats.c.chat_id == chat_id) \
             .first()
 
+    @staticmethod
+    def find_users_in_chat(chat_id):
+        return Users.query \
+            .join(usersInChats, usersInChats.c.user_id == Users.id) \
+            .filter(usersInChats.c.chat_id == chat_id) \
+            .all()
+
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
 
