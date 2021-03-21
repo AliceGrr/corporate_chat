@@ -218,8 +218,11 @@ class UserItemForm(QtWidgets.QWidget):
 
         self.username = QtWidgets.QLabel(username)
         self.username.setStyleSheet(USERNAMES_STYLE)
-
-        self.action_button = QtWidgets.QPushButton('add')
+        if action == 'add':
+            button_text = 'add'
+        else:
+            button_text = 'delete'
+        self.action_button = QtWidgets.QPushButton(button_text)
         self.action_button.setFixedSize(40, 40)
 
         layout.addWidget(self.username)
@@ -245,6 +248,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user_avatar = ''
 
         self.chat_edit_mode = False
+        self.edit_type = 'del'
 
         self.block_buttons()
         self.load_buttons_icons()
@@ -257,6 +261,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.menu_button.clicked.connect(self.show_user_menu)
         self.ui.avatar.clicked.connect(self.hide_user_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
+        self.ui.add_or_delete_button.clicked.connect(self.change_edit_type)
 
         # поиск пользователя по каждому введенному символу
         self.ui.find_user.textChanged.connect(self.find_user)
@@ -266,6 +271,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.open_chat)
+
+    def change_edit_type(self):
+        if self.edit_type == 'del':
+            self.edit_type = 'add'
+            self.ui.add_or_delete_button.setText('Delete users')
+            self.view_users()
+        else:
+            self.edit_type = 'del'
+            self.ui.add_or_delete_button.setText('Add users')
+            self.view_users()
 
     def open_chat_editor(self):
         """Открывает окно редактирования чата."""
@@ -280,20 +295,29 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
             self.ui.chats.itemClicked.disconnect()
             self.show_chat_menu()
-            self.view_users_in_chat()
+            self.view_users()
 
-    def view_users_in_chat(self):
+    def view_users(self):
         self.ui.chats.clear()
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
-                                 data={'chat_id': self.current_chat_id})
-        users = (response.json())['users']
-        for user in users:
+        if self.edit_type == 'add':
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
+                                     data={'chat_id': self.current_chat_id,
+                                           'user_id': self.current_user_id})
+        else:
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
+                                     data={'chat_id': self.current_chat_id})
+        users = response.json()
+        for user in users['users']:
             self.add_user_item(username=user['username'],
                                user_id=user['user_id'],
-                               filename=user['avatar'])
+                               filename=user['avatar'],
+                               action=self.edit_type)
 
-    def add_user_to_chat(self):
-        print('success!')
+    def add_user_to_chat(self, user_id):
+        print(user_id)
+
+    def del_user_from_chat(self, user_id):
+        print(user_id)
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -402,13 +426,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon.addPixmap(QPixmap(icon_path))
         return icon
 
-    def add_user_item(self, username, user_id, filename):
+    def add_user_item(self, username, user_id, filename, action=''):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.chats)
-        user = UserItemForm(username)
-        user.action_button.clicked.connect(self.add_user_to_chat)
-
-        item.user_id = user_id
+        user = UserItemForm(username, action=action)
+        if action == 'add':
+            user.action_button.clicked.connect(lambda: self.add_user_to_chat(user_id))
+        else:
+            user.action_button.clicked.connect(lambda: self.del_user_from_chat(user_id))
 
         item.setIcon(self.load_avatar(filename=filename, user_id=user_id))
         item.setSizeHint(self.chat_items_size())

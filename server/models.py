@@ -1,5 +1,6 @@
 import os
 import requests
+from sqlalchemy import not_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
@@ -81,6 +82,13 @@ class Users(db.Model):
             .filter(usersInChats.c.chat_id == chat_id) \
             .all()
 
+    # TODO: fix that
+    def find_users_not_in_chat(self, chat_id):
+        return Users.query \
+            .join(usersInChats, usersInChats.c.user_id == Users.id) \
+            .filter(not_(usersInChats.c.chat_id == chat_id), Users.id != self.id) \
+            .all()
+
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)
 
@@ -146,6 +154,11 @@ class Chats(db.Model):
             .join(usersInChats, usersInChats.c.chat_id == Chats.id) \
             .filter(Chats.id == self.id) \
             .count()
+
+    @staticmethod
+    def find_owner(chat_id):
+        return Chats.query \
+                .filter(Chats.id == chat_id).first()
 
     @staticmethod
     def find_by_id(chat_id):

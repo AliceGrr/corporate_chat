@@ -123,7 +123,6 @@ def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     current_user = Users.find_by_name(request.form['username'])
     user_chats = current_user.find_user_chats()
-    print(user_chats)
 
     chats_info = []
     for chat in user_chats:
@@ -177,7 +176,6 @@ def start_new_chat():
     """Создание чата."""
     chat = Chats(request.form['users'])
     owner = request.form['owner']
-    print(owner)
     # if :
     #     chat.owner = request.form['owner']
     db.session.add(chat)
@@ -206,9 +204,22 @@ def load_avatar():
 def users_in_chat():
     """Список пользователей чата."""
     users = Users.find_users_in_chat(request.form['chat_id'])
+    owner = Chats.find_owner(request.form['chat_id'])
+    return {'users': [{
+        'user_id': user.id,
+        'username': user.username,
+        'avatar': user.avatar,
+    } for user in users],
+        'owner': owner.owner}
+
+
+@app.route('/corporate_chat/users_not_in_chat', methods=['POST'])
+def users_not_in_chat():
+    """Список пользователей вне чата."""
+    current_user = Users.find_by_id(request.form['user_id'])
+    users = current_user.find_users_not_in_chat(request.form['chat_id'])
     return {'users': [{
         'user_id': user.id,
         'username': user.username,
         'avatar': user.avatar,
     } for user in users]}
-
