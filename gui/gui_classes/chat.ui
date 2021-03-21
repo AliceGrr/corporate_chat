@@ -46,6 +46,9 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
       <height>730</height>
      </rect>
     </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
     <property name="iconSize">
      <size>
       <width>30</width>
@@ -86,6 +89,9 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
       <width>851</width>
       <height>650</height>
      </rect>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
     </property>
     <property name="iconSize">
      <size>

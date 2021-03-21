@@ -127,8 +127,8 @@ def receive_user_chats():
 
     chats_info = []
     for chat in user_chats:
-        print(chat.amount_of_users())
-        if chat.amount_of_users() > 2:
+        amount_of_users = chat.amount_of_users()
+        if amount_of_users > 2:
             pass
         else:
             user = current_user.find_companion(chat.id)
@@ -141,26 +141,9 @@ def receive_user_chats():
                  'companion_id': user.id,
                  'last_msg': last_msg,
                  'last_activity': chat.last_activity,
+                 'amount_of_users': amount_of_users,
                  }
             )
-    # chats_info = []
-    # for chat in user_chats:
-    #     users = current_user.find_users_in_chats(chat.id)
-    #     for user in users:
-    #         if len([users]) > 2:
-    #             pass
-    #         else:
-    #             last_msg = chat.get_last_msg()[:30]
-    #             last_msg = last_msg.replace("\n","")
-    #             chats_info.append(
-    #                 {'chat_name': chat.chat_name,
-    #                  'chat_id': chat.id,
-    #                  'avatar': user.avatar,
-    #                  'companion_id': user.id,
-    #                  'last_msg': last_msg,
-    #                  'last_activity': chat.last_activity,
-    #                  }
-    #             )
     return {'chats': chats_info}
 
 
@@ -176,7 +159,8 @@ def find_user_by_name():
         'chat_id': chat.Chats.id,
         'last_msg': chat.Chats.last_activity,
         'avatar': chat.avatar,
-        'last_activity': chat.Chats.last_activity
+        'last_activity': chat.Chats.last_activity,
+        'amount_of_users': chat.Chats.amount_of_users(),
     } for chat in chats]
     suitable_users = [{'user_id': user.id,
                        'username': user.username,
@@ -192,6 +176,8 @@ def find_user_by_name():
 def start_new_chat():
     """Создание чата."""
     chat = Chats(request.form['users'])
+    if request.form['owner']:
+        chat.owner = request.form['owner']
     db.session.add(chat)
     db.session.commit()
 

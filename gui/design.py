@@ -12,9 +12,11 @@ USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
 TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 
 
-def change_windows(self, window_to_open):
+def change_windows(self, window_to_open, login_in_filed=None):
     """Переход на другое окно."""
     self.clear_form()
+    if login_in_filed:
+        window_to_open.ui.login_in.setFocus()
     window_to_open.show()
     self.close()
 
@@ -69,6 +71,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         # по нажатию Enter в login_in переводит фокус на password_in
         self.ui.login_in.returnPressed.connect(self.ui.password_in.setFocus)
 
+        self.ui.login_in.setFocus()
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -80,7 +83,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
 
     def to_registration_form(self):
         """Переход на форму регистрации."""
-        change_windows(self, registration_window)
+        change_windows(self, registration_window, login_in_filed=True)
 
     def to_chat_form(self, username, user_id, avatar):
         """Переход на форму чата."""
@@ -122,6 +125,8 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         # по нажатию Enter в email_in переводит фокус на password_in
         self.ui.email_in.returnPressed.connect(self.ui.password_in.setFocus)
 
+        self.ui.login_in.setFocus()
+
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
         self.ui.login_in.clear()
@@ -134,7 +139,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
 
     def to_login_form(self):
         """Переход на форму логина."""
-        change_windows(self, login_window)
+        change_windows(self, login_window, login_in_filed=True)
 
     def register(self):
         """Регистрация пользователя."""
@@ -184,12 +189,12 @@ class ChatItemForm(QtWidgets.QWidget):
 
     def __init__(self, chat_name, last_msg='', last_activity=''):
         super().__init__()
-        layout = QtWidgets.QGridLayout()
+        layout = QtWidgets.QFormLayout()
 
         self.chat_name = QtWidgets.QLabel(chat_name)
         self.chat_name.setStyleSheet(USERNAMES_STYLE)
-
-        layout.addWidget(self.chat_name, 0, 0)
+        if last_msg == '':
+            layout.addRow(self.chat_name)
         if last_msg != '':
             self.last_msg = QtWidgets.QLabel(last_msg)
             self.last_activity = QtWidgets.QLabel(last_activity)
@@ -197,8 +202,9 @@ class ChatItemForm(QtWidgets.QWidget):
             self.last_msg.setStyleSheet(TEXT_STYLE)
             self.last_activity.setStyleSheet(TEXT_STYLE)
 
-            layout.addWidget(self.last_msg, 1, 0)
-            layout.addWidget(self.last_activity, 0, 1)
+            layout.addRow(self.chat_name, self.last_activity)
+            layout.addRow(self.last_msg)
+            layout.setHorizontalSpacing(40)
 
         self.setLayout(layout)
 
@@ -232,7 +238,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.find_user.textChanged.connect(self.find_user)
 
         self.ui.send_message.clicked.connect(self.send_message)
-        # self.ui.send_message.setAutoDefault(True)  # click on <Enter>
         # self.ui.message_text..connect(self.ui.send_message.click)
 
         # связка списка чатов с функцией
@@ -288,7 +293,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def to_login_form(self):
         """Переход на форму логина."""
-        change_windows(self, login_window)
+        change_windows(self, login_window, login_in_filed=True)
 
     def log_out(self):
         """Выход из чата."""
@@ -350,6 +355,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
+    @staticmethod
+    def chat_items_size():
+        """Установка размеров аватаров."""
+        return QSize(320, 55)
+
     def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
@@ -364,7 +374,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.chat_id = chat_id
 
         item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
-        item.setSizeHint(chat_item.sizeHint())
+        item.setSizeHint(self.chat_items_size())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat_item)
 
