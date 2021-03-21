@@ -176,8 +176,10 @@ def find_user_by_name():
 def start_new_chat():
     """Создание чата."""
     chat = Chats(request.form['users'])
-    if request.form['owner']:
-        chat.owner = request.form['owner']
+    owner = request.form['owner']
+    print(owner)
+    # if :
+    #     chat.owner = request.form['owner']
     db.session.add(chat)
     db.session.commit()
 

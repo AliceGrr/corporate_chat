@@ -2,7 +2,7 @@ import os
 import sys
 from PyQt5 import QtWidgets
 import requests
-from PyQt5.QtGui import QIcon, QPixmap, QKeyEvent
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
 
@@ -161,7 +161,7 @@ class MessageItemForm(QtWidgets.QWidget):
 
     def __init__(self, msg_text, msg_time, sender):
         super().__init__()
-        layout = QtWidgets.QGridLayout()
+        layout = QtWidgets.QFormLayout()
 
         self.sender = QtWidgets.QLabel(sender)
         self.time = QtWidgets.QLabel(msg_time)
@@ -169,9 +169,8 @@ class MessageItemForm(QtWidgets.QWidget):
 
         self.set_styles()
 
-        layout.addWidget(self.sender, 0, 0)
-        layout.addWidget(self.text, 1, 0)
-        layout.addWidget(self.time, 0, 1)
+        layout.addRow(self.sender, self.time)
+        layout.addRow(self.text)
 
         self.setLayout(layout)
 
@@ -201,10 +200,10 @@ class ChatItemForm(QtWidgets.QWidget):
 
             self.last_msg.setStyleSheet(TEXT_STYLE)
             self.last_activity.setStyleSheet(TEXT_STYLE)
+            self.last_activity.setAlignment(Qt.AlignRight)
 
             layout.addRow(self.chat_name, self.last_activity)
             layout.addRow(self.last_msg)
-            layout.setHorizontalSpacing(40)
 
         self.setLayout(layout)
 
@@ -216,11 +215,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         super().__init__()
         self.ui = chat.Ui_ChatForm()
         self.ui.setupUi(self)
+
+        self.temp_chat = None
+        self.current_chat_id = 0
+
         self.current_user = ''
         self.current_user_id = 0
-        self.current_chat = 0
         self.current_user_avatar = ''
-        self.temp_chat = None
+
         self.chat_edit_mode = False
 
         self.block_buttons()
@@ -310,7 +312,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Удаление пользовательских данных."""
         self.current_user = ''
         self.current_user_id = 0
-        self.current_chat = 0
+        self.current_chat_id = 0
         self.current_user_avatar = ''
         self.temp_chat = None
 
@@ -360,7 +362,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Установка размеров аватаров."""
         return QSize(320, 55)
 
-    def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None):
+    def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None,
+                      amount_of_users=0):
         """Добавление нового chat_item объекта в QListWidget."""
         chat_name = chat_name.replace(self.current_user, '')
         chat_name = chat_name.replace(',', '')
@@ -372,6 +375,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         item.user_id = user_id
         item.chat_id = chat_id
+        item.amount_of_users = amount_of_users
 
         item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
         item.setSizeHint(self.chat_items_size())
@@ -392,7 +396,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                    chat_id=chat['chat_id'],
                                    filename=chat['avatar'],
                                    user_id=chat['companion_id'],
-                                   last_activity=chat['last_activity'])
+                                   last_activity=chat['last_activity'],
+                                   amount_of_users=chat['amount_of_users']
+                                   )
         else:
             self.ui.no_user_label.setText('no chats yet')
 
@@ -400,7 +406,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Выводит сообщения данного чата."""
         self.ui.messages.clear()
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
-                                 data={'chat_id': self.current_chat})
+                                 data={'chat_id': self.current_chat_id})
         msgs = response.json()
         for msg in msgs['msgs']:
             self.add_msg_item(msg_text=msg['msg_text'],
@@ -419,7 +425,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.create_new_chat(self.temp_chat.chat_name, self.temp_chat.user_id)
                 self.temp_chat = None
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
-                                     data={'sender': self.current_user_id, 'to_chat': self.current_chat,
+                                     data={'sender': self.current_user_id, 'to_chat': self.current_chat_id,
                                            'msg': msg_text})
             msg_time = response.json()['send_time']
             self.add_msg_item(msg_text=msg_text,
@@ -432,7 +438,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def find_user(self):
         """Поиск пользователя по введенному значению."""
         requested_username = self.ui.find_user.text()
-
         if requested_username:
             response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
                                      data={'requested_username': requested_username,
@@ -450,7 +455,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                            last_msg=suitable_chat['last_msg'],
                                            chat_id=suitable_chat['chat_id'],
                                            filename=suitable_chat['avatar'],
-                                           last_activity=suitable_chat['last_activity'])
+                                           last_activity=suitable_chat['last_activity'],
+                                           amount_of_users=suitable_chat['amount_of_users']
+                                           )
 
                 if len(user_list['suitable_users']) > 0:
                     self.ui.chats.addItem('~~users~~')
@@ -461,7 +468,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
             else:
                 self.ui.chats.clear()
-                self.ui.no_user_label.setText('no such user')
+                self.ui.no_user_label.setText('nothing found')
         else:
             self.ui.chat_name_lanel.setText('')
             self.view_chats()
@@ -471,10 +478,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         user_ids = ''.join(str(user_id) for user_id in [self.current_user_id, companion_id])
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
                                  data={'users': f'{companion},{self.current_user}',
-                                       'users_ids': user_ids})
+                                       'users_ids': user_ids,
+                                       'owner': 0})
         chat_info = response.json()
-        self.current_chat = chat_info['chat_id']
         self.view_chats()
+        self.current_chat_id = chat_info['chat_id']
 
     def clear_msgs(self):
         self.ui.messages.clear()
@@ -491,7 +499,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.temp_chat = chat
             self.clear_msgs()
         else:
-            self.current_chat = chat.chat_id
+            self.current_chat_id = chat.chat_id
             self.view_msgs()
 
 
