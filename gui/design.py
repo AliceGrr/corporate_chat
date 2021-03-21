@@ -6,7 +6,8 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
 
-PASSWORD_IN_STYLE = '''QLineEdit {padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";}'''
+PASSWORD_IN_STYLE = '''padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";'''
+PASSWORD_ERR_STYLE = '''padding: 5; border-radius: 10px; border: 2px solid rgb(255, 55, 118); font: 25 8pt "Yu Gothic UI Light";'''
 ERR_STYLE = '''border: 2px solid rgb(255, 55, 118);'''
 USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
 TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
@@ -28,7 +29,7 @@ def show_input_errors(self, err_log):
     else:
         self.ui.login_in.setStyleSheet('''''')
     if err_log['psw_err']:
-        self.ui.password_in.setStyleSheet(ERR_STYLE)
+        self.ui.password_in.setStyleSheet(PASSWORD_ERR_STYLE)
     else:
         self.ui.password_in.setStyleSheet(PASSWORD_IN_STYLE)
     if 'email_err' in err_log:
@@ -270,10 +271,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Открывает окно редактирования чата."""
         if self.chat_edit_mode:
             self.chat_edit_mode = False
+            self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+            self.ui.chats.itemClicked.connect(self.open_chat)
             self.hide_chat_menu()
             self.view_chats()
         else:
             self.chat_edit_mode = True
+            self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+            self.ui.chats.itemClicked.disconnect()
             self.show_chat_menu()
             self.view_users_in_chat()
 

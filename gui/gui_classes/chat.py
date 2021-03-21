@@ -44,6 +44,7 @@ class Ui_ChatForm(object):
         self.messages = QtWidgets.QListWidget(self.centralwidget)
         self.messages.setGeometry(QtCore.QRect(340, 70, 851, 650))
         self.messages.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.messages.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.messages.setIconSize(QtCore.QSize(30, 30))
         self.messages.setObjectName("messages")
         self.send_message = QtWidgets.QPushButton(self.centralwidget)
@@ -111,24 +112,15 @@ class Ui_ChatForm(object):
         self.chat_menu.setGeometry(QtCore.QRect(10, 10, 321, 51))
         self.chat_menu.setStyleSheet("background-color:rgb(249, 249, 249)")
         self.chat_menu.setObjectName("chat_menu")
-        self.avatar_2 = QtWidgets.QPushButton(self.chat_menu)
-        self.avatar_2.setGeometry(QtCore.QRect(0, 0, 50, 50))
-        self.avatar_2.setStyleSheet("QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
+        self.add_or_delete_button = QtWidgets.QPushButton(self.chat_menu)
+        self.add_or_delete_button.setGeometry(QtCore.QRect(209, 0, 110, 50))
+        self.add_or_delete_button.setStyleSheet("QPushButton {font: 12pt \"Yu Gothic UI Semilight\"; background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
 "QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
 "QPushButton:pressed {background-color:rgb(212, 212, 212);}")
-        self.avatar_2.setText("")
-        self.avatar_2.setIconSize(QtCore.QSize(40, 40))
-        self.avatar_2.setObjectName("avatar_2")
-        self.log_out_2 = QtWidgets.QPushButton(self.chat_menu)
-        self.log_out_2.setGeometry(QtCore.QRect(270, 0, 50, 50))
-        self.log_out_2.setStyleSheet("QPushButton {background-color:rgb(249, 249, 249);  color:rgb(28, 94, 217); border-radius: 10px;border: 1px solid #CCCCCC;}\n"
-"QPushButton:hover {background-color:rgb(230, 230, 230);}\n"
-"QPushButton:pressed {background-color:rgb(212, 212, 212);}")
-        self.log_out_2.setText("")
-        self.log_out_2.setIconSize(QtCore.QSize(30, 30))
-        self.log_out_2.setObjectName("log_out_2")
+        self.add_or_delete_button.setIconSize(QtCore.QSize(30, 30))
+        self.add_or_delete_button.setObjectName("add_or_delete_button")
         self.find_user_2 = QtWidgets.QLineEdit(self.chat_menu)
-        self.find_user_2.setGeometry(QtCore.QRect(59, 0, 200, 50))
+        self.find_user_2.setGeometry(QtCore.QRect(0, 0, 200, 50))
         self.find_user_2.setStyleSheet("")
         self.find_user_2.setText("")
         self.find_user_2.setDragEnabled(False)
@@ -143,3 +135,4 @@ class Ui_ChatForm(object):
     def retranslateUi(self, ChatForm):
         _translate = QtCore.QCoreApplication.translate
         ChatForm.setWindowTitle(_translate("ChatForm", "MainWindow"))
+        self.add_or_delete_button.setText(_translate("ChatForm", "Add users"))
