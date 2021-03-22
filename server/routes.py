@@ -156,7 +156,7 @@ def find_user_by_name():
     suitable_chats = [{
         'chat_name': chat.Chats.chat_name,
         'chat_id': chat.Chats.id,
-        'last_msg': chat.Chats.last_activity,
+        'last_msg': chat.Chats.get_last_msg(),
         'avatar': chat.avatar,
         'last_activity': chat.Chats.last_activity,
         'amount_of_users': chat.Chats.amount_of_users(),
@@ -172,16 +172,20 @@ def find_user_by_name():
 
 
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
-def start_new_chat():
+def start_new_chat(owner=None, users_ids=None):
     """Создание чата."""
-    chat = Chats(request.form['users'])
     owner = request.form['owner']
-    # if :
-    #     chat.owner = request.form['owner']
+    users_ids = request.form['users_ids']
+
+    chat_name = ''
+    for user_id in users_ids:
+        user = Users.find_by_id(int(user_id))
+        chat_name += user.username + ', '
+
+    chat = Chats(chat_name)
     db.session.add(chat)
     db.session.commit()
 
-    users_ids = list(request.form['users_ids'])
     for user_id in users_ids:
         user = Users.find_by_id(int(user_id))
         user.add_to_chat(chat)
@@ -223,3 +227,26 @@ def users_not_in_chat():
         'username': user.username,
         'avatar': user.avatar,
     } for user in users]}
+
+
+@app.route('/corporate_chat/add_to_chat', methods=['POST'])
+def add_to_chat():
+    """Добавление пользователя в чат."""
+    user_to_add = Users.find_by_id(request.form['user_id'])
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    if current_chat.amount_of_users == 2:
+        users = Users.find_users_in_chat(request.form['chat_id'])
+        start_new_chat()
+    user_to_add.add_to_chat(current_chat)
+    return {'success'}
+
+
+@app.route('/corporate_chat/remove_from_chat', methods=['POST'])
+def delete_from_chat():
+    """Удаление пользователя из чата."""
+    user_to_delete = Users.find_by_id(request.form['user_id'])
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    if current_chat.amount_of_users == 2:
+        pass
+    user_to_delete.remove_from_chat(current_chat)
+    return {'success'}
