@@ -201,6 +201,7 @@ def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
+    print(path)
     return send_file(f'{path}{user.avatar}')
 
 
@@ -220,8 +221,9 @@ def users_in_chat():
 @app.route('/corporate_chat/users_not_in_chat', methods=['POST'])
 def users_not_in_chat():
     """Список пользователей вне чата."""
-    current_user = Users.find_by_id(request.form['user_id'])
-    users = current_user.find_users_not_in_chat(request.form['chat_id'])
+    users_in = [user.id for user in Users.find_users_in_chat(request.form['chat_id'])]
+    users = Users.find_users_not_in_chat(users_in)
+    print(users)
     return {'users': [{
         'user_id': user.id,
         'username': user.username,

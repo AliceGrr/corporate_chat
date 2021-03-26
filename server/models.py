@@ -82,12 +82,10 @@ class Users(db.Model):
             .filter(usersInChats.c.chat_id == chat_id) \
             .all()
 
-    # TODO: fix that
-    def find_users_not_in_chat(self, chat_id):
+    @staticmethod
+    def find_users_not_in_chat(users):
         return Users.query \
-            .join(usersInChats, usersInChats.c.user_id == Users.id) \
-            .filter(not_(usersInChats.c.chat_id == chat_id), Users.id != self.id) \
-            .all()
+            .filter(~Users.id.in_(users))
 
     def set_password(self, password):
         self.psw_hash = generate_password_hash(password)

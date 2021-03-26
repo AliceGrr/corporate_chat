@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from PyQt5 import QtWidgets
@@ -415,7 +414,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def load_icon(icon_name):
         """Загрузка изображения."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\\gui\\resourses\\" + icon_name
+        icon_path = os.getcwd() + "\\resourses\\" + icon_name
         icon.addPixmap(QPixmap(icon_path))
         return icon
 
@@ -423,7 +422,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def load_avatar(filename, user_id=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\\gui\\cache\\images\\" + filename
+        icon_path = os.getcwd() + "\\cache\\images\\" + filename
         if QPixmap(icon_path).isNull():
             download_avatar(icon_path=icon_path,
                             user_id=user_id)
@@ -522,7 +521,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if msg_text:
             if self.temp_chat_id:
                 self.create_new_chat(self.temp_chat_id, self.current_user_id)
-                self.ui.find_user.setText('')
                 self.temp_chat_id = 0
             response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
                                      data={'sender': self.current_user_id, 'to_chat': self.current_chat_id,
@@ -533,7 +531,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                               sender_name=self.current_user,
                               sender=self.current_user_id,
                               filename=self.current_user_avatar)
-            self.view_chats()
+            self.ui.find_user.setText('')
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
@@ -570,12 +568,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.chats.clear()
                 self.ui.no_user_label.setText('nothing found')
         else:
-            self.ui.chat_name_lanel.setText('')
             self.view_chats()
 
     def create_new_chat(self, *user_ids):
         """Создает новый чат."""
-        print(user_ids)
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
                                  data={'users_ids': ''.join(str(user_id) for user_id in user_ids),
                                        'owner': 0})
