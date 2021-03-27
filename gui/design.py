@@ -11,6 +11,7 @@ PASSWORD_ERR_STYLE = '''padding: 5; border-radius: 10px; border: 2px solid rgb(2
 ERR_STYLE = '''border: 2px solid rgb(255, 55, 118);'''
 USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
 TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
+INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
 
 
 def change_windows(self, window_to_open, login_in_filed=None):
@@ -231,6 +232,19 @@ class UserItemForm(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
+class InformationItemForm(QtWidgets.QWidget):
+    """Форма информационного поля."""
+
+    def __init__(self, text):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout()
+
+        self.text = QtWidgets.QLabel(text)
+        layout.addWidget(self.text)
+
+        self.setLayout(layout)
+
+
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     """Класс формы чата."""
 
@@ -300,10 +314,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_users(self):
         self.ui.chats.clear()
         if self.edit_type == 'add':
+            self.add_inf_item('~~users in chat~~')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
                                      data={'chat_id': self.current_chat_id,
                                            'user_id': self.current_user_id})
         else:
+            self.add_inf_item('~~users not in chat~~')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
                                      data={'chat_id': self.current_chat_id})
         users = response.json()
@@ -456,6 +472,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.ui.message_text.clear()
 
+    def add_inf_item(self, text):
+        """Добавление нового msg_item объекта в QListWidget."""
+        item = QtWidgets.QListWidgetItem(self.ui.chats)
+        inf = InformationItemForm(text)
+        inf.setStyleSheet(INFORMATION_ITEM_STYLE)
+
+        item.chat_id = -1
+
+        item.setSizeHint(QSize(320, 40))
+        self.ui.chats.addItem(item)
+        self.ui.chats.setItemWidget(item, inf)
+
     @staticmethod
     def chat_items_size():
         """Установка размеров аватаров."""
@@ -544,7 +572,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.no_user_label.setText('')
 
                 if len(user_list['suitable_chats']) > 0:
-                    self.ui.chats.addItem('~~chats~~')
+                    self.add_inf_item('~~chats~~')
                     for suitable_chat in user_list['suitable_chats']:
                         self.add_chat_item(chat_name=suitable_chat['chat_name'],
                                            last_msg=suitable_chat['last_msg'],
@@ -555,7 +583,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                            )
 
                 if len(user_list['suitable_users']) > 0:
-                    self.ui.chats.addItem('~~users~~')
+                    self.add_inf_item('~~users~~')
                     for suitable_user in user_list['suitable_users']:
                         self.add_chat_item(chat_name=suitable_user['username'],
                                            user_id=suitable_user['user_id'],
@@ -584,16 +612,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def open_chat(self, chat):
         """Открытие конкретного чата."""
-        self.unblock_buttons()
-
-        self.ui.chat_name_lanel.setText(chat.chat_name)
-        self.ui.last_activite_label.setText('was 1 minute ago')
-
         if chat.chat_id is None:
             self.temp_chat_id = chat.user_id
             self.clear_msgs()
+            self.unblock_buttons()
+        elif chat.chat_id == -1:
+            pass
         else:
             self.current_chat_id = chat.chat_id
+            self.ui.chat_name_lanel.setText(chat.chat_name)
+            self.ui.last_activite_label.setText('was 1 minute ago')
             self.current_chat_users_amount = chat.amount_of_users
             self.view_msgs()
 
