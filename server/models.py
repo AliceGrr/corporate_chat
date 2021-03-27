@@ -147,6 +147,15 @@ class Chats(db.Model):
     owner = db.Column(db.Integer)
     last_activity = db.Column(db.DateTime())
 
+    def get_chat_name(self, username):
+        chat_name = self.chat_name.replace(username + ', ', '')
+        print(chat_name)
+        if chat_name[:2] == ' ,':
+            chat_name = chat_name[2:]
+        if chat_name[-2:] == ', ':
+            chat_name = chat_name[:-2]
+        return chat_name
+
     def amount_of_users(self):
         return Chats.query \
             .join(usersInChats, usersInChats.c.chat_id == Chats.id) \

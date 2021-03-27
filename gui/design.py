@@ -464,9 +464,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None,
                       amount_of_users=0):
         """Добавление нового chat_item объекта в QListWidget."""
-        chat_name = chat_name.replace(self.current_user, '')
-        chat_name = chat_name.replace(',', '')
-
         item = QtWidgets.QListWidgetItem()
         chat_item = ChatItemForm(chat_name, last_msg, last_activity)
 
@@ -574,7 +571,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Создает новый чат."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
                                  data={'users_ids': ''.join(str(user_id) for user_id in user_ids),
-                                       'owner': 0})
+                                       'owner': 0,
+                                       'current_user': self.current_user})
         chat_info = response.json()
         self.current_chat_id = chat_info['chat_id']
         self.current_chat_users_amount = chat_info['amount_of_users']

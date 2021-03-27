@@ -134,7 +134,7 @@ def receive_user_chats():
             last_msg = chat.get_last_msg()[:30]
             last_msg = last_msg.replace("\n", "")
             chats_info.append(
-                {'chat_name': chat.chat_name,
+                {'chat_name': chat.get_chat_name(current_user.username),
                  'chat_id': chat.id,
                  'avatar': user.avatar,
                  'companion_id': user.id,
@@ -154,7 +154,7 @@ def find_user_by_name():
     chats = current_user.get_suitable_chats(request.form['requested_username'])
 
     suitable_chats = [{
-        'chat_name': chat.Chats.chat_name,
+        'chat_name': chat.Chats.get_chat_name(current_user.username),
         'chat_id': chat.Chats.id,
         'last_msg': chat.Chats.get_last_msg(),
         'avatar': chat.avatar,
@@ -192,7 +192,7 @@ def start_new_chat(owner=None, users_ids=None):
         db.session.commit()
 
     return {'chat_id': chat.id,
-            'users': chat.chat_name,
+            'users': chat.get_chat_name(request.form['current_user']),
             'amount_of_users': chat.amount_of_users(), }
 
 
@@ -223,7 +223,6 @@ def users_not_in_chat():
     """Список пользователей вне чата."""
     users_in = [user.id for user in Users.find_users_in_chat(request.form['chat_id'])]
     users = Users.find_users_not_in_chat(users_in)
-    print(users)
     return {'users': [{
         'user_id': user.id,
         'username': user.username,
