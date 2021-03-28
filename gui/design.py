@@ -1,10 +1,10 @@
-import os
 import sys
 from PyQt5 import QtWidgets
 import requests
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
+from pathlib import Path
 
 PASSWORD_IN_STYLE = '''padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";'''
 PASSWORD_ERR_STYLE = '''padding: 5; border-radius: 10px; border: 2px solid rgb(255, 55, 118); font: 25 8pt "Yu Gothic UI Light";'''
@@ -46,6 +46,7 @@ def download_avatar(user_id, icon_path):
     response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
                              data={'id': user_id},
                              stream=True)
+    icon_path = Path(Path.cwd(), icon_path)
     with open(icon_path, 'wb') as f:
         for block in response.iter_content(1024):
             if not block:
@@ -240,6 +241,7 @@ class InformationItemForm(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout()
 
         self.text = QtWidgets.QLabel(text)
+        self.text.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.text)
 
         self.setLayout(layout)
@@ -443,19 +445,19 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def load_icon(icon_name):
         """Загрузка изображения."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\\resourses\\" + icon_name
-        icon.addPixmap(QPixmap(icon_path))
+        icon_path = Path('resources', icon_name)
+        icon.addPixmap(QPixmap(str(icon_path)))
         return icon
 
     @staticmethod
     def load_avatar(filename, user_id=''):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        icon_path = os.getcwd() + "\\cache\\images\\" + filename
-        if QPixmap(icon_path).isNull():
+        icon_path = Path('cache', 'images', filename)
+        if QPixmap(str(icon_path)).isNull():
             download_avatar(icon_path=icon_path,
                             user_id=user_id)
-        icon.addPixmap(QPixmap(icon_path))
+        icon.addPixmap(QPixmap(str(icon_path)))
         return icon
 
     def add_user_item(self, username, user_id, filename, action=''):
