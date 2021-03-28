@@ -104,6 +104,7 @@ class Users(db.Model):
         return Users.query.get(user_id)
 
     def add_to_chat(self, chat):
+        print(self.is_in_chat(chat))
         if not self.is_in_chat(chat):
             self.chats.append(chat)
 
@@ -115,9 +116,6 @@ class Users(db.Model):
         return self.chats \
                    .filter(usersInChats.c.chat_id == chat.id) \
                    .count() > 0
-
-    def __repr__(self):
-        return f'{self.username}'
 
 
 class Messages(db.Model):

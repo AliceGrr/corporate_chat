@@ -314,12 +314,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_users(self):
         self.ui.chats.clear()
         if self.edit_type == 'add':
-            self.add_inf_item('~~users in chat~~')
+            self.add_inf_item('~~users not in chat~~')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
                                      data={'chat_id': self.current_chat_id,
                                            'user_id': self.current_user_id})
         else:
-            self.add_inf_item('~~users not in chat~~')
+            self.add_inf_item('~~users in chat~~')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
                                      data={'chat_id': self.current_chat_id})
         users = response.json()
@@ -330,10 +330,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                action=self.edit_type)
 
     def add_user_to_chat(self, user_id):
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/add_to_chat',
                                  data={'chat_id': self.current_chat_id,
-                                       'user_id': user_id})
+                                       'user_id': user_id,
+                                       'current_user_id': self.current_user_id})
         print(response.json())
+        self.view_users()
+
 
     def remove_user_from_chat(self, user_id):
         print(user_id)
@@ -452,7 +455,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if action == 'add':
             user.action_button.clicked.connect(lambda: self.add_user_to_chat(user_id))
         else:
-            user.action_button.clicked.connect(lambda: self.del_user_from_chat(user_id))
+            user.action_button.clicked.connect(lambda: self.remove_user_from_chat(user_id))
 
         item.setIcon(self.load_avatar(filename=filename, user_id=user_id))
         item.setSizeHint(self.chat_items_size())
@@ -620,6 +623,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             pass
         else:
             self.current_chat_id = chat.chat_id
+            self.unblock_buttons()
             self.ui.chat_name_lanel.setText(chat.chat_name)
             self.ui.last_activite_label.setText('was 1 minute ago')
             self.current_chat_users_amount = chat.amount_of_users
