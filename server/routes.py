@@ -169,20 +169,36 @@ def find_user_by_name():
     users = current_user.get_suitable_users(request.form['requested_username'])
     chats = current_user.get_suitable_chats(request.form['requested_username'])
 
-    suitable_chats = [{
-        'chat_name': chat.Chats.get_chat_name(current_user.username),
-        'chat_id': chat.Chats.id,
-        'last_msg': chat.Chats.get_last_msg(),
-        'avatar': chat.avatar,
-        'last_activity': chat.Chats.last_activity,
-        'amount_of_users': chat.Chats.amount_of_users(),
-        'companion_id': -1,
-    } for chat in chats]
-    suitable_users = [{'user_id': user.id,
-                       'username': user.username,
-                       'avatar': user.avatar,
-                       } for user in users
-                      if user.username not in [chat.username for chat in chats]]
+    suitable_chats = []
+    for chat in chats:
+        if chat.Chats.amount_of_users() == 2:
+            suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
+                                   'chat_id': chat.Chats.id,
+                                   'last_msg': chat.Chats.get_last_msg(),
+                                   'avatar': chat.avatar,
+                                   'last_activity': chat.Chats.last_activity,
+                                   'amount_of_users': chat.Chats.amount_of_users(),
+                                   'companion_id': -1, })
+        elif chat.Chats.amount_of_users() > 2 and chat.Chats.id not in [chat['chat_id'] for chat in suitable_chats]:
+            suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
+                                   'chat_id': chat.Chats.id,
+                                   'last_msg': chat.Chats.get_last_msg(),
+                                   'avatar': current_user.avatar,
+                                   'last_activity': chat.Chats.last_activity,
+                                   'amount_of_users': chat.Chats.amount_of_users(),
+                                   'companion_id': -1, })
+
+    suitable_users = []
+    for user in users:
+        for chat in chats:
+            if chat.Chats.amount_of_users() == 2:
+                if user.username in chat.Chats.chat_name:
+                    break
+        else:
+            suitable_users.append({'user_id': user.id,
+                                   'username': user.username,
+                                   'avatar': user.avatar,
+                                   })
 
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
