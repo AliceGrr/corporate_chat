@@ -46,7 +46,6 @@ def download_avatar(user_id, icon_path):
     response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
                              data={'id': user_id},
                              stream=True)
-    print(icon_path)
     with open(icon_path, 'wb') as f:
         for block in response.iter_content(1024):
             if not block:
@@ -305,6 +304,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.ui.chats.itemClicked.connect(self.chat_clicked)
             self.hide_chat_menu()
+
+            self.ui.chats.clear()
             self.view_chats(self.receive_chats())
         else:
             self.chat_edit_mode = True
@@ -422,6 +423,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def clear_find_user(self):
         self.ui.find_user.clear()
+        self.ui.chats.clear()
         self.view_chats(self.receive_chats())
 
     def delete_user_data(self):
@@ -437,6 +439,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.current_user_avatar = avatar
         self.current_user_id = user_id
         self.current_user = username
+
+        self.ui.chats.clear()
         self.view_chats(self.receive_chats())
         self.ui.username_label.setText(username)
         self.ui.avatar.setIcon(self.load_avatar(avatar, user_id))
@@ -543,7 +547,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_chats(self, chats):
         """Показ чатов данного пользователя."""
-        self.ui.chats.clear()
         if len(chats) > 0:
             self.ui.no_user_label.setText('')
             for chat in chats:
@@ -588,6 +591,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                               sender=self.current_user_id,
                               filename=self.current_user_avatar)
             self.ui.find_user.setText('')
+            self.ui.chats.clear()
             self.view_chats(self.receive_chats())
 
     def find_user(self):
@@ -618,6 +622,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.chats.clear()
                 self.ui.no_user_label.setText('nothing found')
         else:
+            self.ui.chats.clear()
             self.view_chats(self.receive_chats())
 
     def create_new_chat(self, *user_ids):
