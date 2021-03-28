@@ -150,7 +150,7 @@ class Chats(db.Model):
             chat_name = chat_name[2:]
         if chat_name[-2:] == ', ':
             chat_name = chat_name[:-2]
-        return chat_name[:15]
+        return chat_name
 
     def find_users_in_chat(self):
         return Users.query \

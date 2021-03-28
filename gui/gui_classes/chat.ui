@@ -156,7 +156,7 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
      <rect>
       <x>340</x>
       <y>6</y>
-      <width>281</width>
+      <width>591</width>
       <height>41</height>
      </rect>
     </property>
@@ -172,7 +172,7 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
      <rect>
       <x>341</x>
       <y>30</y>
-      <width>281</width>
+      <width>601</width>
       <height>41</height>
      </rect>
     </property>

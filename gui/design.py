@@ -192,7 +192,7 @@ class ChatItemForm(QtWidgets.QWidget):
         super().__init__()
         layout = QtWidgets.QFormLayout()
 
-        self.chat_name = QtWidgets.QLabel(chat_name)
+        self.chat_name = QtWidgets.QLabel(chat_name[:10])
         self.chat_name.setStyleSheet(USERNAMES_STYLE)
         if last_msg == '':
             layout.addRow(self.chat_name)
@@ -339,9 +339,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            amount_of_users=response['amount_of_users'])
-            self.open_chat_editor()
         else:
             self.view_msgs(self.receive_msgs())
+            self.ui.chat_name_lanel.setText(response['chat_name'])
             self.view_users()
 
     def remove_user_from_chat(self, user_id):

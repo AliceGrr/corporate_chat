@@ -264,9 +264,13 @@ def add_to_chat():
                                       current_user=current_user))
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
+
+        msg = Messages(-1, current_chat.id, f"{current_user.username} create {answer['chat_id']}")
+        db.session.add(msg)
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
+        answer['chat_name'] = current_chat.chat_name
         answer['new'] = False
     # add information msg
     msg = Messages(-1, current_chat.id, f'{current_user.username} add {user_to_add.username}')
