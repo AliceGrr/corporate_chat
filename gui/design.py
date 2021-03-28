@@ -337,9 +337,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         print(response.json())
         self.view_users()
 
-
     def remove_user_from_chat(self, user_id):
-        print(user_id)
+        response = requests.post('http://127.0.0.1:5000/corporate_chat/remove_from_chat',
+                                 data={'chat_id': self.current_chat_id,
+                                       'user_id': user_id,
+                                       'current_user_id': self.current_user_id})
+        print(response.json())
+        self.view_users()
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""

@@ -76,13 +76,6 @@ class Users(db.Model):
             .first()
 
     @staticmethod
-    def find_users_in_chat(chat_id):
-        return Users.query \
-            .join(usersInChats, usersInChats.c.user_id == Users.id) \
-            .filter(usersInChats.c.chat_id == chat_id) \
-            .all()
-
-    @staticmethod
     def find_users_not_in_chat(users):
         return Users.query \
             .filter(~Users.id.in_(users))
@@ -104,7 +97,6 @@ class Users(db.Model):
         return Users.query.get(user_id)
 
     def add_to_chat(self, chat):
-        print(self.is_in_chat(chat))
         if not self.is_in_chat(chat):
             self.chats.append(chat)
 
@@ -145,6 +137,14 @@ class Chats(db.Model):
     owner = db.Column(db.Integer)
     last_activity = db.Column(db.DateTime())
 
+    def delete_chat(self):
+        users = self.find_users_in_chat()
+        for user in users:
+            user.remove_from_chat(self)
+        Messages.query.filter(Messages.chat == self.id).delete()
+        db.session.delete(self)
+        db.session.commit()
+
     def get_chat_name(self, username):
         chat_name = self.chat_name.replace(username + ', ', '')
         print(chat_name)
@@ -153,6 +153,12 @@ class Chats(db.Model):
         if chat_name[-2:] == ', ':
             chat_name = chat_name[:-2]
         return chat_name
+
+    def find_users_in_chat(self):
+        return Users.query \
+            .join(usersInChats, usersInChats.c.user_id == Users.id) \
+            .filter(usersInChats.c.chat_id == self.id) \
+            .all()
 
     def amount_of_users(self):
         return Chats.query \
@@ -163,7 +169,7 @@ class Chats(db.Model):
     @staticmethod
     def find_owner(chat_id):
         return Chats.query \
-                .filter(Chats.id == chat_id).first()
+            .filter(Chats.id == chat_id).first()
 
     @staticmethod
     def find_by_id(chat_id):

@@ -123,7 +123,6 @@ def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     current_user = Users.find_by_name(request.form['username'])
     user_chats = current_user.find_user_chats()
-    print(user_chats)
 
     chats_info = []
     for chat in user_chats:
@@ -217,14 +216,14 @@ def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['id'])
     path = os.getcwd() + app.config['UPLOAD_FOLDER']
-    print(path)
     return send_file(f'{path}{user.avatar}')
 
 
 @app.route('/corporate_chat/users_in_chat', methods=['POST'])
 def users_in_chat():
     """Список пользователей чата."""
-    users = Users.find_users_in_chat(request.form['chat_id'])
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    users = current_chat.find_users_in_chat()
     owner = Chats.find_owner(request.form['chat_id'])
     return {'users': [{
         'user_id': user.id,
@@ -237,7 +236,8 @@ def users_in_chat():
 @app.route('/corporate_chat/users_not_in_chat', methods=['POST'])
 def users_not_in_chat():
     """Список пользователей вне чата."""
-    users_in = [user.id for user in Users.find_users_in_chat(request.form['chat_id'])]
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    users_in = [user.id for user in current_chat.find_users_in_chat()]
     users = Users.find_users_not_in_chat(users_in)
     return {'users': [{
         'user_id': user.id,
@@ -253,7 +253,7 @@ def add_to_chat():
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
     if current_chat.amount_of_users() == 2:
-        users = [str(user.id) for user in Users.find_users_in_chat(request.form['chat_id'])]
+        users = [str(user.id) for user in current_chat.find_users_in_chat()]
         users.append(str(user_to_add.id))
         answer = create_new_chat(users_ids=users,
                                  owner=request.form['current_user_id'], )
@@ -261,7 +261,6 @@ def add_to_chat():
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
         db.session.commit()
-        print('added')
     return {'success': answer}
 
 
@@ -270,7 +269,10 @@ def delete_from_chat():
     """Удаление пользователя из чата."""
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if current_chat.amount_of_users == 2:
-        pass
-    user_to_delete.remove_from_chat(current_chat)
-    return {'success'}
+    if current_chat.amount_of_users() == 2:
+        current_chat.delete_chat()
+    else:
+        user_to_delete.remove_from_chat(current_chat)
+        current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
+        db.session.commit()
+    return {'success': 'success'}
