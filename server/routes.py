@@ -1,4 +1,5 @@
-import os
+from pathlib import Path
+
 from . import app, db
 from flask import request, send_file
 from .models import Users, Messages, Chats
@@ -221,8 +222,8 @@ def create_new_chat(users_ids=None, current_user=None):
 def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['id'])
-    path = os.getcwd() + app.config['UPLOAD_FOLDER']
-    return send_file(f'{path}{user.avatar}')
+    path = Path('images', user.avatar)
+    return send_file(path)
 
 
 @app.route('/corporate_chat/users_in_chat', methods=['POST'])

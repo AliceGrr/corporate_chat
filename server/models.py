@@ -1,6 +1,5 @@
-import os
+from pathlib import Path
 import requests
-from sqlalchemy import not_
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
@@ -27,7 +26,7 @@ class Users(db.Model):
 
     def load_avatar(self, url):
         filename = f'{self.username}_offline.png'
-        filepath = os.getcwd() + '/server/images/' + filename
+        filepath = Path(Path.cwd(),'server', 'images', filename)
         with open(filepath, 'wb') as f:
             response = requests.get(url, stream=True)
             for block in response.iter_content(1024):

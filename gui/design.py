@@ -46,7 +46,7 @@ def download_avatar(user_id, icon_path):
     response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
                              data={'id': user_id},
                              stream=True)
-    icon_path = Path(Path.cwd(), icon_path)
+    print(icon_path)
     with open(icon_path, 'wb') as f:
         for block in response.iter_content(1024):
             if not block:
@@ -455,7 +455,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon = QIcon()
         icon_path = Path('cache', 'images', filename)
         if QPixmap(str(icon_path)).isNull():
-            download_avatar(icon_path=icon_path,
+            download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
                             user_id=user_id)
         icon.addPixmap(QPixmap(str(icon_path)))
         return icon
