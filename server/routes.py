@@ -301,11 +301,13 @@ def add_to_chat():
 @app.route('/corporate_chat/remove_from_chat', methods=['POST'])
 def delete_from_chat():
     """Удаление пользователя из чата."""
+    answer = {'del_chat': False}
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
     if current_chat.amount_of_users() == 2:
         current_chat.delete_chat()
+        answer['del_chat'] = True
     else:
         user_to_delete.remove_from_chat(current_chat)
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
@@ -316,4 +318,4 @@ def delete_from_chat():
 
         db.session.add(msg)
         db.session.commit()
-    return {'success': 'success'}
+    return answer

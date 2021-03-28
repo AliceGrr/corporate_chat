@@ -342,6 +342,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            amount_of_users=response['amount_of_users'])
+            self.view_users()
         else:
             self.view_msgs(self.receive_msgs())
             self.ui.chat_name_lanel.setText(response['chat_name'])
@@ -352,7 +353,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                  data={'chat_id': self.current_chat_id,
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
-        print(response.json())
+        response = response.json()
+        if response['del_chat']:
+            self.open_chat_editor()
+            self.block_buttons()
+            self.ui.messages.clear()
+        else:
+            self.view_users()
+            self.view_msgs(self.receive_msgs())
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
