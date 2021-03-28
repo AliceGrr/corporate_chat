@@ -107,14 +107,20 @@ def receive_messages():
     chat = Chats.find_by_id(request.form['chat_id'])
     msgs = []
     for msg in chat.messages:
-        user = Users.find_by_id(msg.sender)
-        msgs.append(
-            {'sender': msg.sender,
-             'sender_name': user.username,
-             'msg_text': msg.msg,
-             'send_time': msg.time_stamp,
-             'avatar': user.avatar
-             })
+        if msg.sender == -1:
+            msgs.append(
+                {'sender': msg.sender,
+                 'msg_text': msg.msg,
+                 })
+        else:
+            user = Users.find_by_id(msg.sender)
+            msgs.append(
+                {'sender': msg.sender,
+                 'sender_name': user.username,
+                 'msg_text': msg.msg,
+                 'send_time': msg.time_stamp,
+                 'avatar': user.avatar
+                 })
     return {'msgs': msgs}
 
 
@@ -128,8 +134,7 @@ def receive_user_chats():
     for chat in user_chats:
         amount_of_users = chat.amount_of_users()
         if amount_of_users > 2:
-            last_msg = chat.get_last_msg()[:30]
-            last_msg = last_msg.replace("\n", "")
+            last_msg = chat.get_last_msg()
             chats_info.append(
                 {'chat_name': chat.get_chat_name(current_user.username),
                  'chat_id': chat.id,
@@ -142,8 +147,7 @@ def receive_user_chats():
             )
         else:
             user = current_user.find_companion(chat.id)
-            last_msg = chat.get_last_msg()[:30]
-            last_msg = last_msg.replace("\n", "")
+            last_msg = chat.get_last_msg()
             chats_info.append(
                 {'chat_name': chat.get_chat_name(current_user.username),
                  'chat_id': chat.id,
@@ -185,11 +189,13 @@ def find_user_by_name():
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
 def start_new_chat():
     """Создание чата."""
-    create_new_chat(owner=None,
-                    users_ids=request.form['users_ids'], )
+    current_user = Users.find_by_id(request.form['current_user_id'])
+    answer = create_new_chat(current_user=current_user,
+                             users_ids=request.form['users_ids'], )
+    return answer
 
 
-def create_new_chat(owner=None, users_ids=None):
+def create_new_chat(users_ids=None, current_user=None):
     """Создание чата."""
     chat_name = ''
     for user_id in users_ids:
@@ -197,7 +203,6 @@ def create_new_chat(owner=None, users_ids=None):
         chat_name += user.username + ', '
 
     chat = Chats(chat_name)
-    chat.owner = owner
     db.session.add(chat)
     db.session.commit()
 
@@ -207,7 +212,7 @@ def create_new_chat(owner=None, users_ids=None):
         db.session.commit()
 
     return {'chat_id': chat.id,
-            'users': chat.get_chat_name(owner),
+            'chat_name': chat.get_chat_name(current_user.username),
             'amount_of_users': chat.amount_of_users(), }
 
 
@@ -224,13 +229,11 @@ def users_in_chat():
     """Список пользователей чата."""
     current_chat = Chats.find_by_id(request.form['chat_id'])
     users = current_chat.find_users_in_chat()
-    owner = Chats.find_owner(request.form['chat_id'])
     return {'users': [{
         'user_id': user.id,
         'username': user.username,
         'avatar': user.avatar,
-    } for user in users],
-        'owner': owner.owner}
+    } for user in users]}
 
 
 @app.route('/corporate_chat/users_not_in_chat', methods=['POST'])
@@ -249,24 +252,34 @@ def users_not_in_chat():
 @app.route('/corporate_chat/add_to_chat', methods=['POST'])
 def add_to_chat():
     """Добавление пользователя в чат."""
-    answer = None
+    answer = {}
+    current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
     if current_chat.amount_of_users() == 2:
         users = [str(user.id) for user in current_chat.find_users_in_chat()]
         users.append(str(user_to_add.id))
-        answer = create_new_chat(users_ids=users,
-                                 owner=request.form['current_user_id'], )
+        answer.update(create_new_chat(users_ids=users,
+                                      current_user=current_user))
+        answer['new'] = True
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
+
+        # add information msg
+        msg = Messages(-1, current_chat.id, f'{current_user} add {user_to_add.username}')
+        current_chat.last_activity = msg.time_stamp
+
+        db.session.add(msg)
         db.session.commit()
-    return {'success': answer}
+        answer['new'] = False
+    return answer
 
 
 @app.route('/corporate_chat/remove_from_chat', methods=['POST'])
 def delete_from_chat():
     """Удаление пользователя из чата."""
+    current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
     if current_chat.amount_of_users() == 2:
@@ -274,5 +287,11 @@ def delete_from_chat():
     else:
         user_to_delete.remove_from_chat(current_chat)
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
+
+        # add information msg
+        msg = Messages(-1, current_chat.id, f'{current_user} delete {user_to_delete.username}')
+        current_chat.last_activity = msg.time_stamp
+
+        db.session.add(msg)
         db.session.commit()
     return {'success': 'success'}

@@ -134,7 +134,6 @@ class Chats(db.Model):
         primaryjoin=(usersInChats.c.chat_id == id),
         backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
     chat_name = db.Column(db.String(100))
-    owner = db.Column(db.Integer)
     last_activity = db.Column(db.DateTime())
 
     def delete_chat(self):
@@ -147,12 +146,11 @@ class Chats(db.Model):
 
     def get_chat_name(self, username):
         chat_name = self.chat_name.replace(username + ', ', '')
-        print(chat_name)
         if chat_name[:2] == ' ,':
             chat_name = chat_name[2:]
         if chat_name[-2:] == ', ':
             chat_name = chat_name[:-2]
-        return chat_name
+        return chat_name[:15]
 
     def find_users_in_chat(self):
         return Users.query \
@@ -167,11 +165,6 @@ class Chats(db.Model):
             .count()
 
     @staticmethod
-    def find_owner(chat_id):
-        return Chats.query \
-            .filter(Chats.id == chat_id).first()
-
-    @staticmethod
     def find_by_id(chat_id):
         return Chats.query.get(chat_id)
 
@@ -180,7 +173,8 @@ class Chats(db.Model):
             .filter(Messages.chat == self.id) \
             .order_by(Messages.time_stamp.desc()).first()
         if last_msg:
-            return last_msg.msg
+            last_msg = last_msg.msg.replace("\n", "")
+            return last_msg[:50]
         else:
             return ''
 
