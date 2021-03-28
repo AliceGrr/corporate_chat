@@ -175,6 +175,7 @@ def find_user_by_name():
         'avatar': chat.avatar,
         'last_activity': chat.Chats.last_activity,
         'amount_of_users': chat.Chats.amount_of_users(),
+        'companion_id': -1,
     } for chat in chats]
     suitable_users = [{'user_id': user.id,
                        'username': user.username,
@@ -261,18 +262,18 @@ def add_to_chat():
         users.append(str(user_to_add.id))
         answer.update(create_new_chat(users_ids=users,
                                       current_user=current_user))
+        current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
-
-        # add information msg
-        msg = Messages(-1, current_chat.id, f'{current_user} add {user_to_add.username}')
-        current_chat.last_activity = msg.time_stamp
-
-        db.session.add(msg)
-        db.session.commit()
         answer['new'] = False
+    # add information msg
+    msg = Messages(-1, current_chat.id, f'{current_user.username} add {user_to_add.username}')
+    current_chat.last_activity = msg.time_stamp
+
+    db.session.add(msg)
+    db.session.commit()
     return answer
 
 
@@ -289,7 +290,7 @@ def delete_from_chat():
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
 
         # add information msg
-        msg = Messages(-1, current_chat.id, f'{current_user} delete {user_to_delete.username}')
+        msg = Messages(-1, current_chat.id, f'{current_user.username} delete {user_to_delete.username}')
         current_chat.last_activity = msg.time_stamp
 
         db.session.add(msg)

@@ -339,6 +339,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            amount_of_users=response['amount_of_users'])
+            self.open_chat_editor()
         else:
             self.view_msgs(self.receive_msgs())
             self.view_users()
@@ -349,7 +350,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
         print(response.json())
-        self.view_users()
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -607,7 +607,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
                 if len(user_list['suitable_users']) > 0:
                     self.add_inf_item('~~users~~', to_list='chats')
-                    self.view_chats(user_list['suitable_users'])
+                    for user in user_list['suitable_users']:
+                        self.add_chat_item(user_id=user['user_id'],
+                                           chat_name=user['username'],
+                                           filename=user['avatar'],
+                                           )
             else:
                 self.ui.chats.clear()
                 self.ui.no_user_label.setText('nothing found')
