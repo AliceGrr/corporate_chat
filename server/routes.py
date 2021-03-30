@@ -276,7 +276,7 @@ def add_to_chat():
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if not current_chat.is_public:
+    if current_chat.amount_of_users() == 2:
         users = [user.id for user in current_chat.find_users_in_chat()]
         users.append(user_to_add.id)
         answer.update(create_new_chat(users_ids=users,
@@ -284,7 +284,7 @@ def add_to_chat():
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
 
-        msg = Messages(-1, current_chat.id, f"{current_user.username} create {answer['chat_id']}")
+        msg = Messages(-1, current_chat.id, f"{current_user.username} create {current_chat.get_chat_name(current_user.username)}")
         db.session.add(msg)
     else:
         user_to_add.add_to_chat(current_chat)
@@ -303,19 +303,24 @@ def add_to_chat():
 @app.route('/corporate_chat/remove_from_chat', methods=['POST'])
 def delete_from_chat():
     """Удаление пользователя из чата."""
-    answer = {'del_chat': False}
+    answer = {'del_chat': False, 'leave': False}
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if not current_chat.is_public:
+    if current_chat.amount_of_users() == 2:
         current_chat.delete_chat()
         answer['del_chat'] = True
     else:
+        # add information msg
+        if current_user.id == user_to_delete.id:
+            msg = Messages(-1, current_chat.id, f'{current_user.username} leave chat')
+            answer['leave'] = True
+        else:
+            msg = Messages(-1, current_chat.id, f'{current_user.username} delete {user_to_delete.username}')
+
         user_to_delete.remove_from_chat(current_chat)
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
 
-        # add information msg
-        msg = Messages(-1, current_chat.id, f'{current_user.username} delete {user_to_delete.username}')
         current_chat.last_activity = msg.time_stamp
 
         db.session.add(msg)

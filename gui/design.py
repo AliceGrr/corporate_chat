@@ -354,7 +354,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
         response = response.json()
-        if response['del_chat']:
+        if response['del_chat'] or response['leave']:
             self.open_chat_editor()
             self.block_buttons()
             self.ui.messages.clear()
