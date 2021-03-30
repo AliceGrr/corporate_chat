@@ -23,14 +23,12 @@ def is_field_incorrect(data):
     return is_field_empty(data) or is_field_contains_whitespaces(data)
 
 
-def verify_email(email, err_log):
+def verify_email(email):
     """Проверка email по шаблону."""
     email_regex = re.compile(r'[^@]+@[^@]+\.[^@]+')
-    if not email_regex.match(email):
-        err_log['msg'] += 'Invalid email\n'
-        err_log['email_err'] = True
-        return False
-    return True
+    if email_regex.match(email):
+        return True
+    return False
 
 
 def verify_user_data(username, psw, email='line@mail.com'):
@@ -42,8 +40,9 @@ def verify_user_data(username, psw, email='line@mail.com'):
     if is_field_incorrect(email):
         err_log['msg'] += 'Email ' + is_field_incorrect(email)
         err_log['email_err'] = True
-    elif verify_email(email, err_log):
-        pass
+    elif not verify_email(email):
+        err_log['msg'] += 'Invalid email\n'
+        err_log['email_err'] = True
     if is_field_incorrect(psw):
         err_log['msg'] += 'Password ' + is_field_incorrect(psw)
         err_log['psw_err'] = True
@@ -133,8 +132,7 @@ def receive_user_chats():
 
     chats_info = []
     for chat in user_chats:
-        amount_of_users = chat.amount_of_users()
-        if amount_of_users > 2:
+        if chat.is_public:
             last_msg = chat.get_last_msg()
             chats_info.append(
                 {'chat_name': chat.get_chat_name(current_user.username),
@@ -143,7 +141,7 @@ def receive_user_chats():
                  'companion_id': current_user.id,
                  'last_msg': last_msg,
                  'last_activity': chat.last_activity,
-                 'amount_of_users': amount_of_users,
+                 'is_public': chat.is_public,
                  }
             )
         else:
@@ -156,7 +154,7 @@ def receive_user_chats():
                  'companion_id': user.id,
                  'last_msg': last_msg,
                  'last_activity': chat.last_activity,
-                 'amount_of_users': amount_of_users,
+                 'is_public': chat.is_public,
                  }
             )
     return {'chats': chats_info}
@@ -171,29 +169,28 @@ def find_user_by_name():
 
     suitable_chats = []
     for chat in chats:
-        if chat.Chats.amount_of_users() == 2:
+        if not chat.Chats.is_public:
             suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
                                    'chat_id': chat.Chats.id,
                                    'last_msg': chat.Chats.get_last_msg(),
                                    'avatar': chat.avatar,
                                    'last_activity': chat.Chats.last_activity,
-                                   'amount_of_users': chat.Chats.amount_of_users(),
+                                   'is_public': chat.Chats.is_public,
                                    'companion_id': -1, })
-        elif chat.Chats.amount_of_users() > 2 and chat.Chats.id not in [chat['chat_id'] for chat in suitable_chats]:
+        elif chat.Chats.is_public and chat.Chats.id not in [chat['chat_id'] for chat in suitable_chats]:
             suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
                                    'chat_id': chat.Chats.id,
                                    'last_msg': chat.Chats.get_last_msg(),
                                    'avatar': current_user.avatar,
                                    'last_activity': chat.Chats.last_activity,
-                                   'amount_of_users': chat.Chats.amount_of_users(),
+                                   'is_public': chat.Chats.is_public,
                                    'companion_id': -1, })
 
     suitable_users = []
     for user in users:
         for chat in chats:
-            if chat.Chats.amount_of_users() == 2:
-                if user.username in chat.Chats.chat_name:
-                    break
+            if not chat.Chats.is_public and user.username in chat.Chats.chat_name:
+                break
         else:
             suitable_users.append({'user_id': user.id,
                                    'username': user.username,
@@ -208,8 +205,10 @@ def find_user_by_name():
 def start_new_chat():
     """Создание чата."""
     current_user = Users.find_by_id(request.form['current_user_id'])
+    users_ids_str = request.form['users_ids']
+    users_ids = users_ids_str.split(',')
     answer = create_new_chat(current_user=current_user,
-                             users_ids=request.form['users_ids'], )
+                             users_ids=[int(user_id) for user_id in users_ids], )
     return answer
 
 
@@ -217,21 +216,24 @@ def create_new_chat(users_ids=None, current_user=None):
     """Создание чата."""
     chat_name = ''
     for user_id in users_ids:
-        user = Users.find_by_id(int(user_id))
+        user = Users.find_by_id(user_id)
         chat_name += user.username + ', '
 
     chat = Chats(chat_name)
+    chat.is_public = False if chat.amount_of_users() == 2 else True
     db.session.add(chat)
     db.session.commit()
 
     for user_id in users_ids:
-        user = Users.find_by_id(int(user_id))
+        user = Users.find_by_id(user_id)
         user.add_to_chat(chat)
-        db.session.commit()
 
+    chat.is_public = False if chat.amount_of_users() == 2 else True
+    db.session.add(chat)
+    db.session.commit()
     return {'chat_id': chat.id,
             'chat_name': chat.get_chat_name(current_user.username),
-            'amount_of_users': chat.amount_of_users(), }
+            'is_public': chat.is_public, }
 
 
 @app.route('/corporate_chat/load_avatar', methods=['POST'])
@@ -274,9 +276,9 @@ def add_to_chat():
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if current_chat.amount_of_users() == 2:
-        users = [str(user.id) for user in current_chat.find_users_in_chat()]
-        users.append(str(user_to_add.id))
+    if not current_chat.is_public:
+        users = [user.id for user in current_chat.find_users_in_chat()]
+        users.append(user_to_add.id)
         answer.update(create_new_chat(users_ids=users,
                                       current_user=current_user))
         current_chat = Chats.find_by_id(answer['chat_id'])
@@ -305,7 +307,7 @@ def delete_from_chat():
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if current_chat.amount_of_users() == 2:
+    if not current_chat.is_public:
         current_chat.delete_chat()
         answer['del_chat'] = True
     else:

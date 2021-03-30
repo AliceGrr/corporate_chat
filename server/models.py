@@ -134,6 +134,7 @@ class Chats(db.Model):
         backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
+    is_public = db.Column(db.Boolean, default=False, nullable=False)
 
     def delete_chat(self):
         users = self.find_users_in_chat()

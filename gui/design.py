@@ -256,7 +256,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         self.temp_chat_id = 0
         self.current_chat_id = 0
-        self.current_chat_users_amount = 0
+        self.current_chat_is_public = False
 
         self.current_user = ''
         self.current_user_id = 0
@@ -286,6 +286,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.chat_clicked)
+
 
     def change_edit_type(self):
         if self.edit_type == 'del':
@@ -341,7 +342,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if response['new']:
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
-                           amount_of_users=response['amount_of_users'])
+                           is_public=response['is_public'])
             self.view_users()
         else:
             self.view_msgs(self.receive_msgs())
@@ -522,7 +523,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         return QSize(320, 55)
 
     def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None,
-                      amount_of_users=0):
+                      is_public=False):
         """Добавление нового chat_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem()
         chat_item = ChatItemForm(chat_name, last_msg, last_activity)
@@ -531,7 +532,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         item.user_id = user_id
         item.chat_id = chat_id
-        item.amount_of_users = amount_of_users
+        item.is_public = is_public
 
         item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
         item.setSizeHint(self.chat_items_size())
@@ -564,7 +565,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                    filename=chat['avatar'],
                                    user_id=chat['companion_id'],
                                    last_activity=chat['last_activity'],
-                                   amount_of_users=chat['amount_of_users']
+                                   is_public=chat['is_public']
                                    )
         else:
             self.ui.no_user_label.setText('no chats yet')
@@ -636,13 +637,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def create_new_chat(self, *user_ids):
         """Создает новый чат."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
-                                 data={'users_ids': ''.join(str(user_id) for user_id in user_ids),
+                                 data={'users_ids': ','.join(str(user_id) for user_id in user_ids),
                                        'current_user_id': self.current_user_id})
         chat_info = response.json()
 
         self.set_chat_info(chat_id=chat_info['chat_id'],
                            chat_name=chat_info['chat_name'],
-                           amount_of_users=chat_info['amount_of_users'])
+                           is_public=chat_info['is_public'])
 
     def clear_msgs(self):
         self.ui.messages.clear()
@@ -659,15 +660,15 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             self.open_chat(chat_id=chat.chat_id,
                            chat_name=chat.chat_name,
-                           amount_of_users=chat.amount_of_users)
+                           is_public=chat.is_public)
 
-    def set_chat_info(self, chat_id, chat_name, amount_of_users):
+    def set_chat_info(self, chat_id, chat_name, is_public):
         self.current_chat_id = chat_id
-        self.current_chat_users_amount = amount_of_users
+        self.current_chat_is_public = is_public
         self.ui.chat_name_lanel.setText(chat_name)
 
-    def open_chat(self, chat_id, chat_name, amount_of_users):
-        self.set_chat_info(chat_id, chat_name, amount_of_users)
+    def open_chat(self, chat_id, chat_name, is_public):
+        self.set_chat_info(chat_id, chat_name, is_public)
 
         self.unblock_buttons()
         self.ui.last_activite_label.setText('was 1 minute ago')
