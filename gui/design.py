@@ -274,7 +274,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связки кнопок и функций
         self.ui.log_out.clicked.connect(self.log_out)
         self.ui.menu_button.clicked.connect(self.show_user_menu)
-        self.ui.avatar.clicked.connect(self.hide_user_menu)
+        self.ui.menu_button_2.clicked.connect(self.hide_user_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
         self.ui.add_or_delete_button.clicked.connect(self.change_edit_type)
 
@@ -286,7 +286,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.chat_clicked)
-
 
     def change_edit_type(self):
         if self.edit_type == 'del':
@@ -375,6 +374,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.log_out.setIcon(self.load_icon('logout.png'))
         self.ui.send_message.setIcon(self.load_icon('send.png'))
         self.ui.menu_button.setIcon(self.load_icon('menu.png'))
+        self.ui.menu_button_2.setIcon(self.load_icon('menu.png'))
 
     def block_buttons(self):
         """Блокировка кнопок."""
