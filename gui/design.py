@@ -54,6 +54,14 @@ def download_avatar(user_id, icon_path):
             f.write(block)
 
 
+def load_icon(icon_name):
+    """Загрузка изображения."""
+    icon = QIcon()
+    icon_path = Path('resources', icon_name)
+    icon.addPixmap(QPixmap(str(icon_path)))
+    return icon
+
+
 class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     """Класс формы входа."""
 
@@ -219,14 +227,16 @@ class UserItemForm(QtWidgets.QWidget):
 
         self.username = QtWidgets.QLabel(username)
         self.username.setStyleSheet(USERNAMES_STYLE)
-        if action == 'add':
-            button_text = 'add'
-        else:
-            button_text = 'delete'
-        self.action_button = QtWidgets.QPushButton(button_text)
-        self.action_button.setFixedSize(40, 40)
-
         layout.addWidget(self.username)
+
+        self.action_button = QtWidgets.QPushButton()
+        self.action_button.setFixedSize(40, 40)
+        if action == 'add':
+            self.action_button.setIcon(load_icon('add.png'))
+        elif action == 'leave':
+            self.action_button.setIcon(load_icon('logout.png'))
+        else:
+            self.action_button.setIcon(load_icon('delete.png'))
         layout.addWidget(self.action_button)
 
         self.setLayout(layout)
@@ -343,10 +353,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_users(self, users):
         for user in users['users']:
-            self.add_user_item(username=user['username'],
-                               user_id=user['user_id'],
-                               filename=user['avatar'],
-                               action=self.edit_type)
+            if user['user_id'] == self.current_user_id:
+                self.add_user_item(username=user['username'],
+                                   user_id=user['user_id'],
+                                   filename=user['avatar'],
+                                   action='leave')
+            else:
+                self.add_user_item(username=user['username'],
+                                   user_id=user['user_id'],
+                                   filename=user['avatar'],
+                                   action=self.edit_type)
 
     def add_user_to_chat(self, user_id):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/add_to_chat',
@@ -386,11 +402,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def load_buttons_icons(self):
         """Загрузка иконок кнопок."""
-        self.ui.chat_settings.setIcon(self.load_icon('settings.png'))
-        self.ui.log_out.setIcon(self.load_icon('logout.png'))
-        self.ui.send_message.setIcon(self.load_icon('send.png'))
-        self.ui.menu_button.setIcon(self.load_icon('menu.png'))
-        self.ui.menu_button_2.setIcon(self.load_icon('menu.png'))
+        self.ui.chat_settings.setIcon(load_icon('settings.png'))
+        self.ui.log_out.setIcon(load_icon('logout.png'))
+        self.ui.send_message.setIcon(load_icon('send.png'))
+        self.ui.menu_button.setIcon(load_icon('menu.png'))
+        self.ui.menu_button_2.setIcon(load_icon('menu.png'))
 
     def block_buttons(self):
         """Блокировка кнопок."""
@@ -469,14 +485,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.view_chats(self.receive_chats())
         self.ui.username_label.setText(username)
         self.ui.avatar.setIcon(self.load_avatar(avatar, user_id))
-
-    @staticmethod
-    def load_icon(icon_name):
-        """Загрузка изображения."""
-        icon = QIcon()
-        icon_path = Path('resources', icon_name)
-        icon.addPixmap(QPixmap(str(icon_path)))
-        return icon
 
     @staticmethod
     def load_avatar(filename, user_id=''):
