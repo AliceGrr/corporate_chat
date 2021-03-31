@@ -249,6 +249,13 @@ def users_in_chat():
     """Список пользователей чата."""
     current_chat = Chats.find_by_id(request.form['chat_id'])
     users = current_chat.find_users_in_chat()
+    if request.form['requested_username']:
+        suitable_users = [{
+            'user_id': user.id,
+            'username': user.username,
+            'avatar': user.avatar,
+        } for user in users if user.username.lower().startswith(request.form['requested_username'].lower())]
+        return {'users': suitable_users}
     return {'users': [{
         'user_id': user.id,
         'username': user.username,
@@ -262,6 +269,13 @@ def users_not_in_chat():
     current_chat = Chats.find_by_id(request.form['chat_id'])
     users_in = [user.id for user in current_chat.find_users_in_chat()]
     users = Users.find_users_not_in_chat(users_in)
+    if request.form['requested_username']:
+        suitable_users = [{
+            'user_id': user.id,
+            'username': user.username,
+            'avatar': user.avatar,
+        } for user in users if user.username.lower().startswith(request.form['requested_username'].lower())]
+        return {'users': suitable_users}
     return {'users': [{
         'user_id': user.id,
         'username': user.username,
@@ -284,7 +298,8 @@ def add_to_chat():
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
 
-        msg = Messages(-1, current_chat.id, f"{current_user.username} create {current_chat.get_chat_name(current_user.username)}")
+        msg = Messages(-1, current_chat.id,
+                       f"{current_user.username} create {current_chat.get_chat_name(current_user.username)}")
         db.session.add(msg)
     else:
         user_to_add.add_to_chat(current_chat)

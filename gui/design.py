@@ -280,6 +280,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # поиск пользователя по каждому введенному символу
         self.ui.find_user.textChanged.connect(self.find_user)
+        self.ui.find_user_2.textChanged.connect(self.find_user_in_chat_editor)
 
         self.ui.send_message.clicked.connect(self.send_message)
         # self.ui.message_text..connect(self.ui.send_message.click)
@@ -287,15 +288,28 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.chat_clicked)
 
+    def find_user_in_chat_editor(self):
+        """Поиск пользователей в режиме настройки чата."""
+        requested_username = self.ui.find_user_2.text()
+        if requested_username:
+            users = self.receive_users(requested_username)
+            if users:
+                self.view_users(users)
+            else:
+                self.ui.chats.clear()
+                self.ui.no_user_label.setText('nothing found')
+        else:
+            self.view_users(self.receive_users())
+
     def change_edit_type(self):
         if self.edit_type == 'del':
             self.edit_type = 'add'
             self.ui.add_or_delete_button.setText('Delete users')
-            self.view_users()
         else:
             self.edit_type = 'del'
             self.ui.add_or_delete_button.setText('Add users')
-            self.view_users()
+        self.ui.find_user_2.setText('')
+        self.view_users(self.receive_users())
 
     def open_chat_editor(self):
         """Открывает и закрывает окно редактирования чата."""
@@ -312,20 +326,22 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
             self.ui.chats.itemClicked.disconnect()
             self.show_chat_menu()
-            self.view_users()
+            self.view_users(self.receive_users())
 
-    def view_users(self):
+    def receive_users(self, requested_username=''):
         self.ui.chats.clear()
+        data = {'chat_id': self.current_chat_id, 'requested_username': requested_username}
         if self.edit_type == 'add':
             self.add_inf_item('~~users not in chat~~', to_list='chats')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
-                                     data={'chat_id': self.current_chat_id,
-                                           'user_id': self.current_user_id})
+                                     data=data)
         else:
             self.add_inf_item('~~users in chat~~', to_list='chats')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
-                                     data={'chat_id': self.current_chat_id})
-        users = response.json()
+                                     data=data)
+        return response.json()
+
+    def view_users(self, users):
         for user in users['users']:
             self.add_user_item(username=user['username'],
                                user_id=user['user_id'],
@@ -342,11 +358,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            is_public=response['is_public'])
-            self.view_users()
+            self.view_users(self.receive_users())
         else:
             self.view_msgs(self.receive_msgs())
             self.ui.chat_name_lanel.setText(response['chat_name'])
-            self.view_users()
+            self.view_users(self.receive_users())
 
     def remove_user_from_chat(self, user_id):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/remove_from_chat',
@@ -359,7 +375,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.block_buttons()
             self.ui.messages.clear()
         else:
-            self.view_users()
+            self.view_users(self.receive_users())
             self.view_msgs(self.receive_msgs())
 
     def set_avatars_size(self):
