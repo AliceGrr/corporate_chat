@@ -105,8 +105,9 @@ def send_message():
 def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
     chat = Chats.find_by_id(request.form['chat_id'])
+    limit = int(request.form['limit']) * 10
     msgs = []
-    for msg in chat.get_msgs()[::-1]:
+    for msg in chat.get_msgs(limit)[::-1]:
         if msg.sender == -1:
             msgs.append(
                 {'sender': msg.sender,

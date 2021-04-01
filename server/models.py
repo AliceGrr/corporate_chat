@@ -136,12 +136,11 @@ class Chats(db.Model):
     last_activity = db.Column(db.DateTime())
     is_public = db.Column(db.Boolean, default=False, nullable=False)
 
-    def get_msgs(self):
+    def get_msgs(self, limit):
         return Messages.query \
             .filter(Messages.chat == self.id) \
             .order_by(Messages.time_stamp.desc()) \
-            .paginate(1, 15, False) \
-            .items
+            .limit(limit)
 
     def delete_chat(self):
         users = self.find_users_in_chat()
