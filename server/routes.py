@@ -106,7 +106,7 @@ def receive_messages():
     """Получение сообщений одного конкретного пользователя."""
     chat = Chats.find_by_id(request.form['chat_id'])
     msgs = []
-    for msg in chat.messages:
+    for msg in chat.get_msgs()[::-1]:
         if msg.sender == -1:
             msgs.append(
                 {'sender': msg.sender,
@@ -290,7 +290,7 @@ def add_to_chat():
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if current_chat.amount_of_users() == 2:
+    if current_chat.amount_of_users() == 2 and not current_chat.is_public:
         users = [user.id for user in current_chat.find_users_in_chat()]
         users.append(user_to_add.id)
         answer.update(create_new_chat(users_ids=users,
@@ -312,6 +312,7 @@ def add_to_chat():
 
     db.session.add(msg)
     db.session.commit()
+    answer['msg'] = msg.msg
     return answer
 
 
@@ -340,4 +341,5 @@ def delete_from_chat():
 
         db.session.add(msg)
         db.session.commit()
+        answer['msg'] = msg.msg
     return answer

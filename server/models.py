@@ -26,7 +26,7 @@ class Users(db.Model):
 
     def load_avatar(self, url):
         filename = f'{self.username}_offline.png'
-        filepath = Path(Path.cwd(),'server', 'images', filename)
+        filepath = Path(Path.cwd(), 'server', 'images', filename)
         with open(filepath, 'wb') as f:
             response = requests.get(url, stream=True)
             for block in response.iter_content(1024):
@@ -135,6 +135,13 @@ class Chats(db.Model):
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
     is_public = db.Column(db.Boolean, default=False, nullable=False)
+
+    def get_msgs(self):
+        return Messages.query \
+            .filter(Messages.chat == self.id) \
+            .order_by(Messages.time_stamp.desc()) \
+            .paginate(1, 15, False) \
+            .items
 
     def delete_chat(self):
         users = self.find_users_in_chat()

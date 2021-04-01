@@ -293,15 +293,19 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.find_user_2.textChanged.connect(self.find_user_in_chat_editor)
 
         self.ui.send_message.clicked.connect(self.send_message)
-        # self.ui.message_text..connect(self.ui.send_message.click)
 
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.chat_clicked)
+        self.ui.messages.itemClicked.connect(self.load_more_msgs)
+
+    def load_more_msgs(self):
+        """Загрузка большего количества сообщений."""
 
     def find_user_in_chat_editor(self):
         """Поиск пользователей в режиме настройки чата."""
         requested_username = self.ui.find_user_2.text()
         if requested_username:
+            self.ui.chats.clear()
             users = self.receive_users(requested_username)
             if users:
                 self.view_users(users)
@@ -309,6 +313,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.chats.clear()
                 self.ui.no_user_label.setText('nothing found')
         else:
+            self.ui.chats.clear()
             self.view_users(self.receive_users())
 
     def change_edit_type(self):
@@ -319,6 +324,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.edit_type = 'del'
             self.ui.add_or_delete_button.setText('Add users')
         self.ui.find_user_2.setText('')
+        self.ui.chats.clear()
         self.view_users(self.receive_users())
 
     def open_chat_editor(self):
@@ -336,10 +342,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
             self.ui.chats.itemClicked.disconnect()
             self.show_chat_menu()
+            self.ui.chats.clear()
             self.view_users(self.receive_users())
 
     def receive_users(self, requested_username=''):
-        self.ui.chats.clear()
         data = {'chat_id': self.current_chat_id, 'requested_username': requested_username}
         if self.edit_type == 'add':
             self.add_inf_item('~~users not in chat~~', to_list='chats')
@@ -374,11 +380,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            is_public=response['is_public'])
+            self.ui.messages.clear()
+            self.ui.chats.clear()
             self.view_users(self.receive_users())
         else:
-            self.view_msgs(self.receive_msgs())
             self.ui.chat_name_lanel.setText(response['chat_name'])
+            self.ui.chats.clear()
             self.view_users(self.receive_users())
+            self.add_inf_item(text=response['msg'], to_list='msgs')
 
     def remove_user_from_chat(self, user_id):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/remove_from_chat',
@@ -391,8 +400,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.block_buttons()
             self.ui.messages.clear()
         else:
+            self.ui.chats.clear()
             self.view_users(self.receive_users())
-            self.view_msgs(self.receive_msgs())
+            self.add_inf_item(text=response['msg'], to_list='msgs')
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -525,12 +535,29 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.message_text.clear()
 
     def add_inf_item(self, text, to_list):
-        """Добавление нового msg_item объекта в QListWidget."""
+        """Добавление нового inf_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem()
         inf = InformationItemForm(text)
         inf.setStyleSheet(INFORMATION_ITEM_STYLE)
 
         item.chat_id = -1
+
+        if to_list == 'chats':
+            item.setSizeHint(QSize(320, 40))
+            self.ui.chats.addItem(item)
+            self.ui.chats.setItemWidget(item, inf)
+        elif to_list == 'msgs':
+            item.setSizeHint(QSize(320, 40))
+            self.ui.messages.addItem(item)
+            self.ui.messages.setItemWidget(item, inf)
+
+    def add_more_item(self, text, to_list):
+        """Добавление нового more_item объекта в QListWidget."""
+        item = QtWidgets.QListWidgetItem()
+        inf = InformationItemForm(text)
+        inf.setStyleSheet(INFORMATION_ITEM_STYLE)
+
+        item.chat_id = -2
 
         if to_list == 'chats':
             item.setSizeHint(QSize(320, 40))
@@ -565,7 +592,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_msgs(self):
         """Получение сообщений данного чата."""
-        self.ui.messages.clear()
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
                                  data={'chat_id': self.current_chat_id})
         msgs = response.json()
@@ -626,6 +652,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.find_user.setText('')
             self.ui.chats.clear()
             self.view_chats(self.receive_chats())
+            self.ui.message_text.setFocus()
+        self.ui.message_text.clear()
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
@@ -697,7 +725,9 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.unblock_buttons()
         self.ui.last_activite_label.setText('was 1 minute ago')
 
+        self.ui.messages.clear()
         self.view_msgs(self.receive_msgs())
+        self.ui.message_text.setFocus()
 
 
 if __name__ == '__main__':
