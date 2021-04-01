@@ -4,6 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
 from hashlib import md5
+from PIL import Image
+IMG_SIZE = 128
 
 usersInChats = db.Table('usersInChats',
                         db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
@@ -23,6 +25,14 @@ class Users(db.Model):
         'Chats', secondary=usersInChats,
         primaryjoin=(usersInChats.c.user_id == id),
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
+
+    def user_state(self):
+        difference = datetime.datetime.now() - self.last_activity
+        return 'online' if difference.minute < 15 else 'offline'
+
+    # TODO: написать функцию возврата корректного времени
+    def get_last_activity(self):
+        return ''
 
     def load_avatar(self, url):
         filename = f'{self.username}_offline.png'
@@ -135,6 +145,38 @@ class Chats(db.Model):
     chat_name = db.Column(db.String(100))
     last_activity = db.Column(db.DateTime())
     is_public = db.Column(db.Boolean, default=False, nullable=False)
+    avatar = db.Column(db.String(128))
+
+    def __init__(self, users):
+        self.chat_name = users
+
+    @staticmethod
+    def get_image_card(amount_of_users):
+        if amount_of_users == 2:
+            return [[0, 0], [0.5, 0]]
+        elif amount_of_users == 3:
+            return [[0, 0], [0.33, 0], [0.66, 0]]
+        else:
+            return [[0, 0], [0.5, 0], [0, 0.5], [0.5, 0.5]]
+
+    def get_chat_avatar(self, current_user_id):
+        users = self.find_users_in_chat_without_current(current_user_id)
+        if len(users) > 1:
+            img = Image.new('RGB', (IMG_SIZE, IMG_SIZE))
+            img_card = self.get_image_card(len(users))
+            for card, user in zip(img_card, users[:4]):
+                temp_image_path = Path(Path.cwd(), 'server', 'images', user.avatar)
+                temp_img = Image.open(temp_image_path)
+                img_pos = tuple(int(pos * IMG_SIZE) for pos in card)
+                img.paste(temp_img, img_pos)
+            image_path = Path(Path.cwd(), 'server', 'images', f'{self.id}_chat.png')
+            img.save(image_path)
+
+    def find_users_in_chat_without_current(self, current_user_id):
+        return Users.query \
+            .join(usersInChats, usersInChats.c.user_id == Users.id) \
+            .filter(usersInChats.c.chat_id == self.id, Users.id != current_user_id) \
+            .all()
 
     def get_msgs(self, limit):
         return Messages.query \
@@ -183,6 +225,3 @@ class Chats(db.Model):
             return last_msg[:50]
         else:
             return ''
-
-    def __init__(self, users):
-        self.chat_name = users
