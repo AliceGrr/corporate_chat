@@ -162,17 +162,30 @@ class Chats(db.Model):
     def get_chat_avatar(self, current_user_id):
         users = self.find_users_in_chat_without_current(current_user_id)
         if len(users) > 1:
-            self.avatar = f'{self.id}_chat_{current_user_id}_user.png'
+            image_path, img_card = self.set_avatar_info(current_user_id=current_user_id,
+                                                        users=users)
             img = Image.new('RGB', (IMG_SIZE, IMG_SIZE))
-            img_card = self.get_image_card(len(users))
             for card, user in zip(img_card, users[:4]):
-                temp_image_path = Path(Path.cwd(), 'server', 'images', user.avatar)
-                temp_img = Image.open(temp_image_path)
-                img_pos = tuple(int(pos * IMG_SIZE) for pos in card)
-                img.paste(temp_img, img_pos)
-            image_path = Path(Path.cwd(), 'server', 'images', self.avatar)
+                self.paste_temp_img_to_origin(user=user,
+                                              card=card,
+                                              img=img)
             img.save(image_path)
             return self.avatar
+
+    def set_avatar_info(self, current_user_id, users):
+        """Устанавливает основные параметры для создания аватара."""
+        self.avatar = f'{self.id}_chat_{current_user_id}_user.png'
+        image_path = Path(Path.cwd(), 'server', 'images', self.avatar)
+        img_card = self.get_image_card(len(users))
+        return image_path, img_card
+
+    @staticmethod
+    def paste_temp_img_to_origin(user, card, img):
+        """Копирует часть аватара пользователя в будущий аватар чата в соответствии с card"""
+        temp_image_path = Path(Path.cwd(), 'server', 'images', user.avatar)
+        temp_img = Image.open(temp_image_path)
+        img_pos = tuple(int(pos * IMG_SIZE) for pos in card)
+        img.paste(temp_img, img_pos)
 
     def find_users_in_chat_without_current(self, current_user_id):
         return Users.query \
