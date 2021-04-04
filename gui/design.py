@@ -42,9 +42,10 @@ def show_input_errors(self, err_log):
     self.ui.error_label.setText(answer)
 
 
-def download_avatar(user_id, icon_path):
+def download_avatar(icon_path, user_id=0, chat_id=0, ):
     response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
-                             data={'id': user_id},
+                             data={'user_id': user_id,
+                                   'chat_id': chat_id},
                              stream=True)
     with open(icon_path, 'wb') as f:
         for block in response.iter_content(1024):
@@ -52,6 +53,11 @@ def download_avatar(user_id, icon_path):
                 f.close()
                 break
             f.write(block)
+
+
+def delete_avatar(icon_path):
+    """Удаляет ненужный файл аватара."""
+    Path.unlink(icon_path)
 
 
 def load_icon(icon_name):
@@ -305,12 +311,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if chat.chat_id == -2:
             self.current_chat_page += 1
             msgs = self.receive_msgs()
-            print(len(msgs['msgs']))
-            print(self.current_chat_page * 10)
-            if len(msgs['msgs']) == self.current_chat_page * 10:
-                self.view_msgs(msgs)
-            else:
-                self.view_msgs(msgs, more_item_text='no more msgs')
+            self.view_msgs(msgs)
             self.ui.messages.scrollToItem(self.ui.messages.itemFromIndex(item_index))
         else:
             pass
@@ -386,14 +387,21 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
         response = response.json()
+        icon_path = Path('cache', 'images', response['filename'])
         if response['new']:
             self.open_chat(chat_id=response['chat_id'],
                            chat_name=response['chat_name'],
                            is_public=response['is_public'])
-            self.ui.messages.clear()
+            download_avatar(icon_path,
+                            chat_id=response['chat_id'],
+                            user_id=self.current_user_id)
+            self.view_msgs(self.receive_msgs())
             self.view_users(self.receive_users())
         else:
             self.ui.chat_name_lanel.setText(response['chat_name'])
+            download_avatar(icon_path,
+                            chat_id=self.current_chat_id,
+                            user_id=self.current_user_id)
             self.view_users(self.receive_users())
             self.add_inf_item(text=response['msg'], to_list='msgs')
 
@@ -403,11 +411,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
         response = response.json()
+
         if response['del_chat'] or response['leave']:
+            delete_avatar(response['filename'])
             self.open_chat_editor()
             self.block_buttons()
             self.ui.messages.clear()
         else:
+            download_avatar(Path('cache', 'images', response['filename']),
+                            chat_id=self.current_chat_id,
+                            user_id=self.current_user_id)
             self.view_users(self.receive_users())
             self.add_inf_item(text=response['msg'], to_list='msgs')
 
@@ -501,14 +514,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.username_label.setText(username)
         self.ui.avatar.setIcon(self.load_avatar(avatar, user_id))
 
-    @staticmethod
-    def load_avatar(filename, user_id=''):
+    def load_avatar(self, filename, user_id=0, chat_id=0):
         """Загрузка изображения для аватара."""
         icon = QIcon()
         icon_path = Path('cache', 'images', filename)
         if QPixmap(str(icon_path)).isNull():
-            download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
-                            user_id=user_id)
+            if chat_id:
+                download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
+                                user_id=self.current_user_id,
+                                chat_id=chat_id)
+            else:
+                download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
+                                user_id=user_id)
         icon.addPixmap(QPixmap(str(icon_path)))
         return icon
 
@@ -564,10 +581,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         inf = InformationItemForm(text)
         inf.setStyleSheet(INFORMATION_ITEM_STYLE)
 
-        if text[:3] == 'add':
-            item.chat_id = -2
-        else:
-            item.chat_id = -3
+        item.chat_id = -2
 
         if to_list == 'chats':
             item.setSizeHint(QSize(320, 40))
@@ -595,7 +609,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.chat_id = chat_id
         item.is_public = is_public
 
-        item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
+        item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id, chat_id=chat_id))
         item.setSizeHint(self.chat_items_size())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat_item)
@@ -605,7 +619,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
                                  data={'chat_id': self.current_chat_id,
                                        'limit': self.current_chat_page})
-        msgs = response.json()
+        msgs = response.json()['msgs']
         return msgs
 
     def receive_chats(self):
@@ -632,11 +646,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             self.ui.no_user_label.setText('no chats yet')
 
-    def view_msgs(self, msgs, more_item_text='add more messages'):
+    def view_msgs(self, msgs):
         """Выводит сообщения данного чата."""
         self.ui.messages.clear()
-        self.add_more_item(more_item_text, to_list='msgs')
-        for msg in msgs['msgs']:
+        if len(msgs) == 10:
+            self.add_more_item('add more messages', to_list='msgs')
+        for msg in msgs:
             if msg['sender'] == -1:
                 self.add_inf_item(text=msg['msg_text'], to_list='msgs')
             else:

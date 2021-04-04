@@ -138,8 +138,8 @@ def receive_user_chats():
             chats_info.append(
                 {'chat_name': chat.get_chat_name(current_user.username),
                  'chat_id': chat.id,
-                 'avatar': current_user.avatar,
-                 'companion_id': current_user.id,
+                 'avatar': chat.avatar,
+                 'companion_id': 0,
                  'last_msg': last_msg,
                  'last_activity': chat.last_activity,
                  'is_public': chat.is_public,
@@ -182,7 +182,7 @@ def find_user_by_name():
             suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
                                    'chat_id': chat.Chats.id,
                                    'last_msg': chat.Chats.get_last_msg(),
-                                   'avatar': current_user.avatar,
+                                   'avatar': chat.Chats.avatar,
                                    'last_activity': chat.Chats.last_activity,
                                    'is_public': chat.Chats.is_public,
                                    'companion_id': -1, })
@@ -230,18 +230,30 @@ def create_new_chat(users_ids=None, current_user=None):
         user.add_to_chat(chat)
 
     chat.is_public = False if chat.amount_of_users() == 2 else True
+    if chat.avatar is None:
+        chat.get_chat_avatar(current_user.id)
     db.session.add(chat)
     db.session.commit()
     return {'chat_id': chat.id,
             'chat_name': chat.get_chat_name(current_user.username),
-            'is_public': chat.is_public, }
+            'is_public': chat.is_public,
+            'filename': chat.avatar}
 
 
 @app.route('/corporate_chat/load_avatar', methods=['POST'])
-def load_avatar():
+def load_user_avatar():
     """Отправка аватаров клиенту."""
-    user = Users.find_by_id(request.form['id'])
-    path = Path('images', user.avatar)
+    user = Users.find_by_id(request.form['user_id'])
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    if current_chat is None:
+        path = Path('images', user.avatar)
+        if not Path.exists(path):
+            user.set_avatar()
+    else:
+        path = Path('images', current_chat.avatar)
+        if not Path.exists(path):
+            current_chat.get_chat_avatar(user.id)
+
     return send_file(path)
 
 
@@ -294,13 +306,15 @@ def add_to_chat():
     if current_chat.amount_of_users() == 2 and not current_chat.is_public:
         users = [user.id for user in current_chat.find_users_in_chat()]
         users.append(user_to_add.id)
-        answer.update(create_new_chat(users_ids=users,
-                                      current_user=current_user))
+
+        answer = create_new_chat(users_ids=users,
+                                 current_user=current_user)
+
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
 
         msg = Messages(-1, current_chat.id,
-                       f"{current_user.username} create {current_chat.get_chat_name(current_user.username)}")
+                       f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>")
         db.session.add(msg)
     else:
         user_to_add.add_to_chat(current_chat)
@@ -313,6 +327,8 @@ def add_to_chat():
 
     db.session.add(msg)
     db.session.commit()
+
+    answer['filename'] = current_chat.get_chat_avatar(current_user.id)
     answer['msg'] = msg.msg
     return answer
 
@@ -343,4 +359,5 @@ def delete_from_chat():
         db.session.add(msg)
         db.session.commit()
         answer['msg'] = msg.msg
+    answer['filename'] = current_chat.get_chat_avatar(current_user.id)
     return answer
