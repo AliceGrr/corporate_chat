@@ -31,21 +31,37 @@ def verify_email(email):
     return False
 
 
-def verify_user_data(username, psw, email='line@mail.com'):
-    """Проверка корректности вводимых данных"""
-    err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
+def check_login(username, err_log):
+    """Проверка на корректность логина."""
     if is_field_incorrect(username):
         err_log['msg'] += 'Username ' + is_field_incorrect(username)
         err_log['username_err'] = True
+
+
+def check_password(psw, err_log):
+    """Проверка на корректность пароля."""
+    if is_field_incorrect(psw):
+        err_log['msg'] += 'Password ' + is_field_incorrect(psw)
+        err_log['psw_err'] = True
+
+
+def check_email(email, err_log):
+    """Проверка на корректность почты."""
     if is_field_incorrect(email):
         err_log['msg'] += 'Email ' + is_field_incorrect(email)
         err_log['email_err'] = True
     elif not verify_email(email):
         err_log['msg'] += 'Invalid email\n'
         err_log['email_err'] = True
-    if is_field_incorrect(psw):
-        err_log['msg'] += 'Password ' + is_field_incorrect(psw)
-        err_log['psw_err'] = True
+
+
+def verify_user_data(username, psw, email='line@mail.com'):
+    """Проверка корректности вводимых данных"""
+    err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
+    check_login(username, err_log)
+    check_password(psw, err_log)
+    check_email(email, err_log)
+    print(err_log)
     return err_log
 
 
@@ -93,10 +109,10 @@ def send_message():
     db.session.add(msg)
 
     chat = Chats.find_by_id(request.form['to_chat'])
-    chat.last_activity = msg.time_stamp
+    chat.update_activity(msg.time_stamp)
 
     user = Users.find_by_id(request.form['sender'])
-    user.last_activity = msg.time_stamp
+    user.update_activity(msg.time_stamp)
     db.session.commit()
     return {'send_time': msg.time_stamp}
 

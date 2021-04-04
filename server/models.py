@@ -5,6 +5,7 @@ from . import db
 import datetime
 from hashlib import md5
 from PIL import Image
+
 IMG_SIZE = 128
 
 usersInChats = db.Table('usersInChats',
@@ -26,6 +27,15 @@ class Users(db.Model):
         primaryjoin=(usersInChats.c.user_id == id),
         backref=db.backref('chats', lazy='dynamic'), lazy='dynamic')
 
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+        self.set_avatar()
+
+    # Состояния пользователя
+    def update_activity(self, time_stamp):
+        self.last_activity = time_stamp
+
     def user_state(self):
         difference = datetime.datetime.now() - self.last_activity
         return 'online' if difference.minute < 15 else 'offline'
@@ -34,6 +44,7 @@ class Users(db.Model):
     def get_last_activity(self):
         return ''
 
+    # Работа с аватаром
     def load_avatar(self, url):
         filename = f'{self.username}_offline.png'
         filepath = Path(Path.cwd(), 'server', 'images', filename)
@@ -53,11 +64,28 @@ class Users(db.Model):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return f'https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}'
 
-    def __init__(self, username, email):
-        self.username = username
-        self.email = email
-        self.set_avatar()
+    # Работа с паролем
+    def set_password(self, password):
+        self.psw_hash = generate_password_hash(password)
 
+    def check_password(self, password):
+        return check_password_hash(self.psw_hash, password)
+
+    # Управление нахождением пользователей в чатах
+    def add_to_chat(self, chat):
+        if not self.is_in_chat(chat):
+            self.chats.append(chat)
+
+    def remove_from_chat(self, chat):
+        if self.is_in_chat(chat):
+            self.chats.remove(chat)
+
+    def is_in_chat(self, chat):
+        return self.chats \
+                   .filter(usersInChats.c.chat_id == chat.id) \
+                   .count() > 0
+
+    # Запросы к таблице
     def get_suitable_chats(self, example_username):
         return db.session.query(Chats, Users.avatar, Users.username) \
             .join(usersInChats, (usersInChats.c.chat_id == Chats.id)) \
@@ -89,12 +117,6 @@ class Users(db.Model):
         return Users.query \
             .filter(~Users.id.in_(users))
 
-    def set_password(self, password):
-        self.psw_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.psw_hash, password)
-
     @staticmethod
     def find_by_name(username):
         return Users.query \
@@ -104,19 +126,6 @@ class Users(db.Model):
     @staticmethod
     def find_by_id(user_id):
         return Users.query.get(user_id)
-
-    def add_to_chat(self, chat):
-        if not self.is_in_chat(chat):
-            self.chats.append(chat)
-
-    def remove_from_chat(self, chat):
-        if self.is_in_chat(chat):
-            self.chats.remove(chat)
-
-    def is_in_chat(self, chat):
-        return self.chats \
-                   .filter(usersInChats.c.chat_id == chat.id) \
-                   .count() > 0
 
 
 class Messages(db.Model):
@@ -150,6 +159,10 @@ class Chats(db.Model):
     def __init__(self, users):
         self.chat_name = users
 
+    def update_activity(self, time_stamp):
+        self.last_activity = time_stamp
+
+    # Работа с аватаром
     @staticmethod
     def get_image_card(amount_of_users):
         if amount_of_users == 2:
@@ -187,6 +200,7 @@ class Chats(db.Model):
         img_pos = tuple(int(pos * IMG_SIZE) for pos in card)
         img.paste(temp_img, img_pos)
 
+    # Запросы к бд
     def find_users_in_chat_without_current(self, current_user_id):
         return Users.query \
             .join(usersInChats, usersInChats.c.user_id == Users.id) \
@@ -198,14 +212,6 @@ class Chats(db.Model):
             .filter(Messages.chat == self.id) \
             .order_by(Messages.time_stamp.desc()) \
             .limit(limit)
-
-    def delete_chat(self):
-        users = self.find_users_in_chat()
-        for user in users:
-            user.remove_from_chat(self)
-        Messages.query.filter(Messages.chat == self.id).delete()
-        db.session.delete(self)
-        db.session.commit()
 
     def get_chat_name(self, username):
         chat_name = self.chat_name.replace(username + ', ', '')
@@ -240,3 +246,11 @@ class Chats(db.Model):
             return last_msg[:50]
         else:
             return ''
+
+    def delete_chat(self):
+        users = self.find_users_in_chat()
+        for user in users:
+            user.remove_from_chat(self)
+        Messages.query.filter(Messages.chat == self.id).delete()
+        db.session.delete(self)
+        db.session.commit()
