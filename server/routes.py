@@ -150,31 +150,35 @@ def receive_user_chats():
     chats_info = []
     for chat in user_chats:
         if chat.is_public:
-            last_msg = chat.get_last_msg()
-            chats_info.append(
-                {'chat_name': chat.get_chat_name(current_user.username),
-                 'chat_id': chat.id,
-                 'avatar': chat.avatar,
-                 'companion_id': 0,
-                 'last_msg': last_msg,
-                 'last_activity': chat.last_activity,
-                 'is_public': chat.is_public,
-                 }
-            )
+            chats_info.append(public_chat_info(chat, current_user))
         else:
-            user = current_user.find_companion(chat.id)
-            last_msg = chat.get_last_msg()
-            chats_info.append(
-                {'chat_name': chat.get_chat_name(current_user.username),
-                 'chat_id': chat.id,
-                 'avatar': user.avatar,
-                 'companion_id': user.id,
-                 'last_msg': last_msg,
-                 'last_activity': chat.last_activity,
-                 'is_public': chat.is_public,
-                 }
-            )
+            companion = current_user.find_companion(chat.id)
+            chats_info.append(private_chat_info(chat, current_user, companion))
     return {'chats': chats_info}
+
+
+def private_chat_info(chat, current_user, companion):
+    """Словарь с информацией о личном чате."""
+    return {'chat_name': chat.get_chat_name(current_user.username),
+            'chat_id': chat.id,
+            'avatar': companion.avatar,
+            'companion_id': companion.id,
+            'last_msg': chat.get_last_msg(),
+            'last_activity': chat.last_activity,
+            'is_public': chat.is_public,
+            }
+
+
+def public_chat_info(chat, current_user):
+    """Словарь с информацией о публичном чате."""
+    return {'chat_name': chat.get_chat_name(current_user.username),
+            'chat_id': chat.id,
+            'avatar': chat.avatar,
+            'companion_id': 0,
+            'last_msg': chat.get_last_msg(),
+            'last_activity': chat.last_activity,
+            'is_public': chat.is_public,
+            }
 
 
 @app.route('/corporate_chat/find_user_by_name', methods=['POST'])
@@ -184,25 +188,15 @@ def find_user_by_name():
     users = current_user.get_suitable_users(request.form['requested_username'])
     chats = current_user.get_suitable_chats(request.form['requested_username'])
 
-    suitable_chats = []
-    for chat in chats:
-        if not chat.Chats.is_public:
-            suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
-                                   'chat_id': chat.Chats.id,
-                                   'last_msg': chat.Chats.get_last_msg(),
-                                   'avatar': chat.avatar,
-                                   'last_activity': chat.Chats.last_activity,
-                                   'is_public': chat.Chats.is_public,
-                                   'companion_id': -1, })
-        elif chat.Chats.is_public and chat.Chats.id not in [chat['chat_id'] for chat in suitable_chats]:
-            suitable_chats.append({'chat_name': chat.Chats.get_chat_name(current_user.username),
-                                   'chat_id': chat.Chats.id,
-                                   'last_msg': chat.Chats.get_last_msg(),
-                                   'avatar': chat.Chats.avatar,
-                                   'last_activity': chat.Chats.last_activity,
-                                   'is_public': chat.Chats.is_public,
-                                   'companion_id': -1, })
+    suitable_chats = select_suitable_chats(chats, current_user)
+    suitable_users = select_suitable_users(users, chats)
 
+    return {'suitable_users': suitable_users,
+            'suitable_chats': suitable_chats}
+
+
+def select_suitable_users(users, chats):
+    """Выбирает подходящих запросу пользователей из списка."""
     suitable_users = []
     for user in users:
         for chat in chats:
@@ -213,9 +207,19 @@ def find_user_by_name():
                                    'username': user.username,
                                    'avatar': user.avatar,
                                    })
+    return suitable_users
 
-    return {'suitable_users': suitable_users,
-            'suitable_chats': suitable_chats}
+
+def select_suitable_chats(chats, current_user):
+    """Выбирает подходящие запросу чаты из списка"""
+    suitable_chats = []
+    for chat in chats:
+        if not chat.Chats.is_public:
+            companion = current_user.find_companion(chat.Chats.id)
+            suitable_chats.append(private_chat_info(chat.Chats, current_user, companion))
+        elif chat.Chats.is_public and chat.Chats.id not in [chat['chat_id'] for chat in suitable_chats]:
+            suitable_chats.append(public_chat_info(chat.Chats, current_user))
+    return suitable_chats
 
 
 @app.route('/corporate_chat/start_new_chat', methods=['POST'])
