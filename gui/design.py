@@ -320,7 +320,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Поиск пользователей в режиме настройки чата."""
         requested_username = self.ui.find_user_2.text()
         if requested_username:
-            users = self.receive_users(requested_username)
+            users = self.find_users_in_chat_by_name(requested_username)
             if users:
                 self.view_users(users)
             else:
@@ -328,6 +328,20 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.no_user_label.setText('nothing found')
         else:
             self.view_users(self.receive_users())
+
+    def find_users_in_chat_by_name(self, requested_username):
+        self.ui.chats.clear()
+        if self.edit_type == 'add':
+            self.add_inf_item('~~users not in chat~~', to_list='chats')
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat_by_name',
+                                     data={'chat_id': self.current_chat_id,
+                                           'requested_username': requested_username})
+        else:
+            self.add_inf_item('~~users in chat~~', to_list='chats')
+            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat_by_name',
+                                     data={'chat_id': self.current_chat_id,
+                                           'requested_username': requested_username})
+        return response.json()
 
     def change_edit_type(self):
         if self.edit_type == 'del':
@@ -355,17 +369,16 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.show_chat_menu()
             self.view_users(self.receive_users())
 
-    def receive_users(self, requested_username=''):
-        data = {'chat_id': self.current_chat_id, 'requested_username': requested_username}
+    def receive_users(self):
         self.ui.chats.clear()
         if self.edit_type == 'add':
             self.add_inf_item('~~users not in chat~~', to_list='chats')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
-                                     data=data)
+                                     data={'chat_id': self.current_chat_id})
         else:
             self.add_inf_item('~~users in chat~~', to_list='chats')
             response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
-                                     data=data)
+                                     data={'chat_id': self.current_chat_id})
         return response.json()
 
     def view_users(self, users):

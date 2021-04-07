@@ -224,8 +224,7 @@ class Chats(db.Model):
     def find_users_in_chat(self):
         return Users.query \
             .join(usersInChats, usersInChats.c.user_id == Users.id) \
-            .filter(usersInChats.c.chat_id == self.id) \
-            .all()
+            .filter(usersInChats.c.chat_id == self.id)
 
     def amount_of_users(self):
         return Chats.query \

@@ -61,7 +61,6 @@ def verify_user_data(username, psw, email='line@mail.com'):
     check_login(username, err_log)
     check_password(psw, err_log)
     check_email(email, err_log)
-    print(err_log)
     return err_log
 
 
@@ -76,8 +75,7 @@ def login():
         err_log['msg'] = 'No such user'
         return err_log
     elif user.check_password(request.form['psw']):
-        err_log['user_id'] = user.id
-        err_log['avatar'] = user.avatar
+        err_log.update(user_info(user))
         return err_log
     else:
         err_log['msg'] = 'Incorrect psw'
@@ -181,6 +179,14 @@ def public_chat_info(chat, current_user):
             }
 
 
+def user_info(user):
+    """Словарь с информацией о пользователе."""
+    return {'user_id': user.id,
+            'username': user.username,
+            'avatar': user.avatar,
+            }
+
+
 @app.route('/corporate_chat/find_user_by_name', methods=['POST'])
 def find_user_by_name():
     """Получение списка подходящих по запросу пользователей."""
@@ -203,10 +209,7 @@ def select_suitable_users(users, chats):
             if not chat.Chats.is_public and user.username in chat.Chats.chat_name:
                 break
         else:
-            suitable_users.append({'user_id': user.id,
-                                   'username': user.username,
-                                   'avatar': user.avatar,
-                                   })
+            suitable_users.append(user_info(user))
     return suitable_users
 
 
@@ -241,7 +244,6 @@ def create_new_chat(users_ids=None, current_user=None):
         chat_name += user.username + ', '
 
     chat = Chats(chat_name)
-    chat.is_public = False if chat.amount_of_users() == 2 else True
     db.session.add(chat)
     db.session.commit()
 
@@ -250,7 +252,7 @@ def create_new_chat(users_ids=None, current_user=None):
         user.add_to_chat(chat)
 
     chat.is_public = False if chat.amount_of_users() == 2 else True
-    if chat.avatar is None:
+    if chat.is_public:
         chat.get_chat_avatar(current_user.id)
     db.session.add(chat)
     db.session.commit()
@@ -261,7 +263,7 @@ def create_new_chat(users_ids=None, current_user=None):
 
 
 @app.route('/corporate_chat/load_avatar', methods=['POST'])
-def load_user_avatar():
+def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
@@ -282,18 +284,26 @@ def users_in_chat():
     """Список пользователей чата."""
     current_chat = Chats.find_by_id(request.form['chat_id'])
     users = current_chat.find_users_in_chat()
-    if request.form['requested_username']:
-        suitable_users = [{
-            'user_id': user.id,
-            'username': user.username,
-            'avatar': user.avatar,
-        } for user in users if user.username.lower().startswith(request.form['requested_username'].lower())]
-        return {'users': suitable_users}
-    return {'users': [{
-        'user_id': user.id,
-        'username': user.username,
-        'avatar': user.avatar,
-    } for user in users]}
+    return {'users': [user_info(user) for user in users]}
+
+
+@app.route('/corporate_chat/users_in_chat_by_name', methods=['POST'])
+def users_in_chat_by_name():
+    """Список пользователей чата по запрошенному имени."""
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    users = current_chat.find_users_in_chat().filter(
+        Users.username.startswith(request.form['requested_username'].lower()))
+    return {'users': [user_info(user) for user in users]}
+
+
+@app.route('/corporate_chat/users_not_in_chat_by_name', methods=['POST'])
+def users_not_in_chat_by_name():
+    """Список пользователей вне чата по запрошенному имени."""
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    users_in = [user.id for user in current_chat.find_users_in_chat()]
+    users = Users.find_users_not_in_chat(users_in).filter(
+        Users.username.startswith(request.form['requested_username'].lower()))
+    return {'users': [user_info(user) for user in users]}
 
 
 @app.route('/corporate_chat/users_not_in_chat', methods=['POST'])
@@ -302,18 +312,7 @@ def users_not_in_chat():
     current_chat = Chats.find_by_id(request.form['chat_id'])
     users_in = [user.id for user in current_chat.find_users_in_chat()]
     users = Users.find_users_not_in_chat(users_in)
-    if request.form['requested_username']:
-        suitable_users = [{
-            'user_id': user.id,
-            'username': user.username,
-            'avatar': user.avatar,
-        } for user in users if user.username.lower().startswith(request.form['requested_username'].lower())]
-        return {'users': suitable_users}
-    return {'users': [{
-        'user_id': user.id,
-        'username': user.username,
-        'avatar': user.avatar,
-    } for user in users]}
+    return {'users': [user_info(user) for user in users]}
 
 
 @app.route('/corporate_chat/add_to_chat', methods=['POST'])
