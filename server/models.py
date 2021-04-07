@@ -172,10 +172,16 @@ class Chats(db.Model):
         else:
             return [[0, 0], [0.5, 0], [0, 0.5], [0.5, 0.5]]
 
-    def get_chat_avatar(self, current_user_id):
-        users = self.find_users_in_chat_without_current(current_user_id)
-        if len(users) > 1:
-            image_path, img_card = self.set_avatar_info(current_user_id=current_user_id,
+    def get_chat_avatar(self, current_user):
+        users = self.find_users_in_chat_without_current(current_user.id)
+        if len(users) == 1:
+            user_avatar_path = Path(Path.cwd(), 'server', 'images', users[0].avatar)
+            chat_avatar_path = Path(Path.cwd(), 'server', 'images', self.avatar)
+            with open(user_avatar_path, 'rb') as user_avatar:
+                with open(chat_avatar_path, 'wb') as chat_avatar:
+                    chat_avatar.write(user_avatar.read())
+        else:
+            image_path, img_card = self.set_avatar_info(current_user_id=current_user.id,
                                                         users=users)
             img = Image.new('RGB', (IMG_SIZE, IMG_SIZE))
             for card, user in zip(img_card, users[:4]):
@@ -183,7 +189,7 @@ class Chats(db.Model):
                                               card=card,
                                               img=img)
             img.save(image_path)
-            return self.avatar
+        return self.avatar
 
     def set_avatar_info(self, current_user_id, users):
         """Устанавливает основные параметры для создания аватара."""

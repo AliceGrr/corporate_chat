@@ -253,7 +253,7 @@ def create_new_chat(users_ids=None, current_user=None):
 
     chat.is_public = False if chat.amount_of_users() == 2 else True
     if chat.is_public:
-        chat.get_chat_avatar(current_user.id)
+        chat.get_chat_avatar(current_user)
     db.session.add(chat)
     db.session.commit()
     return {'chat_id': chat.id,
@@ -274,7 +274,7 @@ def load_avatar():
     else:
         path = Path('images', current_chat.avatar)
         if not Path.exists(path):
-            current_chat.get_chat_avatar(user.id)
+            current_chat.get_chat_avatar(user)
 
     return send_file(path)
 
@@ -318,65 +318,70 @@ def users_not_in_chat():
 @app.route('/corporate_chat/add_to_chat', methods=['POST'])
 def add_to_chat():
     """Добавление пользователя в чат."""
-    answer = {}
+    answer = {'new': False}
+    msg_text = ''
+
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_add = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
-    if current_chat.amount_of_users() == 2 and not current_chat.is_public:
-        users = [user.id for user in current_chat.find_users_in_chat()]
-        users.append(user_to_add.id)
 
-        answer = create_new_chat(users_ids=users,
+    if current_chat.amount_of_users() == 2 and not current_chat.is_public:
+        users_ids = [user.id for user in current_chat.find_users_in_chat()]
+        users_ids.append(user_to_add.id)
+        answer = create_new_chat(users_ids=users_ids,
                                  current_user=current_user)
 
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
-
-        msg = Messages(-1, current_chat.id,
-                       f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>")
-        db.session.add(msg)
+        msg_text += f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>"
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
         answer['chat_name'] = current_chat.chat_name
-        answer['new'] = False
-    # add information msg
-    msg = Messages(-1, current_chat.id, f'{current_user.username} add {user_to_add.username}')
+    msg_text += f'{current_user.username} add {user_to_add.username}'
+    add_inf_msg(current_chat, msg_text)
+
+    answer['filename'] = current_chat.get_chat_avatar(current_user)
+    answer['msg'] = msg_text
+    return answer
+
+
+def add_inf_msg(current_chat, text):
+    """Добавление информационного сообщения."""
+    msg = Messages(-1, current_chat.id, text)
     current_chat.last_activity = msg.time_stamp
 
     db.session.add(msg)
     db.session.commit()
-
-    answer['filename'] = current_chat.get_chat_avatar(current_user.id)
-    answer['msg'] = msg.msg
-    return answer
+    return msg.msg
 
 
 @app.route('/corporate_chat/remove_from_chat', methods=['POST'])
 def delete_from_chat():
     """Удаление пользователя из чата."""
-    answer = {'del_chat': False, 'leave': False}
     current_user = Users.find_by_id(request.form['current_user_id'])
     user_to_delete = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
+
+    answer = {'del_chat': False, 'leave': False, 'filename': current_chat.avatar}
+    msg_text = ''
+
     if current_chat.amount_of_users() == 2:
         current_chat.delete_chat()
         answer['del_chat'] = True
     else:
-        # add information msg
         if current_user.id == user_to_delete.id:
-            msg = Messages(-1, current_chat.id, f'{current_user.username} leave chat')
+            msg_text += f'{current_user.username} leave chat'
             answer['leave'] = True
         else:
-            msg = Messages(-1, current_chat.id, f'{current_user.username} delete {user_to_delete.username}')
+            msg_text += f'{current_user.username} delete {user_to_delete.username}'
 
         user_to_delete.remove_from_chat(current_chat)
+
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
+        add_inf_msg(current_chat, msg_text)
 
-        current_chat.last_activity = msg.time_stamp
-
-        db.session.add(msg)
-        db.session.commit()
-        answer['msg'] = msg.msg
-    answer['filename'] = current_chat.get_chat_avatar(current_user.id)
+        answer['msg'] = msg_text
+        answer['filename'] = current_chat.get_chat_avatar(current_user)
+    print(answer)
     return answer

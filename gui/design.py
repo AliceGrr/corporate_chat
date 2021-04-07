@@ -57,7 +57,8 @@ def download_avatar(icon_path, user_id=0, chat_id=0, ):
 
 def delete_avatar(icon_path):
     """Удаляет ненужный файл аватара."""
-    Path.unlink(icon_path)
+    p = Path(icon_path)
+    p.unlink(icon_path)
 
 
 def load_icon(icon_name):
