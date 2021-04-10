@@ -333,7 +333,7 @@ def add_to_chat():
 
         current_chat = Chats.find_by_id(answer['chat_id'])
         answer['new'] = True
-        msg_text += f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>"
+        msg_text += f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>. "
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '

@@ -12,6 +12,7 @@ ERR_STYLE = '''border: 2px solid rgb(255, 55, 118);'''
 USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
 TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
+SERVER = '192.168.56.1:5000'
 
 
 def change_windows(self, window_to_open, login_in_filed=None):
@@ -43,7 +44,7 @@ def show_input_errors(self, err_log):
 
 
 def download_avatar(icon_path, user_id=0, chat_id=0, ):
-    response = requests.post('http://127.0.0.1:5000/corporate_chat/load_avatar',
+    response = requests.post(f'http://{SERVER}/corporate_chat/load_avatar',
                              data={'user_id': user_id,
                                    'chat_id': chat_id},
                              stream=True)
@@ -111,7 +112,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         """Вход пользователя в систему."""
         username = self.ui.login_in.text()
         psw = self.ui.password_in.text()
-        response = requests.post('http://127.0.0.1:5000/corporate_chat',
+        response = requests.post(f'http://{SERVER}/corporate_chat',
                                  data={'username': username, 'psw': psw})
         err_log = response.json()
         if err_log['msg']:
@@ -163,7 +164,7 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         username = self.ui.login_in.text()
         psw = self.ui.password_in.text()
         email = self.ui.email_in.text()
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/register',
+        response = requests.post(f'http://{SERVER}/corporate_chat/register',
                                  data={'username': username, 'psw': psw, 'email': email})
         err_log = response.json()
         if err_log['msg']:
@@ -333,12 +334,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.clear()
         if self.edit_type == 'add':
             self.add_inf_item('~~users not in chat~~', to_list='chats')
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat_by_name',
+            response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat_by_name',
                                      data={'chat_id': self.current_chat_id,
                                            'requested_username': requested_username})
         else:
             self.add_inf_item('~~users in chat~~', to_list='chats')
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat_by_name',
+            response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat_by_name',
                                      data={'chat_id': self.current_chat_id,
                                            'requested_username': requested_username})
         return response.json()
@@ -372,11 +373,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.clear()
         if self.edit_type == 'add':
             self.add_inf_item('~~users not in chat~~', to_list='chats')
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_not_in_chat',
+            response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat',
                                      data={'chat_id': self.current_chat_id})
         else:
             self.add_inf_item('~~users in chat~~', to_list='chats')
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/users_in_chat',
+            response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat',
                                      data={'chat_id': self.current_chat_id})
         return response.json()
 
@@ -395,7 +396,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def add_user_to_chat(self, user_id):
         """Добавление пользователя в чат."""
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/add_to_chat',
+        response = requests.post(f'http://{SERVER}/corporate_chat/add_to_chat',
                                  data={'chat_id': self.current_chat_id,
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
@@ -428,7 +429,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def remove_user_from_chat(self, user_id):
         """Удаление пользователя из чата."""
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/remove_from_chat',
+        response = requests.post(f'http://{SERVER}/corporate_chat/remove_from_chat',
                                  data={'chat_id': self.current_chat_id,
                                        'user_id': user_id,
                                        'current_user_id': self.current_user_id})
@@ -639,7 +640,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_msgs(self):
         """Получение сообщений данного чата."""
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_messages',
+        response = requests.post(f'http://{SERVER}/corporate_chat/receive_messages',
                                  data={'chat_id': self.current_chat_id,
                                        'limit': self.current_chat_page})
         msgs = response.json()['msgs']
@@ -647,7 +648,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_chats(self):
         """Получение чатов данного пользователя."""
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/receive_user_chats',
+        response = requests.post(f'http://{SERVER}/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
         chats = (response.json())['chats']
         return chats
@@ -692,7 +693,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if self.temp_chat_id:
                 self.create_new_chat(self.temp_chat_id, self.current_user_id)
                 self.temp_chat_id = 0
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/send_message',
+            response = requests.post(f'http://{SERVER}/corporate_chat/send_message',
                                      data={'sender': self.current_user_id, 'to_chat': self.current_chat_id,
                                            'msg': msg_text})
             msg_time = response.json()['send_time']
@@ -709,7 +710,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Поиск пользователя по введенному значению."""
         requested_username = self.ui.find_user.text()
         if requested_username:
-            response = requests.post('http://127.0.0.1:5000/corporate_chat/find_user_by_name',
+            response = requests.post(f'http://{SERVER}/corporate_chat/find_user_by_name',
                                      data={'requested_username': requested_username,
                                            'current_user_id': self.current_user_id})
             user_list = response.json()
@@ -737,7 +738,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def create_new_chat(self, *user_ids):
         """Создает новый чат."""
-        response = requests.post('http://127.0.0.1:5000/corporate_chat/start_new_chat',
+        response = requests.post(f'http://{SERVER}/corporate_chat/start_new_chat',
                                  data={'users_ids': ','.join(str(user_id) for user_id in user_ids),
                                        'current_user_id': self.current_user_id})
         chat_info = response.json()
