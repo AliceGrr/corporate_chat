@@ -169,7 +169,6 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         if err_log['msg']:
             show_input_errors(self, err_log)
         else:
-            # переход на форму логина
             self.to_login_form()
 
 
@@ -361,7 +360,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.ui.chats.itemClicked.connect(self.chat_clicked)
             self.hide_chat_menu()
-
             self.view_chats(self.receive_chats())
         else:
             self.chat_edit_mode = True
@@ -396,6 +394,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                    action=self.edit_type)
 
     def add_user_to_chat(self, user_id):
+        """Добавление пользователя в чат."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/add_to_chat',
                                  data={'chat_id': self.current_chat_id,
                                        'user_id': user_id,
@@ -403,23 +402,32 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = response.json()
         icon_path = Path('cache', 'images', response['filename'])
         if response['new']:
-            self.open_chat(chat_id=response['chat_id'],
-                           chat_name=response['chat_name'],
-                           is_public=response['is_public'])
-            download_avatar(icon_path,
-                            chat_id=response['chat_id'],
-                            user_id=self.current_user_id)
-            self.view_msgs(self.receive_msgs())
-            self.view_users(self.receive_users())
+            self.open_new_chat_item(icon_path, response)
         else:
-            self.ui.chat_name_lanel.setText(response['chat_name'])
-            download_avatar(icon_path,
-                            chat_id=self.current_chat_id,
-                            user_id=self.current_user_id)
-            self.view_users(self.receive_users())
-            self.add_inf_item(text=response['msg'], to_list='msgs')
+            self.update_chat_info(icon_path, response)
+
+    def update_chat_info(self, icon_path, response):
+        """Обновление чата после действия."""
+        self.ui.chat_name_lanel.setText(response['chat_name'])
+        download_avatar(icon_path,
+                        chat_id=self.current_chat_id,
+                        user_id=self.current_user_id)
+        self.view_users(self.receive_users())
+        self.add_inf_item(text=response['msg'], to_list='msgs')
+
+    def open_new_chat_item(self, icon_path, response):
+        """Добавление нового чата в список чатов."""
+        self.open_chat(chat_id=response['chat_id'],
+                       chat_name=response['chat_name'],
+                       is_public=response['is_public'])
+        download_avatar(icon_path,
+                        chat_id=response['chat_id'],
+                        user_id=self.current_user_id)
+        self.view_msgs(self.receive_msgs())
+        self.view_users(self.receive_users())
 
     def remove_user_from_chat(self, user_id):
+        """Удаление пользователя из чата."""
         response = requests.post('http://127.0.0.1:5000/corporate_chat/remove_from_chat',
                                  data={'chat_id': self.current_chat_id,
                                        'user_id': user_id,
@@ -427,16 +435,17 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         response = response.json()
 
         if response['del_chat'] or response['leave']:
-            delete_avatar(response['filename'])
-            self.open_chat_editor()
-            self.block_buttons()
-            self.ui.messages.clear()
+            self.delete_chat(response)
         else:
-            download_avatar(Path('cache', 'images', response['filename']),
-                            chat_id=self.current_chat_id,
-                            user_id=self.current_user_id)
-            self.view_users(self.receive_users())
-            self.add_inf_item(text=response['msg'], to_list='msgs')
+            self.update_chat_info(Path('cache', 'images', response['filename']),
+                                  response)
+
+    def delete_chat(self, response):
+        """Удаление чата."""
+        delete_avatar(response['filename'])
+        self.open_chat_editor()
+        self.block_buttons()
+        self.ui.messages.clear()
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
@@ -692,7 +701,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                               sender_name=self.current_user,
                               sender=self.current_user_id,
                               filename=self.current_user_avatar)
-            self.ui.find_user.setText('')
             self.view_chats(self.receive_chats())
             self.ui.message_text.setFocus()
         self.ui.message_text.clear()
@@ -748,9 +756,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.temp_chat_id = chat.user_id
             self.clear_msgs()
             self.unblock_buttons()
-        elif chat.chat_id == -1:
-            pass
-        elif chat.chat_id == self.current_chat_id:
+        elif chat.chat_id == -1 or chat.chat_id == self.current_chat_id:
             pass
         else:
             self.open_chat(chat_id=chat.chat_id,
