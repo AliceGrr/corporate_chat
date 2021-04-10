@@ -337,12 +337,12 @@ def add_to_chat():
     else:
         user_to_add.add_to_chat(current_chat)
         current_chat.chat_name += user_to_add.username + ', '
-        answer['chat_name'] = current_chat.chat_name
     msg_text += f'{current_user.username} add {user_to_add.username}'
-    add_inf_msg(current_chat, msg_text)
 
-    answer['filename'] = current_chat.get_chat_avatar(current_user)
-    answer['msg'] = msg_text
+    add_inf_msg(current_chat, msg_text)
+    answer.update(add_chat_info_to_answer(current_chat=current_chat,
+                                          current_user=current_user,
+                                          msg_text=msg_text))
     return answer
 
 
@@ -354,6 +354,13 @@ def add_inf_msg(current_chat, text):
     db.session.add(msg)
     db.session.commit()
     return msg.msg
+
+
+def add_chat_info_to_answer(current_chat, current_user, msg_text):
+    """Добавление информации о чате в словарь с ответом."""
+    return {'chat_name': current_chat.chat_name,
+            'msg': msg_text,
+            'filename': current_chat.get_chat_avatar(current_user)}
 
 
 @app.route('/corporate_chat/remove_from_chat', methods=['POST'])
@@ -380,8 +387,7 @@ def delete_from_chat():
 
         current_chat.chat_name = current_chat.chat_name.replace(user_to_delete.username + ', ', '')
         add_inf_msg(current_chat, msg_text)
-
-        answer['msg'] = msg_text
-        answer['filename'] = current_chat.get_chat_avatar(current_user)
-    print(answer)
+        answer.update(add_chat_info_to_answer(current_chat=current_chat,
+                                              current_user=current_user,
+                                              msg_text=msg_text))
     return answer
