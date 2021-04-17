@@ -5,6 +5,8 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSize
 from gui.gui_classes import login, registration, chat
 from pathlib import Path
+from threading import Thread
+import time
 
 PASSWORD_IN_STYLE = '''padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";'''
 PASSWORD_ERR_STYLE = '''padding: 5; border-radius: 10px; border: 2px solid rgb(255, 55, 118); font: 25 8pt "Yu Gothic UI Light";'''
@@ -305,6 +307,26 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         # связка списка чатов с функцией
         self.ui.chats.itemClicked.connect(self.chat_clicked)
         self.ui.messages.itemClicked.connect(self.load_more_msgs)
+
+        # thread = Thread(target=self.update_client_thread)
+        # thread.start()
+
+    def update_client_thread(self):
+        """Поток обновления информации на клиенте"""
+        while True:
+            if self.current_user_id:
+                self.update_client()
+            time.sleep(5)
+
+    def update_client(self):
+        """Обновление информации на клиенте"""
+        if self.chat_edit_mode:
+            self.view_users(self.receive_users())
+            self.view_msgs(self.receive_msgs())
+        else:
+            self.view_chats(self.receive_chats())
+            if self.current_chat_id:
+                self.view_msgs(self.receive_msgs())
 
     def load_more_msgs(self, chat):
         """Загрузка большего количества сообщений."""
@@ -648,6 +670,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_chats(self):
         """Получение чатов данного пользователя."""
+        self.ui.chats.clear()
         response = requests.post(f'http://{SERVER}/corporate_chat/receive_user_chats',
                                  data={'username': self.current_user})
         chats = (response.json())['chats']
@@ -655,7 +678,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_chats(self, chats):
         """Показ чатов данного пользователя."""
-        self.ui.chats.clear()
         if len(chats) > 0:
             self.ui.no_user_label.setText('')
             for chat in chats:
