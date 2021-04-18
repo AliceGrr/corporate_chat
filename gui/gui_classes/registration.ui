@@ -224,6 +224,22 @@ QPushButton:pressed {color: rgb(16, 58, 148);}
      <string/>
     </property>
    </widget>
+   <widget class="QLabel" name="connection_error">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>570</y>
+      <width>161</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font: 63 12pt &quot;Yu Gothic UI Semibold&quot;;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

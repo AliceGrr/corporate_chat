@@ -143,7 +143,6 @@ def receive_messages():
 def receive_user_chats():
     """Получение списка всех чатов пользователя."""
     current_user = Users.find_by_name(request.form['username'])
-    print(current_user)
     user_chats = current_user.find_user_chats()
 
     chats_info = []

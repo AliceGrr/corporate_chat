@@ -89,6 +89,11 @@ class Ui_RegisterForm(object):
         self.login_in.setGeometry(QtCore.QRect(280, 190, 231, 40))
         self.login_in.setText("")
         self.login_in.setObjectName("login_in")
+        self.connection_error = QtWidgets.QLabel(self.centralwidget)
+        self.connection_error.setGeometry(QtCore.QRect(10, 570, 161, 21))
+        self.connection_error.setStyleSheet("font: 63 12pt \"Yu Gothic UI Semibold\";")
+        self.connection_error.setText("")
+        self.connection_error.setObjectName("connection_error")
         RegisterForm.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(RegisterForm)
