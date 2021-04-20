@@ -124,6 +124,12 @@ class Users(db.Model):
             .first()
 
     @staticmethod
+    def find_by_mail(email):
+        return Users.query \
+            .filter(Users.email == email) \
+            .first()
+
+    @staticmethod
     def find_by_id(user_id):
         return Users.query.get(user_id)
 

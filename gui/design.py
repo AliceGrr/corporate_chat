@@ -148,7 +148,7 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
             if err_log['msg']:
                 show_input_errors(self, err_log)
             else:
-                self.to_chat_form(username, err_log['user_id'], err_log['avatar'])
+                self.to_chat_form(err_log['username'], err_log['user_id'], err_log['avatar'])
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):

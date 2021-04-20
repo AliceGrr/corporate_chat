@@ -55,7 +55,7 @@ def check_email(email, err_log):
         err_log['email_err'] = True
 
 
-def verify_user_data(username, psw, email='line@mail.com'):
+def verify_user_data(psw, username='user', email='line@mail.com'):
     """Проверка корректности вводимых данных"""
     err_log = {'psw_err': False, 'username_err': False, 'msg': ''}
     check_login(username, err_log)
@@ -67,10 +67,12 @@ def verify_user_data(username, psw, email='line@mail.com'):
 @app.route('/corporate_chat', methods=['POST'])
 def login():
     """Вход пользователя."""
-    err_log = verify_user_data(request.form['username'], request.form['psw'])
+    if verify_email(request.form['username']):
+        err_log, user = login_by_mail()
+    else:
+        err_log, user = login_by_name()
     if err_log['msg']:
         return err_log
-    user = Users.find_by_name(request.form['username'])
     if user is None:
         err_log['msg'] = 'No such user'
         return err_log
@@ -80,6 +82,24 @@ def login():
     else:
         err_log['msg'] = 'Incorrect psw'
         return err_log
+
+
+def login_by_name():
+    err_log = verify_user_data(username=request.form['username'],
+                               psw=request.form['psw'])
+    if err_log['msg']:
+        return err_log, None
+    user = Users.find_by_name(request.form['username'])
+    return err_log, user
+
+
+def login_by_mail():
+    err_log = verify_user_data(email=request.form['username'],
+                               psw=request.form['psw'])
+    if err_log['msg']:
+        return err_log, None
+    user = Users.find_by_mail(request.form['username'])
+    return err_log, user
 
 
 @app.route('/corporate_chat/register', methods=['POST'])
