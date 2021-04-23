@@ -146,7 +146,7 @@ class Messages(db.Model):
         self.sender = sender
         self.chat = chat
         self.msg = msg
-        self.time_stamp = datetime.datetime.now()
+        self.time_stamp = datetime.datetime.utcnow()
 
 
 class Chats(db.Model):

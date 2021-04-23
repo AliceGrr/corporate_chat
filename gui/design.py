@@ -1,12 +1,13 @@
 import sys
-from PyQt5 import QtWidgets
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 import requests
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon, QPixmap
 
 from gui.gui_classes import login, registration, chat
-from pathlib import Path
-import time
 
 PASSWORD_IN_STYLE = '''padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";'''
 PASSWORD_ERR_STYLE = '''padding: 5; border-radius: 10px; border: 2px solid rgb(255, 55, 118); font: 25 8pt "Yu Gothic UI Light";'''
@@ -212,6 +213,28 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
                 self.to_login_form()
 
 
+def utc_to_local(utc_dt):
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
+
+
+def get_local_time(time):
+    datetime_object = datetime.strptime(time, '%a, %d %b %Y %H:%M:%S %Z')
+    local_time = utc_to_local(datetime_object)
+    return format_time(local_time)
+
+
+def format_time(time):
+    current_time = datetime.now()
+
+    if current_time.day != time.day:
+        local_time = time.strftime('%H:%M, %d %b')
+    elif current_time.year != time.year:
+        local_time = time.strftime('%H:%M, %d %b %Y')
+    else:
+        local_time = time.strftime('%H:%M')
+    return local_time
+
+
 class MessageItemForm(QtWidgets.QWidget):
     """Форма одного сообщения."""
 
@@ -220,7 +243,8 @@ class MessageItemForm(QtWidgets.QWidget):
         layout = QtWidgets.QFormLayout()
 
         self.sender = QtWidgets.QLabel(sender)
-        self.time = QtWidgets.QLabel(msg_time)
+        local_time = get_local_time(msg_time)
+        self.time = QtWidgets.QLabel(local_time)
         self.text = QtWidgets.QLabel(msg_text)
 
         self.set_styles()
@@ -252,7 +276,11 @@ class ChatItemForm(QtWidgets.QWidget):
             layout.addRow(self.chat_name)
         if last_msg != '':
             self.last_msg = QtWidgets.QLabel(last_msg)
-            self.last_activity = QtWidgets.QLabel(last_activity)
+
+            local_time = get_local_time(last_activity)
+            if len(local_time) < 6:
+                local_time = f'today at {local_time}'
+            self.last_activity = QtWidgets.QLabel(local_time)
 
             self.last_msg.setStyleSheet(TEXT_STYLE)
             self.last_activity.setStyleSheet(TEXT_STYLE)
@@ -449,7 +477,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             return response.json()
 
     def view_users(self, users):
-        if not users is None:
+        if users is not None:
             for user in users['users']:
                 if user['user_id'] == self.current_user_id:
                     self.add_user_item(username=user['username'],
@@ -744,7 +772,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_chats(self, chats):
         """Показ чатов данного пользователя."""
-        if not chats is None:
+        if chats is not None:
             if len(chats) > 0:
                 self.ui.no_user_label.setText('')
                 for chat in chats:
@@ -761,7 +789,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def view_msgs(self, msgs):
         """Выводит сообщения данного чата."""
-        if not msgs is None:
+        if msgs is not None:
             self.ui.messages.clear()
             if len(msgs) == 10:
                 self.add_more_item('add more messages', to_list='msgs')

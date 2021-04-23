@@ -125,6 +125,7 @@ def send_message():
     """Отправка сообщений от пользователя к пользователю."""
     msg = Messages(request.form['sender'], request.form['to_chat'], request.form['msg'])
     db.session.add(msg)
+    print(msg.time_stamp)
 
     chat = Chats.find_by_id(request.form['to_chat'])
     chat.update_activity(msg.time_stamp)
@@ -142,6 +143,7 @@ def receive_messages():
     limit = int(request.form['limit']) * 10
     msgs = []
     for msg in chat.get_msgs(limit)[::-1]:
+        print(msg.time_stamp)
         if msg.sender == -1:
             msgs.append(
                 {'sender': msg.sender,
