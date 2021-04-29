@@ -352,7 +352,7 @@ class Worker(QObject):
         """Обновление информации на клиенте"""
         if chat_window.chat_edit_mode:
             self.update_user_list.emit(chat_window.users_response())
-            # self.update_msgs.emit(chat_window.receive_msgs())
+            self.update_msgs.emit(chat_window.receive_msgs())
         else:
             self.update_chat_list.emit(chat_window.chats_response())
             if chat_window.current_chat_id:
@@ -455,7 +455,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         except:
             show_connection_error(self)
         else:
-            return response.json()
+            return response.json()['users']
 
     def change_edit_type(self):
         if self.edit_type == 'del':

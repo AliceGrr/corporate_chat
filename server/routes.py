@@ -143,7 +143,6 @@ def receive_messages():
     limit = int(request.form['limit']) * 10
     msgs = []
     for msg in chat.get_msgs(limit)[::-1]:
-        print(msg.time_stamp)
         if msg.sender == -1:
             msgs.append(
                 {'sender': msg.sender,
