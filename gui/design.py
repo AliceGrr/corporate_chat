@@ -334,11 +334,11 @@ class InformationItemForm(QtWidgets.QWidget):
 
 
 class Worker(QObject):
-    login = pyqtSignal(dict)
-    registration = pyqtSignal(dict)
     update_msgs = pyqtSignal(list)
     update_chat_list = pyqtSignal(list)
     update_user_list = pyqtSignal(list)
+    update_user_list_while_find = pyqtSignal(dict)
+    update_chat_list_while_find = pyqtSignal(dict)
 
     def update_client_thread(self):
         """Поток обновления информации на клиенте"""
@@ -351,10 +351,18 @@ class Worker(QObject):
     def update_client(self):
         """Обновление информации на клиенте"""
         if chat_window.chat_edit_mode:
-            self.update_user_list.emit(chat_window.users_response())
+            requested_username = chat_window.ui.find_user_2.text()
+            if requested_username:
+                self.update_user_list_while_find.emit(chat_window.find_users_in_chat_by_name_response(requested_username))
+            else:
+                self.update_user_list.emit(chat_window.users_response())
             self.update_msgs.emit(chat_window.receive_msgs())
         else:
-            self.update_chat_list.emit(chat_window.chats_response())
+            requested_username = chat_window.ui.find_user.text()
+            if requested_username:
+                self.update_chat_list_while_find.emit(chat_window.receive_find_user_result(requested_username))
+            else:
+                self.update_chat_list.emit(chat_window.chats_response())
             if chat_window.current_chat_id:
                 self.update_msgs.emit(chat_window.msgs_response())
 
@@ -411,6 +419,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.worker.update_chat_list.connect(self.view_chats)
         self.worker.update_user_list.connect(self.view_users)
         self.worker.update_msgs.connect(self.view_msgs)
+        self.worker.update_chat_list_while_find.connect(self.view_find_user_result)
+        # self.worker.update_user_list_while_find.connect()
 
         self.thread.start()
 
@@ -437,25 +447,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.ui.no_user_label.setText('nothing found')
         else:
             self.view_users(self.receive_users())
-
-    def find_users_in_chat_by_name(self, requested_username):
-        self.ui.chats.clear()
-        self.ui.connection_error.clear()
-        try:
-            if self.edit_type == 'add':
-                self.add_inf_item('~~users not in chat~~', to_list='chats')
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat_by_name',
-                                         data={'chat_id': self.current_chat_id,
-                                               'requested_username': requested_username})
-            else:
-                self.add_inf_item('~~users in chat~~', to_list='chats')
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat_by_name',
-                                         data={'chat_id': self.current_chat_id,
-                                               'requested_username': requested_username})
-        except:
-            show_connection_error(self)
-        else:
-            return response.json()['users']
 
     def change_edit_type(self):
         if self.edit_type == 'del':
@@ -817,6 +808,31 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             show_connection_error(self)
         else:
             return response.json()
+
+    def find_users_in_chat_by_name_response(self, requested_username):
+        try:
+            if self.edit_type == 'add':
+                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat_by_name',
+                                         data={'chat_id': self.current_chat_id,
+                                               'requested_username': requested_username})
+            else:
+                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat_by_name',
+                                         data={'chat_id': self.current_chat_id,
+                                               'requested_username': requested_username})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return response.json()['users']
+
+    def find_users_in_chat_by_name(self, requested_username):
+        self.ui.connection_error.clear()
+        try:
+            users = self.find_users_in_chat_by_name_response(requested_username)
+        except:
+            show_connection_error(self)
+        else:
+            return users
 
     # View part
 
