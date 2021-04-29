@@ -6,6 +6,7 @@ import requests
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 from gui.gui_classes import login, registration, chat
 
@@ -218,12 +219,14 @@ def utc_to_local(utc_dt):
 
 
 def get_local_time(time):
+    """Проводит обработку времени"""
     datetime_object = datetime.strptime(time, '%a, %d %b %Y %H:%M:%S %Z')
     local_time = utc_to_local(datetime_object)
     return format_time(local_time)
 
 
 def format_time(time):
+    """Форматирует время в соответствии с разницей от текущего."""
     current_time = datetime.now()
 
     if current_time.day != time.day:
@@ -330,6 +333,32 @@ class InformationItemForm(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
+class Worker(QObject):
+    login = pyqtSignal(dict)
+    registration = pyqtSignal(dict)
+    update_msgs = pyqtSignal(list)
+    update_chat_list = pyqtSignal(list)
+    update_user_list = pyqtSignal(list)
+
+    def update_client_thread(self):
+        """Поток обновления информации на клиенте"""
+        while True:
+            print('working...')
+            if chat_window.current_user_id:
+                self.update_client()
+            time.sleep(5)
+
+    def update_client(self):
+        """Обновление информации на клиенте"""
+        if chat_window.chat_edit_mode:
+            self.update_user_list.emit(chat_window.users_response())
+            # self.update_msgs.emit(chat_window.receive_msgs())
+        else:
+            self.update_chat_list.emit(chat_window.chats_response())
+            if chat_window.current_chat_id:
+                self.update_msgs.emit(chat_window.msgs_response())
+
+
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     """Класс формы чата."""
 
@@ -373,23 +402,17 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.itemClicked.connect(self.chat_clicked)
         self.ui.messages.itemClicked.connect(self.load_more_msgs)
 
-    def update_client_thread(self):
-        """Поток обновления информации на клиенте"""
-        while True:
-            print('working...')
-            if self.current_user_id:
-                self.update_client()
-            time.sleep(5)
+        # создание потока обновления данных
+        self.thread = QThread()
+        self.worker = Worker()
+        self.worker.moveToThread(self.thread)
+        # соединение сигналов и слотов
+        self.thread.started.connect(self.worker.update_client_thread)
+        self.worker.update_chat_list.connect(self.view_chats)
+        self.worker.update_user_list.connect(self.view_users)
+        self.worker.update_msgs.connect(self.view_msgs)
 
-    def update_client(self):
-        """Обновление информации на клиенте"""
-        if self.chat_edit_mode:
-            self.view_users(self.receive_users())
-            self.view_msgs(self.receive_msgs())
-        else:
-            self.view_chats(self.receive_chats())
-            if self.current_chat_id:
-                self.view_msgs(self.receive_msgs())
+        self.thread.start()
 
     def load_more_msgs(self, chat):
         """Загрузка большего количества сообщений."""
@@ -458,37 +481,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.ui.chats.itemClicked.disconnect()
             self.show_chat_menu()
             self.view_users(self.receive_users())
-
-    def receive_users(self):
-        self.ui.chats.clear()
-        self.ui.connection_error.clear()
-        try:
-            if self.edit_type == 'add':
-                self.add_inf_item('~~users not in chat~~', to_list='chats')
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat',
-                                         data={'chat_id': self.current_chat_id})
-            else:
-                self.add_inf_item('~~users in chat~~', to_list='chats')
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat',
-                                         data={'chat_id': self.current_chat_id})
-        except:
-            show_connection_error(self)
-        else:
-            return response.json()
-
-    def view_users(self, users):
-        if users is not None:
-            for user in users['users']:
-                if user['user_id'] == self.current_user_id:
-                    self.add_user_item(username=user['username'],
-                                       user_id=user['user_id'],
-                                       filename=user['avatar'],
-                                       action='leave')
-                else:
-                    self.add_user_item(username=user['username'],
-                                       user_id=user['user_id'],
-                                       filename=user['avatar'],
-                                       action=self.edit_type)
 
     def add_user_to_chat(self, user_id):
         """Добавление пользователя в чат."""
@@ -568,6 +560,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.menu_button.setIcon(load_icon('menu.png'))
         self.ui.menu_button_2.setIcon(load_icon('menu.png'))
 
+    # Button block|unblock
+
     def block_buttons(self):
         """Блокировка кнопок."""
         self.ui.send_message.setDisabled(True)
@@ -579,6 +573,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.send_message.setEnabled(True)
         self.ui.chat_settings.setEnabled(True)
         self.ui.message_text.setEnabled(True)
+
+    # Work with menus part
 
     def hide_chat_menu(self):
         """Выключение меню."""
@@ -626,6 +622,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.find_user.clear()
         self.view_chats(self.receive_chats())
 
+    # Work with user data part
+
     def delete_user_data(self):
         """Удаление пользовательских данных."""
         self.current_user = ''
@@ -659,6 +657,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon.addPixmap(QPixmap(str(icon_path)))
         return icon
 
+    # Add some item part
+
     def add_user_item(self, username, user_id, filename, action=''):
         """Добавление нового msg_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.chats)
@@ -685,8 +685,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.messages.addItem(item)
         self.ui.messages.setItemWidget(item, msg)
         self.ui.messages.scrollToItem(item)
-
-        self.ui.message_text.clear()
 
     def add_inf_item(self, text, to_list):
         """Добавление нового inf_item объекта в QListWidget."""
@@ -744,34 +742,87 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat_item)
 
-    def receive_msgs(self):
-        """Получение сообщений данного чата."""
+    # Receive part
+
+    def users_response(self):
+        try:
+            if self.edit_type == 'add':
+                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat',
+                                         data={'chat_id': self.current_chat_id})
+            else:
+                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat',
+                                         data={'chat_id': self.current_chat_id})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return response.json()['users']
+
+    def receive_users(self):
         self.ui.connection_error.clear()
+        try:
+            users = self.users_response()
+        except:
+            show_connection_error(self)
+        else:
+            return users
+
+    def msgs_response(self):
         try:
             response = requests.post(f'http://{SERVER}/corporate_chat/receive_messages',
                                      data={'chat_id': self.current_chat_id,
                                            'limit': self.current_chat_page})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return response.json()['msgs']
+
+    def receive_msgs(self):
+        """Получение сообщений данного чата."""
+        self.ui.connection_error.clear()
+        try:
+            msgs = self.msgs_response()
         except:
             show_connection_error(self)
         else:
-            msgs = response.json()['msgs']
             return msgs
 
-    def receive_chats(self):
-        """Получение чатов данного пользователя."""
-        self.ui.chats.clear()
-        self.ui.connection_error.clear()
+    def chats_response(self):
         try:
             response = requests.post(f'http://{SERVER}/corporate_chat/receive_user_chats',
                                      data={'username': self.current_user})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return (response.json())['chats']
+
+    def receive_chats(self):
+        """Получение чатов данного пользователя."""
+        self.ui.connection_error.clear()
+        try:
+            chats = self.chats_response()
         except:
             show_connection_error(self)
         else:
-            chats = (response.json())['chats']
             return chats
+
+    def receive_find_user_result(self, requested_username):
+        try:
+            response = requests.post(f'http://{SERVER}/corporate_chat/find_user_by_name',
+                                     data={'requested_username': requested_username,
+                                           'current_user_id': self.current_user_id})
+        except:
+            show_connection_error(self)
+        else:
+            return response.json()
+
+    # View part
 
     def view_chats(self, chats):
         """Показ чатов данного пользователя."""
+        self.ui.chats.clear()
         if chats is not None:
             if len(chats) > 0:
                 self.ui.no_user_label.setText('')
@@ -802,6 +853,53 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                       sender_name=msg['sender_name'],
                                       sender=msg['sender'],
                                       filename=msg['avatar'])
+
+    def view_users(self, users):
+        self.ui.chats.clear()
+        if users is not None:
+            if self.edit_type == 'add':
+                self.add_inf_item('~~users not in chat~~', to_list='chats')
+            else:
+                self.add_inf_item('~~users in chat~~', to_list='chats')
+            for user in users:
+                if user['user_id'] == self.current_user_id:
+                    self.add_user_item(username=user['username'],
+                                       user_id=user['user_id'],
+                                       filename=user['avatar'],
+                                       action='leave')
+                else:
+                    self.add_user_item(username=user['username'],
+                                       user_id=user['user_id'],
+                                       filename=user['avatar'],
+                                       action=self.edit_type)
+
+    def view_find_user_result(self, user_list):
+        if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
+            self.ui.chats.clear()
+            self.ui.no_user_label.setText('')
+
+            if len(user_list['suitable_chats']) > 0:
+                self.add_inf_item('~~chats~~', to_list='chats')
+                for chat in user_list['suitable_chats']:
+                    self.add_chat_item(chat_name=chat['chat_name'],
+                                       last_msg=chat['last_msg'],
+                                       chat_id=chat['chat_id'],
+                                       filename=chat['avatar'],
+                                       user_id=chat['companion_id'],
+                                       last_activity=chat['last_activity'],
+                                       is_public=chat['is_public']
+                                       )
+
+            if len(user_list['suitable_users']) > 0:
+                self.add_inf_item('~~users~~', to_list='chats')
+                for user in user_list['suitable_users']:
+                    self.add_chat_item(user_id=user['user_id'],
+                                       chat_name=user['username'],
+                                       filename=user['avatar'],
+                                       )
+        else:
+            self.ui.chats.clear()
+            self.ui.no_user_label.setText('nothing found')
 
     def send_message(self):
         """Отправка сообщения в чате."""
@@ -835,33 +933,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         requested_username = self.ui.find_user.text()
         self.ui.connection_error.clear()
         if requested_username:
-            try:
-                response = requests.post(f'http://{SERVER}/corporate_chat/find_user_by_name',
-                                         data={'requested_username': requested_username,
-                                               'current_user_id': self.current_user_id})
-            except:
-                show_connection_error(self)
-            else:
-                user_list = response.json()
-
-                if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
-                    self.ui.chats.clear()
-                    self.ui.no_user_label.setText('')
-
-                    if len(user_list['suitable_chats']) > 0:
-                        self.add_inf_item('~~chats~~', to_list='chats')
-                        self.view_chats(user_list['suitable_chats'])
-
-                    if len(user_list['suitable_users']) > 0:
-                        self.add_inf_item('~~users~~', to_list='chats')
-                        for user in user_list['suitable_users']:
-                            self.add_chat_item(user_id=user['user_id'],
-                                               chat_name=user['username'],
-                                               filename=user['avatar'],
-                                               )
-                else:
-                    self.ui.chats.clear()
-                    self.ui.no_user_label.setText('nothing found')
+            user_list = self.receive_find_user_result(requested_username)
+            self.view_find_user_result(user_list)
         else:
             self.view_chats(self.receive_chats())
 
