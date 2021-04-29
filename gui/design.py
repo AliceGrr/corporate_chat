@@ -334,14 +334,15 @@ class InformationItemForm(QtWidgets.QWidget):
 
 
 class Worker(QObject):
+    """Рабочий класс потока обновления информации на клиенте."""
     update_msgs = pyqtSignal(list)
     update_chat_list = pyqtSignal(list)
     update_user_list = pyqtSignal(list)
-    update_user_list_while_find = pyqtSignal(dict)
+    update_user_list_while_find = pyqtSignal(list)
     update_chat_list_while_find = pyqtSignal(dict)
 
     def update_client_thread(self):
-        """Поток обновления информации на клиенте"""
+        """Поток обновления информации на клиенте."""
         while True:
             print('working...')
             if chat_window.current_user_id:
@@ -349,7 +350,7 @@ class Worker(QObject):
             time.sleep(5)
 
     def update_client(self):
-        """Обновление информации на клиенте"""
+        """Обновление информации на клиенте."""
         if chat_window.chat_edit_mode:
             requested_username = chat_window.ui.find_user_2.text()
             if requested_username:
@@ -420,7 +421,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.worker.update_user_list.connect(self.view_users)
         self.worker.update_msgs.connect(self.view_msgs)
         self.worker.update_chat_list_while_find.connect(self.view_find_user_result)
-        # self.worker.update_user_list_while_find.connect()
+        self.worker.update_user_list_while_find.connect(self.view_users)
 
         self.thread.start()
 
@@ -440,11 +441,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         requested_username = self.ui.find_user_2.text()
         if requested_username:
             users = self.find_users_in_chat_by_name(requested_username)
-            if users:
-                self.view_users(users)
-            else:
-                self.ui.chats.clear()
-                self.ui.no_user_label.setText('nothing found')
+            self.view_users(users)
         else:
             self.view_users(self.receive_users())
 
@@ -839,25 +836,24 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def view_chats(self, chats):
         """Показ чатов данного пользователя."""
         self.ui.chats.clear()
-        if chats is not None:
-            if len(chats) > 0:
-                self.ui.no_user_label.setText('')
-                for chat in chats:
-                    self.add_chat_item(chat_name=chat['chat_name'],
-                                       last_msg=chat['last_msg'],
-                                       chat_id=chat['chat_id'],
-                                       filename=chat['avatar'],
-                                       user_id=chat['companion_id'],
-                                       last_activity=chat['last_activity'],
-                                       is_public=chat['is_public']
-                                       )
-            else:
-                self.ui.no_user_label.setText('no chats yet')
+        if chats:
+            self.ui.no_user_label.setText('')
+            for chat in chats:
+                self.add_chat_item(chat_name=chat['chat_name'],
+                                   last_msg=chat['last_msg'],
+                                   chat_id=chat['chat_id'],
+                                   filename=chat['avatar'],
+                                   user_id=chat['companion_id'],
+                                   last_activity=chat['last_activity'],
+                                   is_public=chat['is_public']
+                                   )
+        else:
+            self.ui.no_user_label.setText('no chats yet')
 
     def view_msgs(self, msgs):
         """Выводит сообщения данного чата."""
-        if msgs is not None:
-            self.ui.messages.clear()
+        self.ui.messages.clear()
+        if msgs:
             if len(msgs) == 10:
                 self.add_more_item('add more messages', to_list='msgs')
             for msg in msgs:
@@ -869,10 +865,12 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                       sender_name=msg['sender_name'],
                                       sender=msg['sender'],
                                       filename=msg['avatar'])
+        else:
+            self.ui.no_msgs_label.setText('nothing found')
 
     def view_users(self, users):
         self.ui.chats.clear()
-        if users is not None:
+        if users:
             if self.edit_type == 'add':
                 self.add_inf_item('~~users not in chat~~', to_list='chats')
             else:
@@ -888,6 +886,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        user_id=user['user_id'],
                                        filename=user['avatar'],
                                        action=self.edit_type)
+        else:
+            self.ui.no_user_label.setText('nothing found')
 
     def view_find_user_result(self, user_list):
         if len(user_list['suitable_chats']) > 0 or len(user_list['suitable_users']) > 0:
@@ -956,6 +956,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def create_new_chat(self, *user_ids):
         """Создает новый чат."""
+        self.unblock_buttons()
         self.ui.connection_error.clear()
         try:
             response = requests.post(f'http://{SERVER}/corporate_chat/start_new_chat',
@@ -979,7 +980,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         if chat.chat_id is None:
             self.temp_chat_id = chat.user_id
             self.clear_msgs()
-            self.unblock_buttons()
         elif chat.chat_id == -1 or chat.chat_id == self.current_chat_id:
             pass
         else:

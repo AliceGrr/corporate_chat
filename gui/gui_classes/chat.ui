@@ -139,8 +139,8 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
     <property name="geometry">
      <rect>
       <x>60</x>
-      <y>330</y>
-      <width>171</width>
+      <y>360</y>
+      <width>111</width>
       <height>41</height>
      </rect>
     </property>
@@ -149,6 +149,9 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
     </property>
     <property name="text">
      <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="chat_name_lanel">
@@ -458,6 +461,25 @@ QPushButton:pressed {background-color:rgb(212, 212, 212);}</string>
      <string/>
     </property>
    </widget>
+   <widget class="QLabel" name="no_msgs_label">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>360</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font: 25 15pt &quot;Yu Gothic UI Light&quot;;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
    <zorder>chats</zorder>
    <zorder>find_user</zorder>
    <zorder>messages</zorder>
@@ -469,9 +491,10 @@ QPushButton:pressed {background-color:rgb(212, 212, 212);}</string>
    <zorder>chat_settings</zorder>
    <zorder>menu_button</zorder>
    <zorder>chat_menu</zorder>
-   <zorder>user_menu</zorder>
    <zorder>chat_name_lanel_2</zorder>
    <zorder>connection_error</zorder>
+   <zorder>no_msgs_label</zorder>
+   <zorder>user_menu</zorder>
   </widget>
  </widget>
  <resources/>
