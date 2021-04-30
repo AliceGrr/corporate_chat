@@ -344,7 +344,6 @@ class Worker(QObject):
     def update_client_thread(self):
         """Поток обновления информации на клиенте."""
         while True:
-            print('working...')
             if chat_window.current_user_id:
                 self.update_client()
             time.sleep(5)
@@ -354,7 +353,8 @@ class Worker(QObject):
         if chat_window.chat_edit_mode:
             requested_username = chat_window.ui.find_user_2.text()
             if requested_username:
-                self.update_user_list_while_find.emit(chat_window.find_users_in_chat_by_name_response(requested_username))
+                self.update_user_list_while_find.emit(
+                    chat_window.find_users_in_chat_by_name_response(requested_username))
             else:
                 self.update_user_list.emit(chat_window.users_response())
             self.update_msgs.emit(chat_window.receive_msgs())
@@ -400,6 +400,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.menu_button_2.clicked.connect(self.hide_user_menu)
         self.ui.chat_settings.clicked.connect(self.open_chat_editor)
         self.ui.add_or_delete_button.clicked.connect(self.change_edit_type)
+        self.ui.message_text.textChanged.connect(self.is_need_to_send)
 
         # поиск пользователя по каждому введенному символу
         self.ui.find_user.textChanged.connect(self.find_user)
@@ -424,6 +425,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.worker.update_user_list_while_find.connect(self.view_users)
 
         self.thread.start()
+
+    def is_need_to_send(self):
+        msg_text = self.ui.message_text.toPlainText()
+        if msg_text:
+            if msg_text[-1] == '\n':
+                self.ui.message_text.clear()
+                self.ui.message_text.insertPlainText(msg_text[:-1])
+                self.send_message()
 
     def load_more_msgs(self, chat):
         """Загрузка большего количества сообщений."""
