@@ -768,7 +768,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.is_public = is_public
         item.chat_info = chat_info
 
-        item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id, chat_id=chat_id))
+        if is_public:
+            item.setIcon(self.load_avatar(filename=filename, chat_id=chat_id))
+        else:
+            item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id))
         item.setSizeHint(self.chat_items_size())
         self.ui.chats.addItem(item)
         self.ui.chats.setItemWidget(item, chat_item)
@@ -874,6 +877,17 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         else:
             return users
 
+    def receive_chat_info(self):
+        try:
+            response = requests.post(f'http://{SERVER}/corporate_chat/receive_current_chat_info',
+                                     data={'current_user_id': self.current_user_id,
+                                           'chat_id': self.current_chat_id})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return response.json()
+
     # View part
 
     def view_chats(self, chats):
@@ -961,7 +975,29 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        )
         else:
             self.ui.chats.clear()
-            self.ui.no_user_label.setText('nothing found')
+            self.ui.no_user_label.setText('Nothing found')
+
+    def no_chat_yet_view(self, chat_name, chat_info, user_id):
+        self.temp_chat_id = user_id
+        self.current_chat_id = 0
+
+        self.ui.chat_name_lanel.setText(chat_name)
+        self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
+        self.clear_msgs()
+        self.ui.no_msgs_label.setText('No messages yet')
+        self.ui.chat_settings.setDisabled(True)
+
+    def view_dict_chat_info(self, dict_chat_info):
+        self.view_chat_info(chat_info=dict_chat_info['chat_info'],
+                            is_public=dict_chat_info['is_public'])
+
+    def view_chat_info(self, chat_info, is_public):
+        if is_public:
+            self.ui.last_activite_label.setText(f'{chat_info} members')
+        elif chat_info == '':
+            pass
+        else:
+            self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
 
     def send_message(self):
         """Отправка сообщения в чате."""
@@ -1037,39 +1073,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                            chat_name=chat.chat_name,
                            is_public=chat.is_public,
                            chat_info=chat.chat_info)
-
-    def no_chat_yet_view(self, chat_name, chat_info, user_id):
-        self.temp_chat_id = user_id
-        self.current_chat_id = 0
-
-        self.ui.chat_name_lanel.setText(chat_name)
-        self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
-        self.clear_msgs()
-        self.ui.no_msgs_label.setText('No messages yet')
-        self.ui.chat_settings.setDisabled(True)
-
-    def view_dict_chat_info(self, dict_chat_info):
-        self.view_chat_info(chat_info=dict_chat_info['chat_info'],
-                            is_public=dict_chat_info['is_public'])
-
-    def view_chat_info(self, chat_info, is_public):
-        if is_public:
-            self.ui.last_activite_label.setText(f'{chat_info} members')
-        elif chat_info == '':
-            pass
-        else:
-            self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
-
-    def receive_chat_info(self):
-        try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/receive_current_chat_info',
-                                     data={'current_user_id': self.current_user_id,
-                                           'chat_id': self.current_chat_id})
-        except Exception as error:
-            print('Caught this error: ' + repr(error))
-            raise Exception
-        else:
-            return response.json()
 
     def set_chat_info(self, chat_id, chat_name, is_public, chat_info):
         self.current_chat_id = chat_id

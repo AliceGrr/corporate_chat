@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from . import app, db
 from flask import request, send_file
 from .models import Users, Messages, Chats
@@ -77,7 +76,10 @@ def login():
         err_log['msg'] = 'No such user'
         return err_log
     elif user.check_password(request.form['psw']):
-        err_log.update(user_info(user))
+        err_log.update({'user_id': user.id,
+                        'username': user.username,
+                        'avatar': user.avatar,
+                        })
         user.update_activity()
         db.session.commit()
         return err_log
@@ -195,7 +197,7 @@ def private_chat_info(chat, current_user, companion):
     """Словарь с информацией о личном чате."""
     return {'chat_name': chat.get_chat_name(current_user.username),
             'chat_id': chat.id,
-            'avatar': companion.avatar,
+            'avatar': companion.avatar_name,
             'companion_id': companion.id,
             'last_msg': chat.get_last_msg(),
             'last_activity': chat.last_activity,
@@ -221,7 +223,7 @@ def user_info(user):
     """Словарь с информацией о пользователе."""
     return {'user_id': user.id,
             'username': user.username,
-            'avatar': user.avatar,
+            'avatar': user.avatar_name,
             }
 
 
@@ -251,7 +253,7 @@ def select_suitable_users(users, chats):
             suitable_users.append({
                 'user_id': user.id,
                 'username': user.username,
-                'avatar': user.avatar,
+                'avatar': user.avatar_name,
                 'chat_info': user.last_activity,
             })
     return suitable_users
@@ -313,7 +315,9 @@ def load_avatar():
     user = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
     if current_chat is None:
-        path = Path('images', user.avatar)
+        if user.avatar_name is None:
+            user.set_avatar()
+        path = Path('images', user.avatar_name)
         if not Path.exists(path):
             user.set_avatar()
     else:

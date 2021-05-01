@@ -140,7 +140,7 @@ QPlainTextEdit {padding: 2; border-radius: 10px;border: 1px solid #CCCCCC;font: 
      <rect>
       <x>60</x>
       <y>360</y>
-      <width>111</width>
+      <width>166</width>
       <height>41</height>
      </rect>
     </property>

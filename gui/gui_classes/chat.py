@@ -57,7 +57,7 @@ class Ui_ChatForm(object):
         self.message_text.setStyleSheet("")
         self.message_text.setObjectName("message_text")
         self.no_user_label = QtWidgets.QLabel(self.centralwidget)
-        self.no_user_label.setGeometry(QtCore.QRect(60, 360, 111, 41))
+        self.no_user_label.setGeometry(QtCore.QRect(60, 360, 166, 41))
         self.no_user_label.setStyleSheet("font: 25 15pt \"Yu Gothic UI Light\";")
         self.no_user_label.setText("")
         self.no_user_label.setAlignment(QtCore.Qt.AlignCenter)

@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 import datetime
 from hashlib import md5
-from PIL import Image
+from PIL import Image, ImageDraw
 
 IMG_SIZE = 128
 
@@ -32,6 +32,19 @@ class Users(db.Model):
         self.email = email
         self.set_avatar()
 
+    @property
+    def avatar_name(self):
+        if self.is_online():
+            return f'{self.username}_online.png'
+        return f'{self.username}_offline.png'
+
+    def is_online(self):
+        current_time = datetime.datetime.utcnow()
+        difference = current_time - self.last_activity
+        if difference.seconds < 15 * 60:
+            return True
+        return False
+
     def update_activity(self):
         self.last_activity = datetime.datetime.utcnow()
 
@@ -49,11 +62,37 @@ class Users(db.Model):
 
     def set_avatar(self):
         url = self.get_avatar_url(128)
-        self.avatar = self.load_avatar(url)
+        self.load_avatar(url)
+        self.create_online_avatar()
 
     def get_avatar_url(self, size):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return f'https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}'
+
+    def create_online_avatar(self):
+        online_avatar_name = f'{self.username}_online.png'
+        online_avatar_path = Path(Path.cwd(), 'server', 'images', online_avatar_name)
+        offline_avatar_path = Path(Path.cwd(), 'server', 'images', self.avatar)
+
+        img = Image.new('RGB', (IMG_SIZE, IMG_SIZE))
+        self.paste_temp_img_to_origin(img, offline_avatar_path)
+        self.draw_green_rect(img)
+
+        img.save(online_avatar_path)
+        img.close()
+
+    @staticmethod
+    def paste_temp_img_to_origin(img, offline_avatar_path):
+        temp_img = Image.open(offline_avatar_path)
+        img_pos = (0, 0)
+        img.paste(temp_img, img_pos)
+        temp_img.close()
+
+    @staticmethod
+    def draw_green_rect(img):
+        idraw = ImageDraw.Draw(img)
+        pos = (102, 102, 128, 128)
+        idraw.rectangle(pos, fill='#00e600')
 
     # Работа с паролем
     def set_password(self, password):
@@ -186,6 +225,7 @@ class Chats(db.Model):
                                               card=card,
                                               img=img)
             img.save(image_path)
+            img.close()
         return self.avatar
 
     def set_avatar_info(self, current_user_id, users):
@@ -202,6 +242,7 @@ class Chats(db.Model):
         temp_img = Image.open(temp_image_path)
         img_pos = tuple(int(pos * IMG_SIZE) for pos in card)
         img.paste(temp_img, img_pos)
+        temp_img.close()
 
     # Запросы к бд
     def find_users_in_chat_without_current(self, current_user_id):
