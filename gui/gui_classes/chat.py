@@ -159,7 +159,7 @@ class Ui_ChatForm(object):
         self.connection_error.setText("")
         self.connection_error.setObjectName("connection_error")
         self.no_msgs_label = QtWidgets.QLabel(self.centralwidget)
-        self.no_msgs_label.setGeometry(QtCore.QRect(680, 360, 111, 41))
+        self.no_msgs_label.setGeometry(QtCore.QRect(660, 360, 191, 41))
         self.no_msgs_label.setStyleSheet("font: 25 15pt \"Yu Gothic UI Light\";")
         self.no_msgs_label.setText("")
         self.no_msgs_label.setAlignment(QtCore.Qt.AlignCenter)

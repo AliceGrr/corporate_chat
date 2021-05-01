@@ -32,17 +32,8 @@ class Users(db.Model):
         self.email = email
         self.set_avatar()
 
-    # Состояния пользователя
-    def update_activity(self, time_stamp):
-        self.last_activity = time_stamp
-
-    def user_state(self):
-        difference = datetime.datetime.now() - self.last_activity
-        return 'online' if difference.minute < 15 else 'offline'
-
-    # TODO: написать функцию возврата корректного времени
-    def get_last_activity(self):
-        return ''
+    def update_activity(self):
+        self.last_activity = datetime.datetime.utcnow()
 
     # Работа с аватаром
     def load_avatar(self, url):
@@ -165,8 +156,8 @@ class Chats(db.Model):
     def __init__(self, users):
         self.chat_name = users
 
-    def update_activity(self, time_stamp):
-        self.last_activity = time_stamp
+    def update_activity(self):
+        self.last_activity = datetime.datetime.utcnow()
 
     # Работа с аватаром
     @staticmethod

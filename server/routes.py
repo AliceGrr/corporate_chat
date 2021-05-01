@@ -78,6 +78,7 @@ def login():
         return err_log
     elif user.check_password(request.form['psw']):
         err_log.update(user_info(user))
+        user.update_activity()
         return err_log
     else:
         err_log['msg'] = 'Incorrect psw'
@@ -125,13 +126,12 @@ def send_message():
     """Отправка сообщений от пользователя к пользователю."""
     msg = Messages(request.form['sender'], request.form['to_chat'], request.form['msg'])
     db.session.add(msg)
-    print(msg.time_stamp)
 
     chat = Chats.find_by_id(request.form['to_chat'])
-    chat.update_activity(msg.time_stamp)
+    chat.update_activity()
 
     user = Users.find_by_id(request.form['sender'])
-    user.update_activity(msg.time_stamp)
+    user.update_activity()
     db.session.commit()
     return {'send_time': msg.time_stamp}
 
@@ -185,6 +185,7 @@ def private_chat_info(chat, current_user, companion):
             'last_msg': chat.get_last_msg(),
             'last_activity': chat.last_activity,
             'is_public': chat.is_public,
+            'chat_info': companion.last_activity,
             }
 
 
@@ -197,6 +198,7 @@ def public_chat_info(chat, current_user):
             'last_msg': chat.get_last_msg(),
             'last_activity': chat.last_activity,
             'is_public': chat.is_public,
+            'chat_info': chat.amount_of_users()
             }
 
 
@@ -218,6 +220,7 @@ def find_user_by_name():
     suitable_chats = select_suitable_chats(chats, current_user)
     suitable_users = select_suitable_users(users, chats)
 
+    current_user.update_activity()
     return {'suitable_users': suitable_users,
             'suitable_chats': suitable_chats}
 
@@ -230,7 +233,12 @@ def select_suitable_users(users, chats):
         if any([user.username in chat.Chats.chat_name for chat in private_chats]):
             continue
         else:
-            suitable_users.append(user_info(user))
+            suitable_users.append({
+                'user_id': user.id,
+                'username': user.username,
+                'avatar': user.avatar,
+                'chat_info': user.last_activity,
+            })
     return suitable_users
 
 
@@ -254,6 +262,7 @@ def start_new_chat():
     users_ids = users_ids_str.split(',')
     answer = create_new_chat(current_user=current_user,
                              users_ids=[int(user_id) for user_id in users_ids], )
+    current_user.update_activity()
     return answer
 
 
@@ -364,6 +373,7 @@ def add_to_chat():
     answer.update(add_chat_info_to_answer(current_chat=current_chat,
                                           current_user=current_user,
                                           msg_text=msg_text))
+    current_user.update_activity()
     return answer
 
 
@@ -411,4 +421,5 @@ def delete_from_chat():
         answer.update(add_chat_info_to_answer(current_chat=current_chat,
                                               current_user=current_user,
                                               msg_text=msg_text))
+    current_user.update_activity()
     return answer

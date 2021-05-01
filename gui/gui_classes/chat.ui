@@ -464,9 +464,9 @@ QPushButton:pressed {background-color:rgb(212, 212, 212);}</string>
    <widget class="QLabel" name="no_msgs_label">
     <property name="geometry">
      <rect>
-      <x>680</x>
+      <x>660</x>
       <y>360</y>
-      <width>111</width>
+      <width>191</width>
       <height>41</height>
      </rect>
     </property>

@@ -222,10 +222,10 @@ def get_local_time(time):
     """Проводит обработку времени"""
     datetime_object = datetime.strptime(time, '%a, %d %b %Y %H:%M:%S %Z')
     local_time = utc_to_local(datetime_object)
-    return format_time(local_time)
+    return local_time
 
 
-def format_time(time):
+def format_chat_and_msg_time(time):
     """Форматирует время в соответствии с разницей от текущего."""
     current_time = datetime.now()
 
@@ -238,6 +238,27 @@ def format_time(time):
     return local_time
 
 
+def format_user_activity_time(time):
+    """Форматирует время в соответствии с разницей от текущего."""
+    current_time = datetime.now()
+    current_time = current_time.replace(tzinfo=None)
+    time = time.replace(tzinfo=None)
+    if current_time.day == time.day:
+        difference = current_time - time
+        if difference.seconds < 15*60:
+            user_state = 'online'
+        else:
+            local_time = time.strftime('%H:%M')
+            user_state = f'last seen at {local_time}'
+    else:
+        if current_time.day != time.day:
+            local_time = time.strftime('%H:%M, %d %b')
+        elif current_time.year != time.year:
+            local_time = time.strftime('%H:%M, %d %b %Y')
+        user_state = f'last seen at {local_time}'
+    return user_state
+
+
 class MessageItemForm(QtWidgets.QWidget):
     """Форма одного сообщения."""
 
@@ -246,7 +267,7 @@ class MessageItemForm(QtWidgets.QWidget):
         layout = QtWidgets.QFormLayout()
 
         self.sender = QtWidgets.QLabel(sender)
-        local_time = get_local_time(msg_time)
+        local_time = format_chat_and_msg_time(get_local_time(msg_time))
         self.time = QtWidgets.QLabel(local_time)
         self.text = QtWidgets.QLabel(msg_text)
 
@@ -280,7 +301,7 @@ class ChatItemForm(QtWidgets.QWidget):
         if last_msg != '':
             self.last_msg = QtWidgets.QLabel(last_msg)
 
-            local_time = get_local_time(last_activity)
+            local_time = format_chat_and_msg_time(get_local_time(last_activity))
             if len(local_time) < 6:
                 local_time = f'today at {local_time}'
             self.last_activity = QtWidgets.QLabel(local_time)
@@ -350,6 +371,7 @@ class Worker(QObject):
 
     def update_client(self):
         """Обновление информации на клиенте."""
+        print(chat_window.current_chat_id)
         if chat_window.chat_edit_mode:
             requested_username = chat_window.ui.find_user_2.text()
             if requested_username:
@@ -357,15 +379,14 @@ class Worker(QObject):
                     chat_window.find_users_in_chat_by_name_response(requested_username))
             else:
                 self.update_user_list.emit(chat_window.users_response())
-            self.update_msgs.emit(chat_window.receive_msgs())
         else:
             requested_username = chat_window.ui.find_user.text()
             if requested_username:
                 self.update_chat_list_while_find.emit(chat_window.receive_find_user_result(requested_username))
             else:
                 self.update_chat_list.emit(chat_window.chats_response())
-            if chat_window.current_chat_id:
-                self.update_msgs.emit(chat_window.msgs_response())
+        if chat_window.current_chat_id != -1:
+            self.update_msgs.emit(chat_window.msgs_response())
 
 
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
@@ -510,7 +531,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Добавление нового чата в список чатов."""
         self.open_chat(chat_id=response['chat_id'],
                        chat_name=response['chat_name'],
-                       is_public=response['is_public'])
+                       is_public=response['is_public'],
+                       chat_info=response['chat_info'])
         download_avatar(icon_path,
                         chat_id=response['chat_id'],
                         user_id=self.current_user_id)
@@ -722,7 +744,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Установка размеров аватаров."""
         return QSize(320, 55)
 
-    def add_chat_item(self, chat_name, filename, last_msg='', last_activity='', chat_id=None, user_id=None,
+    def add_chat_item(self, chat_name, filename, chat_info, last_msg='', last_activity='', chat_id=None, user_id=None,
                       is_public=False):
         """Добавление нового chat_item объекта в QListWidget."""
         item = QtWidgets.QListWidgetItem(self.ui.chats)
@@ -733,6 +755,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         item.user_id = user_id
         item.chat_id = chat_id
         item.is_public = is_public
+        item.chat_info = chat_info
 
         item.setIcon(self.load_avatar(filename=filename, user_id=item.user_id, chat_id=chat_id))
         item.setSizeHint(self.chat_items_size())
@@ -854,7 +877,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                    filename=chat['avatar'],
                                    user_id=chat['companion_id'],
                                    last_activity=chat['last_activity'],
-                                   is_public=chat['is_public']
+                                   is_public=chat['is_public'],
+                                   chat_info=chat['chat_info'],
                                    )
         else:
             self.ui.no_user_label.setText('no chats yet')
@@ -912,15 +936,18 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                                        filename=chat['avatar'],
                                        user_id=chat['companion_id'],
                                        last_activity=chat['last_activity'],
-                                       is_public=chat['is_public']
+                                       is_public=chat['is_public'],
+                                       chat_info=chat['chat_info'],
                                        )
 
             if len(user_list['suitable_users']) > 0:
                 self.add_inf_item('~~users~~', to_list='chats')
                 for user in user_list['suitable_users']:
+                    print(user)
                     self.add_chat_item(user_id=user['user_id'],
                                        chat_name=user['username'],
                                        filename=user['avatar'],
+                                       chat_info=user['chat_info'],
                                        )
         else:
             self.ui.chats.clear()
@@ -936,6 +963,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if self.temp_chat_id:
                 self.create_new_chat(self.temp_chat_id, self.current_user_id)
                 self.temp_chat_id = 0
+                self.ui.no_msgs_label.clear()
             try:
                 response = requests.post(f'http://{SERVER}/corporate_chat/send_message',
                                          data={'sender': self.current_user_id, 'to_chat': self.current_chat_id,
@@ -952,6 +980,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.view_chats(self.receive_chats())
                 self.ui.message_text.setFocus()
         self.ui.message_text.clear()
+        self.ui.find_user.clear()
 
     def find_user(self):
         """Поиск пользователя по введенному значению."""
@@ -978,7 +1007,8 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
             self.set_chat_info(chat_id=chat_info['chat_id'],
                                chat_name=chat_info['chat_name'],
-                               is_public=chat_info['is_public'])
+                               is_public=chat_info['is_public'],
+                               chat_info='')
 
     def clear_msgs(self):
         self.ui.messages.clear()
@@ -987,27 +1017,42 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def chat_clicked(self, chat):
         """Открытие конкретного чата."""
         if chat.chat_id is None:
-            self.temp_chat_id = chat.user_id
-            self.clear_msgs()
+            self.no_chat_yet_view(chat_name=chat.chat_name,
+                                  chat_info=chat.chat_info,
+                                  user_id=chat.user_id)
         elif chat.chat_id == -1 or chat.chat_id == self.current_chat_id:
             pass
         else:
             self.open_chat(chat_id=chat.chat_id,
                            chat_name=chat.chat_name,
-                           is_public=chat.is_public)
+                           is_public=chat.is_public,
+                           chat_info=chat.chat_info)
 
-    def set_chat_info(self, chat_id, chat_name, is_public):
+    def no_chat_yet_view(self, chat_name, chat_info, user_id):
+        self.temp_chat_id = user_id
+        self.current_chat_id = -1
+
+        self.ui.chat_name_lanel.setText(chat_name)
+        self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
+        self.clear_msgs()
+        self.ui.no_msgs_label.setText('No messages yet')
+        self.ui.chat_settings.setDisabled(True)
+
+    def set_chat_info(self, chat_id, chat_name, is_public, chat_info):
         self.current_chat_id = chat_id
         self.current_chat_is_public = is_public
         self.current_chat_page = 1
         self.ui.chat_name_lanel.setText(chat_name)
+        if is_public:
+            self.ui.last_activite_label.setText(f'{chat_info} members')
+        elif chat_info == '':
+            pass
+        else:
+            self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
 
-    def open_chat(self, chat_id, chat_name, is_public):
-        self.set_chat_info(chat_id, chat_name, is_public)
-
+    def open_chat(self, chat_id, chat_name, is_public, chat_info):
+        self.set_chat_info(chat_id, chat_name, is_public, chat_info)
         self.unblock_buttons()
-        self.ui.last_activite_label.setText('was 1 minute ago')
-
         self.view_msgs(self.receive_msgs())
         self.ui.message_text.setFocus()
 
