@@ -109,8 +109,9 @@ def login_by_mail():
 @app.route('/corporate_chat/register', methods=['POST'])
 def register():
     """Регистрация пользователей."""
-    err_log = {'email_err': False}
-    err_log.update(verify_user_data(request.form['username'], request.form['psw'], request.form['email']))
+    err_log = verify_user_data(username=request.form['username'],
+                               psw=request.form['psw'],
+                               email=request.form['email'])
     if err_log['msg']:
         return err_log
     try:

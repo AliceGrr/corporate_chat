@@ -50,6 +50,7 @@ def show_input_errors(self, err_log):
             self.ui.email_in.setStyleSheet('''''')
     answer = err_log['msg']
     self.ui.error_label.setText(answer)
+    self.ui.login_in.setFocus()
 
 
 def hide_input_errors(self, mail=False):
@@ -163,7 +164,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
     def login(self, response):
         """Вход пользователя в систему."""
         self.ui.connection_error.clear()
-        print(response)
         if len(response) == 1:
             show_connection_error(self)
         else:
@@ -182,13 +182,10 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         self.ui.setupUi(self)
 
         # связки кнопок и функций
-        self.ui.sign_up_button.clicked.connect(self.register)
         self.ui.to_login_button.clicked.connect(self.to_login_form)
 
         # по нажатию Enter в password_in вызывает register
-        self.ui.sign_up_button.clicked.connect(self.register)
         self.ui.sign_up_button.setAutoDefault(True)
-        self.ui.password_in.returnPressed.connect(self.register)
 
         # по нажатию Enter в login_in переводит фокус на email_in
         self.ui.login_in.returnPressed.connect(self.ui.email_in.setFocus)
@@ -200,7 +197,34 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         self.ui.email_in.textChanged.connect(lambda: hide_input_errors(self, mail=True))
         self.ui.password_in.textChanged.connect(lambda: hide_input_errors(self, mail=True))
 
+        self.create_worker_thread()
+
         self.ui.login_in.setFocus()
+
+    def create_worker_thread(self):
+        self.worker = RegistrationWorker()
+        self.worker_thread = QThread()
+        self.worker.moveToThread(self.worker_thread)
+
+        self.sing_up_button_actions()
+
+        self.ui.sign_up_button.pressed.connect(lambda: self.ui.sign_up_button.setEnabled(True))
+        self.ui.password_in.returnPressed.connect(lambda: self.ui.sign_up_button.setEnabled(True))
+        self.worker.register_log.connect(self.register)
+        self.worker.register_log.connect(self.worker_thread.quit)
+        self.worker.register_log.connect(self.worker.deleteLater)
+        self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+
+    def sing_up_button_actions(self):
+        self.ui.sign_up_button.pressed.connect(lambda: self.ui.sign_up_button.setDisabled(True))
+        self.ui.password_in.returnPressed.connect(lambda: self.ui.sign_up_button.setDisabled(True))
+
+        self.ui.sign_up_button.pressed.connect(lambda: self.worker.register(username=self.ui.login_in.text(),
+                                                                         psw=self.ui.password_in.text(),
+                                                                         email=self.ui.email_in.text()))
+        self.ui.password_in.returnPressed.connect(lambda: self.worker.register(username=self.ui.login_in.text(),
+                                                                            psw=self.ui.password_in.text(),
+                                                                            email=self.ui.email_in.text()))
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -216,20 +240,14 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         """Переход на форму логина."""
         change_windows(self, login_window, login_in_filed=True)
 
-    def register(self):
+    def register(self, response):
         """Регистрация пользователя."""
-        username = self.ui.login_in.text()
-        psw = self.ui.password_in.text()
-        email = self.ui.email_in.text()
-        try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/register',
-                                     data={'username': username, 'psw': psw, 'email': email})
-        except:
+        self.ui.connection_error.clear()
+        if len(response) == 1:
             show_connection_error(self)
         else:
-            err_log = response.json()
-            if err_log['msg']:
-                show_input_errors(self, err_log)
+            if response['msg']:
+                show_input_errors(self, response)
             else:
                 self.to_login_form()
 
@@ -246,6 +264,20 @@ class LoginWorker(QObject):
             self.login_log.emit({'error': True})
         else:
             self.login_log.emit(response.json())
+
+
+class RegistrationWorker(QObject):
+    """Рабочий класс потока регистрации."""
+    register_log = pyqtSignal(dict)
+
+    def register(self, username, psw, email):
+        try:
+            response = requests.post(f'http://{SERVER}/corporate_chat/register',
+                                     data={'username': username, 'psw': psw, 'email': email})
+        except Exception as error:
+            self.register_log.emit({'error': True})
+        else:
+            self.register_log.emit(response.json())
 
 
 def utc_to_local(utc_dt):
