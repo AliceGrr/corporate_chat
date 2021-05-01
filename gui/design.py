@@ -245,7 +245,7 @@ def format_user_activity_time(time):
     time = time.replace(tzinfo=None)
     if current_time.day == time.day:
         difference = current_time - time
-        if difference.seconds < 15*60:
+        if difference.seconds < 15 * 60:
             user_state = 'online'
         else:
             local_time = time.strftime('%H:%M')
@@ -361,6 +361,7 @@ class Worker(QObject):
     update_user_list = pyqtSignal(list)
     update_user_list_while_find = pyqtSignal(list)
     update_chat_list_while_find = pyqtSignal(dict)
+    update_chat_info = pyqtSignal(dict)
 
     def update_client_thread(self):
         """Поток обновления информации на клиенте."""
@@ -371,22 +372,31 @@ class Worker(QObject):
 
     def update_client(self):
         """Обновление информации на клиенте."""
-        print(chat_window.current_chat_id)
         if chat_window.chat_edit_mode:
-            requested_username = chat_window.ui.find_user_2.text()
-            if requested_username:
-                self.update_user_list_while_find.emit(
-                    chat_window.find_users_in_chat_by_name_response(requested_username))
-            else:
-                self.update_user_list.emit(chat_window.users_response())
+            self.update_chat_edit_mode()
         else:
-            requested_username = chat_window.ui.find_user.text()
-            if requested_username:
-                self.update_chat_list_while_find.emit(chat_window.receive_find_user_result(requested_username))
-            else:
-                self.update_chat_list.emit(chat_window.chats_response())
-        if chat_window.current_chat_id != -1:
+            self.update_main_mode()
+        self.update_chat()
+
+    def update_chat(self):
+        if chat_window.current_chat_id:
             self.update_msgs.emit(chat_window.msgs_response())
+            self.update_chat_info.emit(chat_window.receive_chat_info())
+
+    def update_chat_edit_mode(self):
+        requested_username = chat_window.ui.find_user_2.text()
+        if requested_username:
+            self.update_user_list_while_find.emit(
+                chat_window.find_users_in_chat_by_name_response(requested_username))
+        else:
+            self.update_user_list.emit(chat_window.users_response())
+
+    def update_main_mode(self):
+        requested_username = chat_window.ui.find_user.text()
+        if requested_username:
+            self.update_chat_list_while_find.emit(chat_window.receive_find_user_result(requested_username))
+        else:
+            self.update_chat_list.emit(chat_window.chats_response())
 
 
 class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
@@ -444,6 +454,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.worker.update_msgs.connect(self.view_msgs)
         self.worker.update_chat_list_while_find.connect(self.view_find_user_result)
         self.worker.update_user_list_while_find.connect(self.view_users)
+        self.worker.update_chat_info.connect(self.view_dict_chat_info)
 
         self.thread.start()
 
@@ -711,7 +722,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         inf = InformationItemForm(text)
         inf.setStyleSheet(INFORMATION_ITEM_STYLE)
 
-        item.chat_id = -1
+        item.chat_id = 0
 
         if to_list == 'chats':
             item.setSizeHint(QSize(320, 40))
@@ -943,7 +954,6 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if len(user_list['suitable_users']) > 0:
                 self.add_inf_item('~~users~~', to_list='chats')
                 for user in user_list['suitable_users']:
-                    print(user)
                     self.add_chat_item(user_id=user['user_id'],
                                        chat_name=user['username'],
                                        filename=user['avatar'],
@@ -1020,7 +1030,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             self.no_chat_yet_view(chat_name=chat.chat_name,
                                   chat_info=chat.chat_info,
                                   user_id=chat.user_id)
-        elif chat.chat_id == -1 or chat.chat_id == self.current_chat_id:
+        elif chat.chat_id == 0 or chat.chat_id == self.current_chat_id:
             pass
         else:
             self.open_chat(chat_id=chat.chat_id,
@@ -1030,7 +1040,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def no_chat_yet_view(self, chat_name, chat_info, user_id):
         self.temp_chat_id = user_id
-        self.current_chat_id = -1
+        self.current_chat_id = 0
 
         self.ui.chat_name_lanel.setText(chat_name)
         self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
@@ -1038,17 +1048,35 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.ui.no_msgs_label.setText('No messages yet')
         self.ui.chat_settings.setDisabled(True)
 
-    def set_chat_info(self, chat_id, chat_name, is_public, chat_info):
-        self.current_chat_id = chat_id
-        self.current_chat_is_public = is_public
-        self.current_chat_page = 1
-        self.ui.chat_name_lanel.setText(chat_name)
+    def view_dict_chat_info(self, dict_chat_info):
+        self.view_chat_info(chat_info=dict_chat_info['chat_info'],
+                            is_public=dict_chat_info['is_public'])
+
+    def view_chat_info(self, chat_info, is_public):
         if is_public:
             self.ui.last_activite_label.setText(f'{chat_info} members')
         elif chat_info == '':
             pass
         else:
             self.ui.last_activite_label.setText(format_user_activity_time(get_local_time(chat_info)))
+
+    def receive_chat_info(self):
+        try:
+            response = requests.post(f'http://{SERVER}/corporate_chat/receive_current_chat_info',
+                                     data={'current_user_id': self.current_user_id,
+                                           'chat_id': self.current_chat_id})
+        except Exception as error:
+            print('Caught this error: ' + repr(error))
+            raise Exception
+        else:
+            return response.json()
+
+    def set_chat_info(self, chat_id, chat_name, is_public, chat_info):
+        self.current_chat_id = chat_id
+        self.current_chat_is_public = is_public
+        self.current_chat_page = 1
+        self.ui.chat_name_lanel.setText(chat_name)
+        self.view_chat_info(chat_info, is_public)
 
     def open_chat(self, chat_id, chat_name, is_public, chat_info):
         self.set_chat_info(chat_id, chat_name, is_public, chat_info)

@@ -79,6 +79,7 @@ def login():
     elif user.check_password(request.form['psw']):
         err_log.update(user_info(user))
         user.update_activity()
+        db.session.commit()
         return err_log
     else:
         err_log['msg'] = 'Incorrect psw'
@@ -158,6 +159,20 @@ def receive_messages():
                  'avatar': user.avatar
                  })
     return {'msgs': msgs}
+
+
+@app.route('/corporate_chat/receive_current_chat_info', methods=['POST'])
+def receive_current_chat_info():
+    current_user = Users.find_by_id(request.form['current_user_id'])
+    current_chat = Chats.find_by_id(request.form['chat_id'])
+    if current_chat.is_public:
+        answer = {'chat_info': current_chat.amount_of_users(),
+                  'is_public': current_chat.is_public}
+    else:
+        companion = current_user.find_companion(current_chat.id)
+        answer = {'chat_info': companion.last_activity,
+                  'is_public': current_chat.is_public}
+    return answer
 
 
 @app.route('/corporate_chat/receive_user_chats', methods=['POST'])
