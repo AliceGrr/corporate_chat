@@ -108,7 +108,6 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         # по нажатию Enter в password_in вызывает login
         self.ui.sign_in_button.clicked.connect(self.login)
         self.ui.sign_in_button.setAutoDefault(True)
-        self.ui.password_in.returnPressed.connect(self.login)
 
         # по нажатию Enter в login_in переводит фокус на password_in
         self.ui.login_in.returnPressed.connect(self.ui.password_in.setFocus)
@@ -117,7 +116,32 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         self.ui.login_in.textChanged.connect(lambda: hide_input_errors(self))
         self.ui.password_in.textChanged.connect(lambda: hide_input_errors(self))
 
+        self.create_worker_thread()
+
         self.ui.login_in.setFocus()
+
+    def create_worker_thread(self):
+        self.worker = LoginWorker()
+        self.worker_thread = QThread()
+        self.worker.moveToThread(self.worker_thread)
+
+        self.sing_in_button_actions()
+
+        self.ui.sign_in_button.pressed.connect(lambda: self.ui.sign_in_button.setEnabled(True))
+        self.ui.password_in.returnPressed.connect(lambda: self.ui.sign_in_button.setEnabled(True))
+        self.worker.login_log.connect(self.login)
+        self.worker.login_log.connect(self.worker_thread.quit)
+        self.worker.login_log.connect(self.worker.deleteLater)
+        self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+
+    def sing_in_button_actions(self):
+        self.ui.sign_in_button.pressed.connect(lambda: self.ui.sign_in_button.setDisabled(True))
+        self.ui.password_in.returnPressed.connect(lambda: self.ui.sign_in_button.setDisabled(True))
+
+        self.ui.sign_in_button.pressed.connect(lambda: self.worker.login(username=self.ui.login_in.text(),
+                                                                         psw=self.ui.password_in.text()))
+        self.ui.password_in.returnPressed.connect(lambda: self.worker.login(username=self.ui.login_in.text(),
+                                                                            psw=self.ui.password_in.text()))
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -136,21 +160,17 @@ class LoginForm(QtWidgets.QMainWindow, login.Ui_LoginForm):
         change_windows(self, chat_window)
         chat_window.load_user_data(username, user_id, avatar)
 
-    def login(self):
+    def login(self, response):
         """Вход пользователя в систему."""
-        username = self.ui.login_in.text()
-        psw = self.ui.password_in.text()
-        try:
-            response = requests.post(f'http://{SERVER}/corporate_chat',
-                                     data={'username': username, 'psw': psw})
-        except:
+        self.ui.connection_error.clear()
+        print(response)
+        if len(response) == 1:
             show_connection_error(self)
         else:
-            err_log = response.json()
-            if err_log['msg']:
-                show_input_errors(self, err_log)
+            if response['msg']:
+                show_input_errors(self, response)
             else:
-                self.to_chat_form(err_log['username'], err_log['user_id'], err_log['avatar'])
+                self.to_chat_form(response['username'], response['user_id'], response['avatar'])
 
 
 class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
@@ -212,6 +232,20 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
                 show_input_errors(self, err_log)
             else:
                 self.to_login_form()
+
+
+class LoginWorker(QObject):
+    """Рабочий класс потока логина."""
+    login_log = pyqtSignal(dict)
+
+    def login(self, username, psw):
+        try:
+            response = requests.post(f'http://{SERVER}/corporate_chat',
+                                     data={'username': username, 'psw': psw})
+        except Exception as error:
+            self.login_log.emit({'error': True})
+        else:
+            self.login_log.emit(response.json())
 
 
 def utc_to_local(utc_dt):
@@ -354,7 +388,7 @@ class InformationItemForm(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class Worker(QObject):
+class ChatWorker(QObject):
     """Рабочий класс потока обновления информации на клиенте."""
     update_msgs = pyqtSignal(list)
     update_chat_list = pyqtSignal(list)
@@ -445,7 +479,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
         # создание потока обновления данных
         self.thread = QThread()
-        self.worker = Worker()
+        self.worker = ChatWorker()
         self.worker.moveToThread(self.thread)
         # соединение сигналов и слотов
         self.thread.started.connect(self.worker.update_client_thread)
