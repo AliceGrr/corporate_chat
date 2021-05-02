@@ -62,7 +62,7 @@ class Users(db.Model):
 
     def set_avatar(self):
         url = self.get_avatar_url(128)
-        self.load_avatar(url)
+        self.avatar = self.load_avatar(url)
         self.create_online_avatar()
 
     def get_avatar_url(self, size):
