@@ -16,7 +16,7 @@ ERR_STYLE = '''border: 2px solid rgb(255, 55, 118);'''
 USERNAMES_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold";'''
 TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
-SERVER = '192.168.56.1:5000'
+SERVER = 'https://corporate--chat.herokuapp.com'
 
 
 def show_connection_error(self):
