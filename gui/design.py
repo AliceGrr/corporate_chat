@@ -66,7 +66,7 @@ def hide_input_errors(self, mail=False):
 def download_avatar(icon_path, user_id=0, chat_id=0):
     chat_window.ui.connection_error.clear()
     try:
-        response = requests.post(f'http://{SERVER}/corporate_chat/load_avatar',
+        response = requests.post(f'{SERVER}/corporate_chat/load_avatar',
                                  data={'user_id': user_id,
                                        'chat_id': chat_id},
                                  stream=True)
@@ -258,7 +258,7 @@ class LoginWorker(QObject):
 
     def login(self, username, psw):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat',
+            response = requests.post(f'{SERVER}/corporate_chat',
                                      data={'username': username, 'psw': psw})
         except Exception as error:
             self.login_log.emit({'error': True})
@@ -272,7 +272,7 @@ class RegistrationWorker(QObject):
 
     def register(self, username, psw, email):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/register',
+            response = requests.post(f'{SERVER}/corporate_chat/register',
                                      data={'username': username, 'psw': psw, 'email': email})
         except Exception as error:
             self.register_log.emit({'error': True})
@@ -581,7 +581,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Добавление пользователя в чат."""
         self.ui.connection_error.clear()
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/add_to_chat',
+            response = requests.post(f'{SERVER}/corporate_chat/add_to_chat',
                                      data={'chat_id': self.current_chat_id,
                                            'user_id': user_id,
                                            'current_user_id': self.current_user_id})
@@ -620,7 +620,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         """Удаление пользователя из чата."""
         self.ui.connection_error.clear()
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/remove_from_chat',
+            response = requests.post(f'{SERVER}/corporate_chat/remove_from_chat',
                                      data={'chat_id': self.current_chat_id,
                                            'user_id': user_id,
                                            'current_user_id': self.current_user_id})
@@ -847,10 +847,10 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def users_response(self):
         try:
             if self.edit_type == 'add':
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat',
+                response = requests.post(f'{SERVER}/corporate_chat/users_not_in_chat',
                                          data={'chat_id': self.current_chat_id})
             else:
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat',
+                response = requests.post(f'{SERVER}/corporate_chat/users_in_chat',
                                          data={'chat_id': self.current_chat_id})
         except Exception as error:
             print('Caught this error: ' + repr(error))
@@ -869,7 +869,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def msgs_response(self):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/receive_messages',
+            response = requests.post(f'{SERVER}/corporate_chat/receive_messages',
                                      data={'chat_id': self.current_chat_id,
                                            'limit': self.current_chat_page})
         except Exception as error:
@@ -890,7 +890,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def chats_response(self):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/receive_user_chats',
+            response = requests.post(f'{SERVER}/corporate_chat/receive_user_chats',
                                      data={'username': self.current_user})
         except Exception as error:
             print('Caught this error: ' + repr(error))
@@ -910,7 +910,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_find_user_result(self, requested_username):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/find_user_by_name',
+            response = requests.post(f'{SERVER}/corporate_chat/find_user_by_name',
                                      data={'requested_username': requested_username,
                                            'current_user_id': self.current_user_id})
         except:
@@ -921,11 +921,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def find_users_in_chat_by_name_response(self, requested_username):
         try:
             if self.edit_type == 'add':
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_not_in_chat_by_name',
+                response = requests.post(f'{SERVER}/corporate_chat/users_not_in_chat_by_name',
                                          data={'chat_id': self.current_chat_id,
                                                'requested_username': requested_username})
             else:
-                response = requests.post(f'http://{SERVER}/corporate_chat/users_in_chat_by_name',
+                response = requests.post(f'{SERVER}/corporate_chat/users_in_chat_by_name',
                                          data={'chat_id': self.current_chat_id,
                                                'requested_username': requested_username})
         except Exception as error:
@@ -945,7 +945,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def receive_chat_info(self):
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/receive_current_chat_info',
+            response = requests.post(f'{SERVER}/corporate_chat/receive_current_chat_info',
                                      data={'current_user_id': self.current_user_id,
                                            'chat_id': self.current_chat_id})
         except Exception as error:
@@ -1077,7 +1077,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
                 self.temp_chat_id = 0
                 self.ui.no_msgs_label.clear()
             try:
-                response = requests.post(f'http://{SERVER}/corporate_chat/send_message',
+                response = requests.post(f'{SERVER}/corporate_chat/send_message',
                                          data={'sender': self.current_user_id, 'to_chat': self.current_chat_id,
                                                'msg': msg_text})
             except:
@@ -1109,7 +1109,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.unblock_buttons()
         self.ui.connection_error.clear()
         try:
-            response = requests.post(f'http://{SERVER}/corporate_chat/start_new_chat',
+            response = requests.post(f'{SERVER}/corporate_chat/start_new_chat',
                                      data={'users_ids': ','.join(str(user_id) for user_id in user_ids),
                                            'current_user_id': self.current_user_id})
         except:
