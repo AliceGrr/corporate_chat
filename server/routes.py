@@ -63,32 +63,29 @@ def verify_user_data(psw, username='user', email='line@mail.com'):
     return err_log
 
 
-@app.route('/corporate_chat', methods=['POST', 'GET'])
+@app.route('/corporate_chat', methods=['POST'])
 def login():
     """Вход пользователя."""
-    if request.method == 'POST':
-        if verify_email(request.form['username']):
-            err_log, user = login_by_mail()
-        else:
-            err_log, user = login_by_name()
-        if err_log['msg']:
-            return err_log
-        if user is None:
-            err_log['msg'] = 'No such user'
-            return err_log
-        elif user.check_password(request.form['psw']):
-            err_log.update({'user_id': user.id,
-                            'username': user.username,
-                            'avatar': user.avatar,
-                            })
-            user.update_activity()
-            db.session.commit()
-            return err_log
-        else:
-            err_log['msg'] = 'Incorrect psw'
-            return err_log
+    if verify_email(request.form['username']):
+        err_log, user = login_by_mail()
     else:
-        return 'access successful'
+        err_log, user = login_by_name()
+    if err_log['msg']:
+        return err_log
+    if user is None:
+        err_log['msg'] = 'No such user'
+        return err_log
+    elif user.check_password(request.form['psw']):
+        err_log.update({'user_id': user.id,
+                        'username': user.username,
+                        'avatar': user.avatar,
+                        })
+        user.update_activity()
+        db.session.commit()
+        return err_log
+    else:
+        err_log['msg'] = 'Incorrect psw'
+        return err_log
 
 
 def login_by_name():
