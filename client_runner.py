@@ -7,7 +7,6 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-
 from gui.gui_classes import login, registration, chat
 
 PASSWORD_IN_STYLE = '''padding: 5; border-radius: 10px; border: 1px solid #CCCCCC; font: 25 8pt "Yu Gothic UI Light";'''
@@ -90,7 +89,7 @@ def delete_avatar(icon_path):
 def load_icon(icon_name):
     """Загрузка изображения."""
     icon = QIcon()
-    icon_path = Path('resources', icon_name)
+    icon_path = Path('gui/resources', icon_name)
     icon.addPixmap(QPixmap(str(icon_path)))
     return icon
 
@@ -589,7 +588,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             show_connection_error(self)
         else:
             response = response.json()
-            icon_path = Path('cache', 'images', response['filename'])
+            icon_path = Path('gui/cache', 'images', response['filename'])
             if response['new']:
                 self.open_new_chat_item(icon_path, response)
             else:
@@ -632,7 +631,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if response['del_chat'] or response['leave']:
                 self.delete_chat(response)
             else:
-                self.update_chat_info(Path('cache', 'images', response['filename']),
+                self.update_chat_info(Path('gui/cache', 'images', response['filename']),
                                       response)
 
     def delete_chat(self, response):
@@ -741,14 +740,14 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
     def load_avatar(self, filename, user_id=0, chat_id=0):
         """Загрузка изображения для аватара."""
         icon = QIcon()
-        icon_path = Path('cache', 'images', filename)
+        icon_path = Path('gui/cache', 'images', filename)
         if QPixmap(str(icon_path)).isNull():
             if chat_id:
-                download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
+                download_avatar(icon_path=Path(Path.cwd(), 'gui/cache', 'images', filename),
                                 user_id=self.current_user_id,
                                 chat_id=chat_id)
             else:
-                download_avatar(icon_path=Path(Path.cwd(), 'cache', 'images', filename),
+                download_avatar(icon_path=Path(Path.cwd(), 'gui/cache', 'images', filename),
                                 user_id=user_id)
         icon.addPixmap(QPixmap(str(icon_path)))
         return icon
