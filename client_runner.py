@@ -1051,6 +1051,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         self.clear_msgs()
         self.ui.no_msgs_label.setText('No messages yet')
         self.ui.chat_settings.setDisabled(True)
+        self.ui.message_text.setEnabled(True)
 
     def view_dict_chat_info(self, dict_chat_info):
         self.view_chat_info(chat_info=dict_chat_info['chat_info'],

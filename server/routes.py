@@ -246,11 +246,20 @@ def find_user_by_name():
 def select_suitable_users(users, chats):
     """Выбирает подходящих запросу пользователей из списка."""
     suitable_users = []
-    private_chats = [chat for chat in chats if not chat.Chats.is_public]
-    for user in users:
-        if any([user.username in chat.Chats.chat_name for chat in private_chats]):
-            continue
-        else:
+    if len(chats) > 0:
+        private_chats = [chat for chat in chats if not chat.Chats.is_public]
+        for user in users:
+            if any([user.username in chat.Chats.chat_name for chat in private_chats]):
+                continue
+            else:
+                suitable_users.append({
+                    'user_id': user.id,
+                    'username': user.username,
+                    'avatar': user.avatar_name,
+                    'chat_info': user.last_activity,
+                })
+    else:
+        for user in users:
             suitable_users.append({
                 'user_id': user.id,
                 'username': user.username,
