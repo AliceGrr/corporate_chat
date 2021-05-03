@@ -40,9 +40,10 @@ class Users(db.Model):
 
     def is_online(self):
         current_time = datetime.datetime.utcnow()
-        difference = current_time - self.last_activity
-        if difference.seconds < 15 * 60:
-            return True
+        if current_time.day == self.last_activity.day and current_time.month == self.last_activity.month and current_time.year == self.last_activity.year:
+            difference = current_time - self.last_activity
+            if difference.seconds < 15 * 60:
+                return True
         return False
 
     def update_activity(self):

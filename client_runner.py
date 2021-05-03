@@ -308,7 +308,7 @@ def format_user_activity_time(time):
     current_time = datetime.now()
     current_time = current_time.replace(tzinfo=None)
     time = time.replace(tzinfo=None)
-    if current_time.day == time.day:
+    if current_time.day == time.day and current_time.month == time.month and current_time.year == time.year:
         difference = current_time - time
         if difference.seconds < 15 * 60:
             user_state = 'online'
