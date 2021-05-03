@@ -636,10 +636,13 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
 
     def delete_chat(self, response):
         """Удаление чата."""
+        self.current_chat_id = 0
         delete_avatar(response['filename'])
         self.open_chat_editor()
         self.block_buttons()
         self.ui.messages.clear()
+        self.ui.chat_name_lanel.clear()
+        self.ui.last_activite_label.clear()
 
     def set_avatars_size(self):
         """Установка размеров аватаров."""
