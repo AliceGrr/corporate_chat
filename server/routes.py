@@ -78,7 +78,7 @@ def login():
     elif user.check_password(request.form['psw']):
         err_log.update({'user_id': user.id,
                         'username': user.username,
-                        'avatar': user.avatar,
+                        'avatar': f'{user.username}_offline.png',
                         })
         user.update_activity()
         db.session.commit()
