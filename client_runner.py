@@ -17,6 +17,7 @@ TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
 SERVER = 'https://corporate--chat.herokuapp.com'
 
+
 def show_connection_error(self):
     """Выводит сообщение об ошибке соединения."""
     self.ui.connection_error.setText('Connection lost')
@@ -220,11 +221,11 @@ class RegistrationForm(QtWidgets.QMainWindow, registration.Ui_RegisterForm):
         self.ui.password_in.returnPressed.connect(lambda: self.ui.sign_up_button.setDisabled(True))
 
         self.ui.sign_up_button.pressed.connect(lambda: self.worker.register(username=self.ui.login_in.text(),
-                                                                         psw=self.ui.password_in.text(),
-                                                                         email=self.ui.email_in.text()))
-        self.ui.password_in.returnPressed.connect(lambda: self.worker.register(username=self.ui.login_in.text(),
                                                                             psw=self.ui.password_in.text(),
                                                                             email=self.ui.email_in.text()))
+        self.ui.password_in.returnPressed.connect(lambda: self.worker.register(username=self.ui.login_in.text(),
+                                                                               psw=self.ui.password_in.text(),
+                                                                               email=self.ui.email_in.text()))
 
     def clear_form(self):
         """Очистка формы от введенных значений и маркеров ошибок."""
@@ -631,7 +632,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if response['del_chat'] or response['leave']:
                 self.delete_chat(response)
             else:
-                self.update_chat_info(response['filename'],response)
+                self.update_chat_info(response['filename'], response)
 
     def delete_chat(self, response):
         """Удаление чата."""
