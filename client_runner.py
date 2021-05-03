@@ -17,7 +17,6 @@ TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
 SERVER = 'https://corporate--chat.herokuapp.com'
 
-
 def show_connection_error(self):
     """Выводит сообщение об ошибке соединения."""
     self.ui.connection_error.setText('Connection lost')
@@ -62,16 +61,18 @@ def hide_input_errors(self, mail=False):
     self.ui.error_label.clear()
 
 
-def download_avatar(icon_path, user_id=0, chat_id=0):
+def download_avatar(filename, user_id=0, chat_id=0):
     chat_window.ui.connection_error.clear()
     try:
         response = requests.post(f'{SERVER}/corporate_chat/load_avatar',
                                  data={'user_id': user_id,
-                                       'chat_id': chat_id},
+                                       'chat_id': chat_id,
+                                       'filename': filename},
                                  stream=True)
     except:
         show_connection_error(chat_window)
     else:
+        icon_path = Path(Path.cwd(), 'gui', 'cache', 'images', filename)
         with open(icon_path, 'wb') as f:
             for block in response.iter_content(1024):
                 if not block:
@@ -588,28 +589,27 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             show_connection_error(self)
         else:
             response = response.json()
-            icon_path = Path('gui/cache', 'images', response['filename'])
             if response['new']:
-                self.open_new_chat_item(icon_path, response)
+                self.open_new_chat_item(response['filename'], response)
             else:
-                self.update_chat_info(icon_path, response)
+                self.update_chat_info(response['filename'], response)
 
-    def update_chat_info(self, icon_path, response):
+    def update_chat_info(self, filename, response):
         """Обновление чата после действия."""
         self.ui.chat_name_lanel.setText(response['chat_name'])
-        download_avatar(icon_path,
+        download_avatar(filename=filename,
                         chat_id=self.current_chat_id,
                         user_id=self.current_user_id)
         self.view_users(self.receive_users())
         self.add_inf_item(text=response['msg'], to_list='msgs')
 
-    def open_new_chat_item(self, icon_path, response):
+    def open_new_chat_item(self, filename, response):
         """Добавление нового чата в список чатов."""
         self.open_chat(chat_id=response['chat_id'],
                        chat_name=response['chat_name'],
                        is_public=response['is_public'],
                        chat_info=response['chat_info'])
-        download_avatar(icon_path,
+        download_avatar(filename=filename,
                         chat_id=response['chat_id'],
                         user_id=self.current_user_id)
         self.view_msgs(self.receive_msgs())
@@ -631,8 +631,7 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
             if response['del_chat'] or response['leave']:
                 self.delete_chat(response)
             else:
-                self.update_chat_info(Path('gui/cache', 'images', response['filename']),
-                                      response)
+                self.update_chat_info(response['filename'],response)
 
     def delete_chat(self, response):
         """Удаление чата."""
@@ -743,11 +742,11 @@ class ChatForm(QtWidgets.QMainWindow, chat.Ui_ChatForm):
         icon_path = Path('gui/cache', 'images', filename)
         if QPixmap(str(icon_path)).isNull():
             if chat_id:
-                download_avatar(icon_path=Path(Path.cwd(), 'gui/cache', 'images', filename),
+                download_avatar(filename=filename,
                                 user_id=self.current_user_id,
                                 chat_id=chat_id)
             else:
-                download_avatar(icon_path=Path(Path.cwd(), 'gui/cache', 'images', filename),
+                download_avatar(filename=filename,
                                 user_id=user_id)
         icon.addPixmap(QPixmap(str(icon_path)))
         return icon

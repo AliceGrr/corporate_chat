@@ -78,7 +78,7 @@ def login():
     elif user.check_password(request.form['psw']):
         err_log.update({'user_id': user.id,
                         'username': user.username,
-                        'avatar': f'{user.username}_offline.png',
+                        'avatar': user.avatar,
                         })
         user.update_activity()
         db.session.commit()
@@ -324,14 +324,12 @@ def load_avatar():
     """Отправка аватаров клиенту."""
     user = Users.find_by_id(request.form['user_id'])
     current_chat = Chats.find_by_id(request.form['chat_id'])
+    filename = request.form['filename']
+    path = Path('images', filename)
     if current_chat is None:
-        if user.avatar_name is None:
-            user.set_avatar()
-        path = Path('images', user.avatar_name)
         if not Path.exists(path):
             user.set_avatar()
     else:
-        path = Path('images', current_chat.avatar)
         if not Path.exists(path):
             current_chat.get_chat_avatar(user)
 
