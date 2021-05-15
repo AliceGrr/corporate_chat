@@ -127,14 +127,14 @@ def register():
 
 def is_user_exists(err_log, username, email):
     user = Users.find_by_name(username)
-    if user is None:
-        user = Users.find_by_mail(email)
-        if user is None:
-            return False
-        err_log['msg'] = 'User with this email exists'
+    if user is not None:
+        err_log['msg'] += 'User with this name exists'
         return True
-    err_log['msg'] = 'User with this name exists'
-    return True
+    user = Users.find_by_mail(email)
+    if user is not None:
+        err_log['msg'] += 'User with this email exists'
+        return True
+    return False
 
 
 @app.route('/corporate_chat/send_message', methods=['POST'])
