@@ -112,11 +112,10 @@ def register():
     err_log = verify_user_data(username=request.form['username'],
                                psw=request.form['psw'],
                                email=request.form['email'])
+    is_user_exists(username=request.form['username'],
+                   email=request.form['email'],
+                   err_log=err_log)
     if err_log['msg']:
-        return err_log
-    if is_user_exists(username=request.form['username'],
-                      email=request.form['email'],
-                      err_log=err_log):
         return err_log
     user = Users(request.form['username'], request.form['email'])
     user.set_password(request.form['psw'])
@@ -129,12 +128,9 @@ def is_user_exists(err_log, username, email):
     user = Users.find_by_name(username)
     if user is not None:
         err_log['msg'] += 'User with this name exists'
-        return True
     user = Users.find_by_mail(email)
     if user is not None:
         err_log['msg'] += 'User with this email exists'
-        return True
-    return False
 
 
 @app.route('/corporate_chat/send_message', methods=['POST'])
