@@ -17,6 +17,7 @@ TEXT_STYLE = '''font: 10pt "Yu Gothic UI Semilight";'''
 INFORMATION_ITEM_STYLE = '''font: 63 10pt "Yu Gothic UI Semibold"; background-color:rgb(143, 169, 255); color:rgb(249, 249, 249);'''
 SERVER = 'https://corporate--chat.herokuapp.com'
 
+
 def show_connection_error(self):
     """Выводит сообщение об ошибке соединения."""
     self.ui.connection_error.setText('Connection lost')
