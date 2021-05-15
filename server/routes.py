@@ -127,7 +127,7 @@ def register():
 def is_user_exists(err_log, username, email):
     user = Users.find_by_name(username)
     if user is not None:
-        err_log['msg'] += 'User with this name exists\n'
+        err_log['msg'] += 'User with this name exists \n'
     user = Users.find_by_mail(email)
     if user is not None:
         err_log['msg'] += 'User with this email exists'
