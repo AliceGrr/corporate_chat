@@ -114,15 +114,27 @@ def register():
                                email=request.form['email'])
     if err_log['msg']:
         return err_log
-    try:
-        user = Users(request.form['username'], request.form['email'])
-        user.set_password(request.form['psw'])
-        db.session.add(user)
-        db.session.commit()
+    if is_user_exists(username=request.form['username'],
+                      email=request.form['email'],
+                      err_log=err_log):
         return err_log
-    except exc.IntegrityError:
-        err_log['msg'] = 'User with this name exists'
-        return err_log
+    user = Users(request.form['username'], request.form['email'])
+    user.set_password(request.form['psw'])
+    db.session.add(user)
+    db.session.commit()
+    return err_log
+
+
+def is_user_exists(err_log, username, email):
+    user = Users.find_by_name(username)
+    if user is None:
+        user = Users.find_by_mail(email)
+        if user is None:
+            return False
+        err_log['msg'] = 'User with this email exists'
+        return True
+    err_log['msg'] = 'User with this name exists'
+    return True
 
 
 @app.route('/corporate_chat/send_message', methods=['POST'])
