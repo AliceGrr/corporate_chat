@@ -397,7 +397,7 @@ def add_to_chat():
                                  current_user=current_user)
 
         current_chat = Chats.find_by_id(answer['chat_id'])
-        answer['chat_info'] = '2'
+        answer['chat_info'] = '3'
         answer['new'] = True
         msg_text += f"{current_user.username} create chat <{current_chat.get_chat_name(current_user.username)}>. "
     else:
