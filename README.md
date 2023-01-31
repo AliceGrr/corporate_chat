@@ -7,7 +7,36 @@ Using:
 * `Flask`,
 * `PyQt 5`,
 * `SQLAlchemy`,
-* `SQLite`.
+* `SQLite`,
+* `werkzeug.security`
+* `PIL`,
+* `hashlib`,
+* `Heroku`.
+
+## Features
+1. Registration
+2. Validation data on sign up/ sign in windows:
+  * empty fields,
+  * spaces ,
+  * incorrect e-mail,
+  * existing user name.
+3. Login with user-name or e-mail and some login-errors:
+  * incorrect/empty fields,
+  * incorrect password,
+  * valid data, but unknown user.
+ (in these two windows you can go into another field with 'enter' button)
+4. Search of user by his name, or by part of it
+5. Search of chats
+6. Creation of group chats
+7. Sending/recieving messages
+8. Adding/removing/exiting from group chats
+9. Local time in messages
+10. Pagination in chats
+11. Real-time updating of chats
+12. State of user by his activity (online, offline)
+13. Avatars from gravatar
+14. Cache of avatars
+
 ## Screenshots
 ![img.png](screenshots/img.png)
 ![img_1.png](screenshots/img_1.png)
